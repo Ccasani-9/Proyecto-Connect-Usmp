@@ -33,7 +33,14 @@ public static class DbInitializer
         // Mientras no usemos migraciones, la BD se recrea en cada arranque para que
         // siempre coincida con los modelos de todas las ramas.
         if (config.GetValue("Database:ResetOnStartup", true))
+        {
             await db.Database.EnsureDeletedAsync();
+
+            // Los archivos subidos pertenecían a la BD anterior.
+            var uploads = Path.Combine(sp.GetRequiredService<IWebHostEnvironment>().WebRootPath, "uploads");
+            if (Directory.Exists(uploads))
+                Directory.Delete(uploads, recursive: true);
+        }
 
         if (!await db.Database.EnsureCreatedAsync())
             return;
