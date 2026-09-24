@@ -1,0 +1,65 @@
+<!-- CalculadoraFIA: promedio final y nota mínima que necesitas en el examen final -->
+<div class="modal fade" id="modalCalculadora" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-calculator me-2"></i>CalculadoraFIA</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body" id="calc">
+                <p class="text-muted small mb-3">Ingresa tus notas y los pesos de tu sílabo. Si dejas vacío el <b>EF</b>, te decimos cuánto necesitas para aprobar.</p>
+                <div class="row g-2 mb-2 small fw-semibold text-muted">
+                    <div class="col-6">Componente</div><div class="col-3">Nota</div><div class="col-3">Peso %</div>
+                </div>
+                <div class="row g-2 mb-2 align-items-center">
+                    <div class="col-6">Promedio de prácticas (PP)</div>
+                    <div class="col-3"><input class="form-control" type="number" min="0" max="20" step="0.1" data-nota="pp"></div>
+                    <div class="col-3"><input class="form-control" type="number" min="0" max="100" value="40" data-peso="pp"></div>
+                </div>
+                <div class="row g-2 mb-2 align-items-center">
+                    <div class="col-6">Examen parcial (EP)</div>
+                    <div class="col-3"><input class="form-control" type="number" min="0" max="20" step="0.1" data-nota="ep"></div>
+                    <div class="col-3"><input class="form-control" type="number" min="0" max="100" value="30" data-peso="ep"></div>
+                </div>
+                <div class="row g-2 mb-3 align-items-center">
+                    <div class="col-6">Examen final (EF)</div>
+                    <div class="col-3"><input class="form-control" type="number" min="0" max="20" step="0.1" data-nota="ef"></div>
+                    <div class="col-3"><input class="form-control" type="number" min="0" max="100" value="30" data-peso="ef"></div>
+                </div>
+                <div class="calc-result">
+                    <div class="small text-muted" data-calc="titulo">Promedio final</div>
+                    <div class="valor" data-calc="valor">—</div>
+                    <div class="small fw-semibold" data-calc="detalle">Nota aprobatoria: 10.5</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ayuda -->
+<div class="modal fade" id="modalAyuda" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">¿Necesitas ayuda?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="accordion accordion-flush" id="faq">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f1">¿Qué es USMP Connect?</button></h2>
+                        <div id="f1" class="accordion-collapse collapse" data-bs-parent="#faq"><div class="accordion-body">Una plataforma comunitaria para alumnos y docentes: notas, horarios, tips por cátedra, apuntes, marketplace y objetos perdidos.</div></div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f2">¿Cómo registro las notas de mi sección?</button></h2>
+                        <div id="f2" class="accordion-collapse collapse" data-bs-parent="#faq"><div class="accordion-body">Si eres docente, en Inicio verás tus secciones. Entra a “Registrar notas”, completa EP y EF y guarda: cada alumno recibe una notificación.</div></div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f3">Tengo un problema con mi matrícula</button></h2>
+                        <div id="f3" class="accordion-collapse collapse" data-bs-parent="#faq"><div class="accordion-body">Usa el botón “Reportar caso” del banner de Inicio. Recibirás el número de caso en tus Noticias.</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,39 @@
+@using UsmpConnect.Services
+@model List<UsmpConnect.ViewModels.ClaseVM>
+@{
+    ViewData["Title"] = "Mi horario";
+    var hoy = (DayOfWeek)ViewData["Hoy"]!;
+    var dias = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday };
+}
+
+<div class="card-u page-head">
+    <div>
+        <h1>Mi horario semanal</h1>
+        <p>Periodo 2026-II · @Model.Count clases por semana</p>
+    </div>
+</div>
+
+<div class="row g-3">
+    @foreach (var dia in dias)
+    {
+        var clases = Model.Where(c => c.Dia == dia).ToList();
+        <div class="col-xl-2 col-lg-4 col-md-6">
+            <div class="card-u p h-100" style="@(dia == hoy ? "border-color:var(--guinda);box-shadow:0 0 0 2px var(--guinda-100)" : "")">
+                <h3 class="card-title-u mb-1">@HoraPeru.DiaLargo(dia)</h3>
+                @if (dia == hoy) { <span class="tag tag-guinda">HOY</span> }
+                @foreach (var c in clases)
+                {
+                    <div class="clase">
+                        <div class="hora">@c.Rango</div>
+                        <div class="curso" style="font-size:.9rem">@c.Curso</div>
+                        <div class="meta">@c.Aula<br />@c.Detalle</div>
+                    </div>
+                }
+                @if (clases.Count == 0)
+                {
+                    <div class="vacio"><i class="bi bi-cup-hot"></i>Libre</div>
+                }
+            </div>
+        </div>
+    }
+</div>
