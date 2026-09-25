@@ -1,0 +1,52 @@
+@using UsmpConnect.Data.Seed
+@model UsmpConnect.ViewModels.LoginViewModel
+@{
+    Layout = "_LayoutAuth";
+    ViewData["Title"] = "Iniciar sesión";
+}
+
+<h2>Iniciar sesión</h2>
+<p class="text-muted mb-4">Ingresa con tu correo institucional USMP.</p>
+
+<form asp-action="Login" method="post" novalidate>
+    <input type="hidden" asp-for="ReturnUrl" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" placeholder="nombre.apellido@usmp.pe" autocomplete="username" autofocus />
+        <span asp-validation-for="Email"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label"></label>
+        <input asp-for="Password" class="form-control" placeholder="••••••••" autocomplete="current-password" />
+        <span asp-validation-for="Password"></span>
+    </div>
+    <div class="form-check mb-4">
+        <input asp-for="Recordarme" class="form-check-input" />
+        <label asp-for="Recordarme" class="form-check-label"></label>
+    </div>
+    <button type="submit" class="btn-guinda w-100 py-2">Ingresar</button>
+</form>
+
+<p class="text-center mt-4 mb-0">¿No tienes cuenta? <a asp-action="Registro" class="fw-bold">Regístrate</a></p>
+
+<div class="demo-box">
+    <div class="fw-bold mb-2"><i class="bi bi-person-badge me-1"></i>Cuentas de demostración <span class="text-muted fw-normal">(clave: @DemoUsers.Password)</span></div>
+    <div class="d-flex gap-2 flex-wrap">
+        <button type="button" data-demo="@DemoUsers.Alessandro"><i class="bi bi-mortarboard me-1"></i>Alumno · Alessandro</button>
+        <button type="button" data-demo="@DemoUsers.Ramirez"><i class="bi bi-person-workspace me-1"></i>Docente · Ing. Ramírez</button>
+        <button type="button" data-demo="@DemoUsers.Maria"><i class="bi bi-mortarboard me-1"></i>Alumna · María</button>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll('[data-demo]').forEach(b => b.addEventListener('click', () => {
+            document.getElementById('Email').value = b.dataset.demo;
+            document.getElementById('Password').value = '@DemoUsers.Password';
+            b.closest('.auth-form').querySelector('form').submit();
+        }));
+    </script>
+}

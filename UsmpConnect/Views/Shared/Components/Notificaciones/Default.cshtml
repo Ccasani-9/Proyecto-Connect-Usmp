@@ -1,0 +1,31 @@
+@using UsmpConnect.Services
+@model List<UsmpConnect.Models.Notificacion>
+@{
+    var noLeidas = (int)(ViewData["NoLeidas"] ?? 0);
+}
+<div class="dropdown" id="notificaciones">
+    <button type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+        <i class="bi bi-bell"></i> NOTICIAS
+        @if (noLeidas > 0)
+        {
+            <span class="badge-count" data-noti-count>@noLeidas</span>
+        }
+    </button>
+    <div class="dropdown-menu dropdown-menu-end noti-menu">
+        <div class="noti-head">Noticias</div>
+        @if (Model.Count == 0)
+        {
+            <div class="vacio"><i class="bi bi-bell-slash"></i>No tienes notificaciones</div>
+        }
+        @foreach (var n in Model)
+        {
+            <a class="noti-item @(n.Leida ? "" : "no-leida")" href="@(n.Url ?? "#")">
+                <i class="bi bi-@n.Icono"></i>
+                <div>
+                    <div>@n.Mensaje</div>
+                    <small>@HoraPeru.Hace(n.Fecha)</small>
+                </div>
+            </a>
+        }
+    </div>
+</div>

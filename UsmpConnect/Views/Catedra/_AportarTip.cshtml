@@ -1,0 +1,107 @@
+@model AportarTipFormVM
+
+<div class="modal fade" id="modalTip" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Aportar un Tip</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <form asp-controller="Catedra" asp-action="Aportar" method="post">
+                    <div class="mb-3">
+                        <label class="form-label" for="tip-curso">Curso</label>
+                        <select class="form-select" id="tip-curso" name="CursoId" required>
+                            <option value="">Seleccionar curso</option>
+                            @foreach (var ciclo in Model.Cursos.GroupBy(c => c.Ciclo))
+                            {
+                                <optgroup label="@Curso.Romano(ciclo.Key) Ciclo">
+                                    @foreach (var c in ciclo)
+                                    {
+                                        <option value="@c.Id" selected="@(c.Id == Model.CursoSeleccionado)">@c.Nombre</option>
+                                    }
+                                </optgroup>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="tip-docente">Docente</label>
+                        <select class="form-select" id="tip-docente" name="DocenteId">
+                            <option value="">General (sin docente específico)</option>
+                            @foreach (var d in Model.Docentes)
+                            {
+                                <option value="@d.DocenteId" data-curso="@d.CursoId">@d.Nombre — Sección @d.Secciones</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="tip-texto">Tu tip o consejo</label>
+                        <textarea class="form-control" id="tip-texto" name="Texto" rows="4" required minlength="20" maxlength="1000"
+                                  placeholder="Ej: Para el parcial, practiquen los ejercicios de árboles binarios..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="tip-dificultad">Dificultad del curso</label>
+                        <select class="form-select" id="tip-dificultad" name="Dificultad">
+                            <option value="">Prefiero no calificar</option>
+                            <option value="1">1 — Muy fácil</option>
+                            <option value="2">2 — Fácil</option>
+                            <option value="3">3 — Normal</option>
+                            <option value="4">4 — Difícil</option>
+                            <option value="5">5 — Muy difícil</option>
+                        </select>
+                    </div>
+                    <div class="row g-3 mb-3" id="tip-sobre-docente">
+                        <div class="col-sm-6">
+                            <label class="form-label" for="tip-claridad">Claridad del docente</label>
+                            <select class="form-select" id="tip-claridad" name="Claridad">
+                                <option value="">Sin calificar</option>
+                                @for (var i = 5; i >= 1; i--)
+                                {
+                                    <option value="@i">@(new string('★', i))@(new string('☆', 5 - i))</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label" for="tip-exigencia">Exigencia</label>
+                            <select class="form-select" id="tip-exigencia" name="Exigencia">
+                                <option value="">Sin calificar</option>
+                                @foreach (var e in Enum.GetValues<Exigencia>())
+                                {
+                                    <option value="@e">@e.Nombre()</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <p class="small text-muted">Tu tip se publica con tu nombre corto (ej. “María G.”). Sé respetuoso: los tips con 3 reportes se ocultan.</p>
+                    <button class="btn-guinda w-100" type="submit">Publicar tip</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // El docente depende del curso; la claridad y la exigencia solo aplican si se elige un docente.
+    document.addEventListener('DOMContentLoaded', () => {
+        const curso = document.getElementById('tip-curso');
+        const docente = document.getElementById('tip-docente');
+        const sobreDocente = document.getElementById('tip-sobre-docente');
+
+        const filtrarDocentes = () => {
+            docente.querySelectorAll('option[data-curso]').forEach(o => {
+                o.hidden = o.disabled = o.dataset.curso !== curso.value;
+            });
+            if (docente.selectedOptions[0]?.disabled) docente.value = '';
+            actualizarDocente();
+        };
+        const actualizarDocente = () => {
+            const hay = docente.value !== '';
+            sobreDocente.querySelectorAll('select').forEach(s => { s.disabled = !hay; if (!hay) s.value = ''; });
+            sobreDocente.style.opacity = hay ? 1 : .5;
+        };
+
+        curso.addEventListener('change', filtrarDocentes);
+        docente.addEventListener('change', actualizarDocente);
+        filtrarDocentes();
+    });
+</script>

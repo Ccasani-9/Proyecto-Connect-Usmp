@@ -1,0 +1,301 @@
+@using UsmpConnect.Controllers
+@using UsmpConnect.Services
+@model UsmpConnect.ViewModels.InicioViewModel
+@{
+    ViewData["Title"] = "Inicio";
+
+    static string ClaseNota(decimal? n) => n switch { null => "tag-muted", >= 13 => "tag-ok", >= 10.5m => "tag-warn", _ => "tag-bad" };
+    static string F(decimal? n) => n?.ToString("0.0") ?? "—";
+}
+
+<!-- Banner / carrusel -->
+<section class="hero" id="hero">
+    <div class="slide active">
+        <div>
+            <span class="hero-tag">MATRÍCULA 2026-II</span>
+            <h2>¿Tuviste algún inconveniente con tu matrícula?</h2>
+            <p>Registra tu caso y un asesor especializado te ayudará a resolverlo en la brevedad.</p>
+        </div>
+        <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#modalCaso">Reportar caso <i class="bi bi-arrow-right"></i></button>
+    </div>
+    <div class="slide">
+        <div>
+            <span class="hero-tag">EXÁMENES PARCIALES</span>
+            <h2>Parciales del 5 al 9 de octubre</h2>
+            <p>Prepárate con los resúmenes y exámenes resueltos que comparte la comunidad.</p>
+        </div>
+        <a class="btn btn-light" href="/Apuntes">Ir al Banco de Apuntes <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="slide">
+        <div>
+            <span class="hero-tag">COMUNIDAD</span>
+            <h2>¿Libros o calculadoras que ya no usas?</h2>
+            <p>Véndelos o dónalos a otros alumnos en el Marketplace comunitario.</p>
+        </div>
+        <a class="btn btn-light" href="/Marketplace">Ir al Marketplace <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="hero-dots">
+        <button class="active" aria-label="Slide 1"></button><button aria-label="Slide 2"></button><button aria-label="Slide 3"></button>
+    </div>
+</section>
+
+<div class="card-u saludo">
+    ☀️ <b>¡@Model.Saludo, @Model.PrimerNombre!</b>
+    @(Model.EsProfesor ? "Aquí tienes tus secciones del periodo 2026-II." : "Un nuevo período comienza. ¡Ya tienes todo listo para arrancar!")
+</div>
+
+<div class="row g-3">
+    <!-- Mis notas (alumno) / Mis secciones (docente) -->
+    <div class="col-xl-4 col-lg-6">
+        <div class="card-u p h-100">
+            @if (Model.EsProfesor)
+            {
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h3 class="card-title-u">Mis secciones</h3>
+                    <span class="icon-bubble"><i class="bi bi-people"></i></span>
+                </div>
+                @foreach (var s in Model.Secciones)
+                {
+                    <div class="acordeon-item">
+                        <div class="d-flex justify-content-between align-items-start gap-2">
+                            <div>
+                                <div class="fw-semibold">@s.Curso</div>
+                                <div class="small text-muted">Sección @s.Codigo · @s.Alumnos alumnos</div>
+                                <div class="small text-muted">@s.Horario</div>
+                            </div>
+                            <span class="tag @(s.ConNotas == s.Alumnos && s.Alumnos > 0 ? "tag-ok" : "tag-warn")">@s.ConNotas/@s.Alumnos notas</span>
+                        </div>
+                        <a class="btn btn-sm btn-outline-guinda mt-2" asp-controller="Notas" asp-action="Seccion" asp-route-id="@s.SeccionId">
+                            <i class="bi bi-pencil-square me-1"></i>Registrar notas
+                        </a>
+                    </div>
+                }
+                @if (Model.Secciones.Count == 0)
+                {
+                    <div class="vacio"><i class="bi bi-easel"></i>No tienes secciones asignadas este periodo.</div>
+                }
+            }
+            else
+            {
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h3 class="card-title-u">Mis notas</h3>
+                    <div class="d-flex align-items-center gap-3">
+                        <a class="ver-todo" href="/Notas">Ver todo &gt;</a>
+                        <span class="icon-bubble"><i class="bi bi-journal-bookmark"></i></span>
+                    </div>
+                </div>
+                @for (var i = 0; i < Model.Notas.Count; i++)
+                {
+                    var n = Model.Notas[i];
+                    var abierto = n.EP.HasValue && i < 2;
+                    <div class="acordeon-item">
+                        <button class="acordeon-btn" type="button" data-bs-toggle="collapse" data-bs-target="#nota@(i)" aria-expanded="@(abierto ? "true" : "false")">
+                            <span>@n.Curso</span><i class="bi @(abierto ? "bi-dash-lg" : "bi-plus-lg")"></i>
+                        </button>
+                        <div class="collapse @(abierto ? "show" : "")" id="nota@(i)">
+                            <div class="acordeon-body">
+                                @if (n.EP is null && n.EF is null)
+                                {
+                                    <span class="small text-muted">Aún no hay notas registradas · @n.Docente</span>
+                                }
+                                else
+                                {
+                                    <span class="tag @ClaseNota(n.EP)">EP: @F(n.EP)</span>
+                                    <span class="tag @ClaseNota(n.EF)">EF: @F(n.EF)</span>
+                                    <span class="tag @ClaseNota(n.Promedio)">Prom: @F(n.Promedio)</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+                @if (Model.Notas.Count == 0)
+                {
+                    <div class="vacio"><i class="bi bi-journal"></i>No tienes cursos matriculados.</div>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Mis horarios -->
+    <div class="col-xl-4 col-lg-6">
+        <div class="card-u p h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="card-title-u">Mis horarios</h3>
+                <div class="d-flex align-items-center gap-3">
+                    <a class="ver-todo" href="/Horario">Ver todo &gt;</a>
+                    <span class="icon-bubble"><i class="bi bi-clock"></i></span>
+                </div>
+            </div>
+            <div class="tabs-seg" role="tablist">
+                <button class="active" type="button" data-dia="hoy">@Model.Hoy.Etiqueta</button>
+                <button type="button" data-dia="manana">@Model.Manana.Etiqueta</button>
+            </div>
+            @foreach (var (clave, dia) in new[] { ("hoy", Model.Hoy), ("manana", Model.Manana) })
+            {
+                <div data-panel-dia="@clave" hidden="@(clave != "hoy")">
+                    @foreach (var c in dia.Clases)
+                    {
+                        <div class="clase">
+                            <div class="hora">@c.Rango</div>
+                            <div class="curso">@c.Curso</div>
+                            <div class="meta">@c.Aula · @c.Detalle</div>
+                        </div>
+                    }
+                    @if (dia.Clases.Count == 0)
+                    {
+                        <div class="vacio"><i class="bi bi-cup-hot"></i>Sin clases este día. ¡Aprovecha para descansar!</div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Calendario académico -->
+    <div class="col-xl-4 col-lg-12">
+        <div class="card-u p h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="card-title-u">Calendario académico</h3>
+                <a class="ver-todo" href="/Calendario">Ver todo &gt;</a>
+            </div>
+            <div class="mini-cal-head">
+                <button type="button" data-cal="-1" aria-label="Mes anterior"><i class="bi bi-chevron-left"></i></button>
+                <span data-cal-titulo></span>
+                <button type="button" data-cal="1" aria-label="Mes siguiente"><i class="bi bi-chevron-right"></i></button>
+            </div>
+            <div class="mini-cal" id="miniCal"></div>
+            <ul class="leyenda">
+                @foreach (var e in Model.ProximosEventos)
+                {
+                    var fecha = DateOnly.Parse(e.Fecha);
+                    <li>
+                        <span class="dot dot-@e.Tipo"></span>
+                        <span><b>@fecha.ToString("d MMM", HoraPeru.Cultura)</b> – @e.Titulo</span>
+                        @if (e.Personal)
+                        {
+                            <form asp-controller="Eventos" asp-action="Eliminar" method="post" class="ms-auto">
+                                <input type="hidden" name="id" value="@e.Id" />
+                                <button class="btn btn-link btn-sm p-0 text-muted" title="Eliminar recordatorio"><i class="bi bi-x-lg"></i></button>
+                            </form>
+                        }
+                    </li>
+                }
+            </ul>
+            <button class="btn-dashed" data-bs-toggle="modal" data-bs-target="#modalEvento">+ Agregar recordatorio/actividad</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: reportar caso de matrícula -->
+<div class="modal fade" id="modalCaso" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" asp-controller="Casos" asp-action="Crear" method="post">
+            <div class="modal-header">
+                <h5 class="modal-title">Reportar caso de matrícula</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label" for="casoTipo">Tipo de inconveniente</label>
+                    <select class="form-select" id="casoTipo" name="tipo" required>
+                        <option value="">Seleccionar</option>
+                        @foreach (var t in CasosController.Tipos)
+                        {
+                            <option>@t</option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label" for="casoDesc">Describe tu caso</label>
+                    <textarea class="form-control" id="casoDesc" name="descripcion" rows="4" maxlength="1000" required placeholder="Ej: El curso Física I no aparece en mi horario aunque ya pagué la matrícula..."></textarea>
+                </div>
+                <button class="btn-guinda w-100" type="submit">Enviar caso</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: nuevo recordatorio -->
+<div class="modal fade" id="modalEvento" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" asp-controller="Eventos" asp-action="Crear" method="post">
+            <div class="modal-header">
+                <h5 class="modal-title">Nuevo recordatorio / actividad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label" for="evTitulo">Título</label>
+                    <input class="form-control" id="evTitulo" name="titulo" maxlength="120" required placeholder="Ej. Estudiar para la práctica de Física" />
+                </div>
+                <div class="mb-4">
+                    <label class="form-label" for="evFecha">Fecha</label>
+                    <input class="form-control" id="evFecha" name="fecha" type="date" required value="@Model.FechaHoy.ToString("yyyy-MM-dd")" />
+                </div>
+                <button class="btn-guinda w-100" type="submit">Guardar recordatorio</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Carrusel del banner
+        (() => {
+            const hero = document.getElementById('hero');
+            const slides = [...hero.querySelectorAll('.slide')], dots = [...hero.querySelectorAll('.hero-dots button')];
+            let i = 0;
+            const ir = n => { i = n; slides.forEach((s, k) => s.classList.toggle('active', k === i)); dots.forEach((d, k) => d.classList.toggle('active', k === i)); };
+            dots.forEach((d, k) => d.addEventListener('click', () => ir(k)));
+            let timer = setInterval(() => ir((i + 1) % slides.length), 7000);
+            hero.addEventListener('mouseenter', () => clearInterval(timer));
+            hero.addEventListener('mouseleave', () => timer = setInterval(() => ir((i + 1) % slides.length), 7000));
+        })();
+
+        // Acordeón de notas: cambiar + / −
+        document.querySelectorAll('.acordeon-item .collapse').forEach(c => {
+            const icono = c.previousElementSibling?.querySelector('i');
+            c.addEventListener('show.bs.collapse', () => icono.className = 'bi bi-dash-lg');
+            c.addEventListener('hide.bs.collapse', () => icono.className = 'bi bi-plus-lg');
+        });
+
+        // Pestañas Hoy / Mañana
+        document.querySelectorAll('[data-dia]').forEach(b => b.addEventListener('click', () => {
+            document.querySelectorAll('[data-dia]').forEach(x => x.classList.toggle('active', x === b));
+            document.querySelectorAll('[data-panel-dia]').forEach(p => p.hidden = p.dataset.panelDia !== b.dataset.dia);
+        }));
+
+        // Mini calendario
+        (() => {
+            const eventos = @Json.Serialize(Model.Eventos);
+            const hoy = '@Model.FechaHoy.ToString("yyyy-MM-dd")';
+            const conEvento = new Set(eventos.map(e => e.fecha));
+            const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Setiembre','Octubre','Noviembre','Diciembre'];
+            let [anio, mes] = hoy.split('-').map(Number); mes--;
+            const cal = document.getElementById('miniCal'), titulo = document.querySelector('[data-cal-titulo]');
+            const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+            function pintar() {
+                titulo.textContent = `${meses[mes]} – ${anio}`;
+                cal.innerHTML = ['Lu','Ma','Mi','Ju','Vi','Sa','Do'].map(d => `<div class="dow">${d}</div>`).join('');
+                const primero = new Date(anio, mes, 1);
+                const inicio = new Date(anio, mes, 1 - ((primero.getDay() + 6) % 7));
+                for (let k = 0; k < 42; k++) {
+                    const d = new Date(inicio); d.setDate(inicio.getDate() + k);
+                    if (k >= 35 && d.getMonth() !== mes) break;
+                    const f = iso(d), clases = ['d'];
+                    if (d.getMonth() !== mes) clases.push('fuera');
+                    if (f === hoy) clases.push('hoy');
+                    if (conEvento.has(f)) clases.push('evento');
+                    const titulos = eventos.filter(e => e.fecha === f).map(e => e.titulo).join('\n');
+                    cal.insertAdjacentHTML('beforeend', `<div class="${clases.join(' ')}" title="${titulos.replace(/"/g, '&quot;')}"><span>${d.getDate()}</span></div>`);
+                }
+            }
+            document.querySelectorAll('[data-cal]').forEach(b => b.addEventListener('click', () => {
+                mes += Number(b.dataset.cal);
+                if (mes < 0) { mes = 11; anio--; } if (mes > 11) { mes = 0; anio++; }
+                pintar();
+            }));
+            pintar();
+        })();
+    </script>
+}

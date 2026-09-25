@@ -1,0 +1,49 @@
+@model List<UsmpConnect.ViewModels.NotaCursoVM>
+@{
+    ViewData["Title"] = "Mis notas";
+    static string ClaseNota(decimal? n) => n switch { null => "tag-muted", >= 13 => "tag-ok", >= 10.5m => "tag-warn", _ => "tag-bad" };
+    static string F(decimal? n) => n?.ToString("0.0") ?? "—";
+
+    var conPromedio = Model.Where(n => n.Promedio.HasValue).ToList();
+    decimal? ponderado = conPromedio.Count == 0 ? null
+        : Math.Round(conPromedio.Sum(n => n.Promedio!.Value * n.Creditos) / conPromedio.Sum(n => n.Creditos), 2);
+}
+
+<div class="card-u page-head">
+    <div>
+        <h1>Mis notas · 2026-II</h1>
+        <p>EP = Examen parcial · EF = Examen final · Promedio = (EP + EF) / 2</p>
+    </div>
+    <div class="text-end">
+        <div class="small text-muted">Promedio ponderado (cursos con nota final)</div>
+        <div class="fs-3 fw-bold" style="color:var(--guinda)">@(ponderado?.ToString("0.00") ?? "—")</div>
+    </div>
+</div>
+
+<div class="card-u p">
+    <div class="table-responsive">
+        <table class="table-u">
+            <thead>
+                <tr><th>Curso</th><th>Docente</th><th class="text-center">Créditos</th><th class="text-center">EP</th><th class="text-center">EF</th><th class="text-center">Promedio</th><th>Estado</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var n in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@n.Curso</td>
+                        <td class="text-muted">@n.Docente</td>
+                        <td class="text-center">@n.Creditos</td>
+                        <td class="text-center"><span class="tag @ClaseNota(n.EP)">@F(n.EP)</span></td>
+                        <td class="text-center"><span class="tag @ClaseNota(n.EF)">@F(n.EF)</span></td>
+                        <td class="text-center"><span class="tag @ClaseNota(n.Promedio)">@F(n.Promedio)</span></td>
+                        <td>
+                            @if (n.Promedio is null) { <span class="small text-muted">En curso</span> }
+                            else if (n.Promedio >= 10.5m) { <span class="small fw-semibold" style="color:var(--ok)">Aprobado</span> }
+                            else { <span class="small fw-semibold" style="color:var(--bad)">Desaprobado</span> }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

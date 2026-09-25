@@ -1,0 +1,23 @@
+@{
+    var codigo = (int)(ViewData["Codigo"] ?? 404);
+    ViewData["Title"] = codigo == 404 ? "En construcción" : "Error";
+    if (User.Identity?.IsAuthenticated != true)
+    {
+        Layout = "_LayoutAuth";
+    }
+}
+<div class="card-u estado">
+    @if (codigo == 404)
+    {
+        <div class="icono"><i class="bi bi-cone-striped"></i></div>
+        <h1 class="h4 fw-bold">Este módulo está en construcción</h1>
+        <p class="text-muted">Nuestro equipo está trabajando en esta sección. ¡Muy pronto estará disponible!</p>
+    }
+    else
+    {
+        <div class="icono"><i class="bi bi-exclamation-triangle"></i></div>
+        <h1 class="h4 fw-bold">Ocurrió un problema (@codigo)</h1>
+        <p class="text-muted">Intenta nuevamente en unos momentos.</p>
+    }
+    <a href="/" class="btn-guinda d-inline-block mt-2">Volver al inicio</a>
+</div>

@@ -1,0 +1,108 @@
+@using UsmpConnect.Services
+@{
+    var controlador = (ViewContext.RouteData.Values["controller"] as string ?? "").ToLowerInvariant();
+    var enInicio = controlador is "home" or "notas" or "horario";
+
+    // Menú lateral. Cada módulo vive en su propio controlador; si aún no existe, se muestra "En construcción".
+    var menu = new[]
+    {
+        (Texto: "Inicio",           Icono: "house",    Activo: "house-fill",    Url: "/",            Controlador: "home"),
+        (Texto: "Food & Spots",     Icono: "geo-alt",  Activo: "geo-alt-fill",  Url: "/FoodSpots",   Controlador: "foodspots"),
+        (Texto: "Cátedra & Tips",   Icono: "bookmark", Activo: "bookmark-fill", Url: "/Catedra",     Controlador: "catedra"),
+        (Texto: "Marketplace",      Icono: "bag",      Activo: "bag-fill",      Url: "/Marketplace", Controlador: "marketplace"),
+        (Texto: "Banco de Apuntes", Icono: "folder",   Activo: "folder-fill",   Url: "/Apuntes",     Controlador: "apuntes"),
+        (Texto: "Lost & Found",     Icono: "search",   Activo: "search",        Url: "/LostFound",   Controlador: "lostfound"),
+        (Texto: "Mi Calendario",    Icono: "calendar", Activo: "calendar-fill", Url: "/Calendario",  Controlador: "calendario"),
+    };
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · USMP Connect</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <header class="topbar">
+        <button class="sidebar-toggle" type="button" onclick="document.body.classList.toggle('sidebar-open')" aria-label="Menú">
+            <i class="bi bi-list"></i>
+        </button>
+        <a class="brand" href="/"><span class="brand-logo">M</span> MI USMP HUB</a>
+
+        <nav class="topnav">
+            <a href="https://outlook.office.com/mail/" target="_blank" rel="noopener"><i class="bi bi-envelope"></i> CORREO</a>
+            <a href="https://www.usmp.edu.pe/" target="_blank" rel="noopener"><i class="bi bi-book"></i> AULA VIRTUAL</a>
+            <a href="https://www.usmp.edu.pe/" target="_blank" rel="noopener"><i class="bi bi-gear"></i> SAP</a>
+            @await Component.InvokeAsync("Notificaciones")
+        </nav>
+
+        <button class="btn-ayuda" type="button" data-bs-toggle="modal" data-bs-target="#modalAyuda">¿Necesitas ayuda?</button>
+
+        <div class="dropdown">
+            <button class="user-chip" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="avatar">@User.GetIniciales()</span>
+                <span class="d-texto">
+                    <span class="nombre d-block">@User.GetNombre()</span>
+                    <span class="escuela d-block">@(User.EsProfesor() ? "Docente · " : "")@User.GetEscuela()</span>
+                </span>
+                <i class="bi bi-chevron-down d-texto"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><span class="dropdown-item-text small text-muted">@User.Identity?.Name</span></li>
+                <li><hr class="dropdown-divider"></li>
+                @if (!User.EsProfesor())
+                {
+                    <li><a class="dropdown-item" href="/Notas"><i class="bi bi-journal-check me-2"></i>Mis notas</a></li>
+                }
+                <li><a class="dropdown-item" href="/Horario"><i class="bi bi-clock me-2"></i>Mi horario</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <form asp-controller="Cuenta" asp-action="Logout" method="post">
+                        <button class="dropdown-item text-danger" type="submit"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </header>
+
+    <aside class="sidebar">
+        <ul class="sidenav">
+            @foreach (var item in menu)
+            {
+                var activo = item.Controlador == controlador || (item.Controlador == "home" && enInicio);
+                <li><a href="@item.Url" class="@(activo ? "active" : "")"><i class="bi bi-@(activo ? item.Activo : item.Icono)"></i>@item.Texto</a></li>
+            }
+        </ul>
+        <div class="sidebar-footer">
+            <button class="btn-guinda w-100" type="button" data-bs-toggle="modal" data-bs-target="#modalCalculadora">CalculadoraFIA</button>
+            <small>Periodo 2026-II</small>
+        </div>
+    </aside>
+
+    <main class="main" onclick="document.body.classList.remove('sidebar-open')">
+        @RenderBody()
+    </main>
+
+    <partial name="_ModalesGlobales" />
+
+    @if (TempData["Toast"] is string toast)
+    {
+        <div class="toast-u" data-autohide><i class="bi bi-check-circle-fill text-success"></i>@toast</div>
+    }
+    @if (TempData["ToastError"] is string toastError)
+    {
+        <div class="toast-u error" data-autohide><i class="bi bi-exclamation-circle-fill"></i>@toastError</div>
+    }
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
