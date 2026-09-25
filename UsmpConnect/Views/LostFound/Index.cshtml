@@ -1,0 +1,319 @@
+@model LostFoundIndexViewModel
+@{
+    ViewData["Title"] = "Lost & Found";
+    var encontrados = Model.Tipo == TipoReporte.Encontrado;
+    var ahora = HoraPeru.Ahora.ToString("yyyy-MM-ddTHH:mm");
+}
+
+@section Styles {
+    <style>
+        .lf-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+        .lf-tabs a { padding: 0 2px 10px; color: var(--muted); font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+        .lf-tabs a.active { color: var(--guinda); border-color: var(--guinda); }
+        .lf-card { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+        .lf-foto { position: relative; display: grid; place-items: center; aspect-ratio: 16 / 9; background: #f6f6f8; }
+        .lf-foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .lf-foto .ph { font-size: 3rem; color: var(--muted-2); }
+        .lf-foto .tag { position: absolute; top: 12px; left: 12px; }
+        .lf-body { display: flex; flex-direction: column; flex: 1; padding: 14px 16px 16px; }
+        .lf-meta { color: var(--muted); font-size: .82rem; display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+        .lf-custodia { border-top: 1px solid var(--border); margin: 10px 0 12px; padding-top: 10px; }
+        .lf-devuelto { opacity: .7; }
+        .reclamo-resumen { display: flex; gap: 12px; align-items: center; background: var(--guinda-50); border: 1px solid var(--guinda-100); border-radius: 12px; padding: 12px; }
+        .reclamo-resumen .mini { width: 56px; height: 56px; border-radius: 8px; background: #e7e8ec; display: grid; place-items: center; overflow: hidden; flex-shrink: 0; color: var(--muted); }
+        .reclamo-resumen .mini img { width: 100%; height: 100%; object-fit: cover; }
+    </style>
+}
+
+<div class="card-u page-head">
+    <div>
+        <h1>Lost &amp; Found (Objetos Perdidos)</h1>
+        <p>Reporta objetos encontrados o busca tus pertenencias extraviadas en campus</p>
+    </div>
+    <button class="btn-guinda" type="button" data-bs-toggle="modal" data-bs-target="#modalReportar">
+        @(encontrados ? "+ Reportar Objeto Encontrado" : "+ Reportar Objeto Perdido")
+    </button>
+</div>
+
+<div class="card-u p mb-3">
+    <nav class="lf-tabs">
+        <a href="/LostFound" class="@(encontrados ? "active" : "")">Objetos Encontrados (Esperando dueño)</a>
+        <a href="/LostFound?tipo=Perdido" class="@(encontrados ? "" : "active")">Objetos que Busco (Extraviados)</a>
+    </nav>
+    <div class="chips" data-filtro="categoria">
+        <button type="button" class="chip active" data-valor="todo">Todo</button>
+        @foreach (var c in Enum.GetValues<CategoriaObjeto>())
+        {
+            <button type="button" class="chip" data-valor="@c">@c.Nombre()</button>
+        }
+    </div>
+</div>
+
+@if (Model.Objetos.Count == 0)
+{
+    <div class="card-u vacio">
+        <i class="bi bi-search"></i>
+        @(encontrados ? "No hay objetos encontrados por ahora." : "Nadie está buscando objetos por ahora.")
+    </div>
+}
+
+<div class="row g-3">
+    @foreach (var o in Model.Objetos)
+    {
+        var propio = o.ReportanteId == Model.UsuarioId;
+        var devuelto = o.Estado == EstadoObjeto.Devuelto;
+        var hoy = DateOnly.FromDateTime(HoraPeru.DesdeUtc(o.FechaReporte)) == HoraPeru.Hoy;
+        var (tag, claseTag) = (devuelto, encontrados, hoy) switch
+        {
+            (true, true, _) => ("Reclamado", "tag-info"),
+            (true, false, _) => ("Recuperado", "tag-info"),
+            (false, _, true) => ("Reportado hoy", "tag-warn"),
+            (false, true, false) => ("En custodia", "tag-ok"),
+            _ => ("Se busca", "tag-bad")
+        };
+        <div class="col-xl-4 col-md-6" data-categoria="@o.Categoria">
+            <div class="card-u lf-card @(devuelto ? "lf-devuelto" : "")">
+                <div class="lf-foto">
+                    @if (o.FotoUrl is not null)
+                    {
+                        <img src="@o.FotoUrl" alt="@o.Titulo" loading="lazy" />
+                    }
+                    else
+                    {
+                        <i class="bi bi-@o.Categoria.Icono() ph"></i>
+                    }
+                    <span class="tag tag-upper @claseTag">@tag</span>
+                </div>
+                <div class="lf-body">
+                    <div class="fw-bold">@o.Titulo</div>
+                    <div class="lf-meta"><i class="bi bi-geo-alt"></i>@o.Ubicacion</div>
+                    <div class="lf-meta"><i class="bi bi-calendar3"></i>@LostFoundUi.FechaCorta(o.FechaHallazgo)</div>
+                    <div class="lf-custodia small text-muted">
+                        @if (encontrados)
+                        {
+                            <i class="bi bi-@(devuelto ? "check2-circle" : o.Custodia == CustodiaObjeto.Reportante ? "person" : "shield-check") me-1"></i>
+                            @(devuelto ? EstadoObjeto.Devuelto.Nombre() : o.Custodia?.Nombre())
+                        }
+                        else
+                        {
+                            <i class="bi bi-person me-1"></i>@o.Reportante.NombreCorto
+                            @if (o.Descripcion is not null)
+                            {
+                                <div class="mt-1">@o.Descripcion</div>
+                            }
+                        }
+                    </div>
+
+                    <div class="mt-auto d-grid gap-2">
+                        @if (propio)
+                        {
+                            if (encontrados && !devuelto)
+                            {
+                                <a class="btn btn-outline-guinda py-2" href="/LostFound/Reclamos/@o.Id">
+                                    <i class="bi bi-inbox me-1"></i>Ver reclamos (@o.Reclamos.Count)
+                                </a>
+                            }
+                            if (!devuelto)
+                            {
+                                <form asp-action="MarcarDevuelto" asp-route-id="@o.Id" method="post" class="d-grid">
+                                    <button class="btn btn-soft py-2" type="submit">
+                                        <i class="bi bi-check2 me-1"></i>@(encontrados ? "Ya lo entregué" : "Ya lo recuperé")
+                                    </button>
+                                </form>
+                            }
+                            <form asp-action="Eliminar" asp-route-id="@o.Id" method="post" class="d-grid" onsubmit="return confirm('¿Eliminar este reporte?')">
+                                <button class="btn btn-link btn-sm text-danger" type="submit">Eliminar reporte</button>
+                            </form>
+                        }
+                        else if (devuelto)
+                        {
+                            <button class="btn btn-outline-guinda py-2" type="button" disabled>@(encontrados ? "Entregado a su dueño" : "Ya fue recuperado")</button>
+                        }
+                        else if (!encontrados)
+                        {
+                            <a class="btn btn-wa py-2" target="_blank" rel="noopener"
+                               href="@WhatsApp.Enlace(o.WhatsApp!, $"Hola {o.Reportante.Nombres}, creo que encontré tu objeto \"{o.Titulo}\" (vi tu reporte en USMP Connect).")">
+                                <i class="bi bi-whatsapp me-1"></i>Lo encontré
+                            </a>
+                        }
+                        else if (Model.MisReclamos.Contains(o.Id))
+                        {
+                            <button class="btn btn-outline-guinda py-2" type="button" disabled><i class="bi bi-hourglass-split me-1"></i>Reclamo enviado</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outline-guinda py-2" type="button" data-bs-toggle="modal" data-bs-target="#modalReclamar"
+                                    data-id="@o.Id" data-titulo="@o.Titulo" data-lugar="@o.Ubicacion"
+                                    data-fecha="@LostFoundUi.FechaCorta(o.FechaHallazgo)" data-foto="@o.FotoUrl">
+                                🙋 Reclamar pertenencia
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Reportar objeto encontrado / perdido -->
+<div class="modal fade" id="modalReportar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@(encontrados ? "Reportar Objeto Encontrado" : "Reportar Objeto Perdido")</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <form asp-action="Reportar" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="Tipo" value="@Model.Tipo" />
+                    <div class="mb-3">
+                        <label class="form-label" for="rep-titulo">Título del objeto</label>
+                        <input class="form-control" id="rep-titulo" name="Titulo" maxlength="100" required placeholder="Ej. Carné universitario, audífonos negros..." />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="rep-categoria">Categoría</label>
+                        <select class="form-select" id="rep-categoria" name="Categoria" required>
+                            <option value="">Seleccionar categoría</option>
+                            @foreach (var c in Enum.GetValues<CategoriaObjeto>())
+                            {
+                                <option value="@c">@c.Nombre()</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label" for="rep-pabellon">Pabellón / Edificio</label>
+                            <select class="form-select" id="rep-pabellon" name="Pabellon" required>
+                                <option value="">Seleccionar pabellón</option>
+                                @foreach (var p in ObjetoPerdido.Pabellones)
+                                {
+                                    <option>@p</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label" for="rep-lugar">Lugar exacto</label>
+                            <input class="form-control" id="rep-lugar" name="Lugar" maxlength="100" placeholder="Ej. Aula 204, baño 2do piso" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="rep-fecha">@(encontrados ? "Fecha y hora del hallazgo" : "¿Cuándo lo perdiste?")</label>
+                        <input class="form-control" id="rep-fecha" name="FechaHallazgo" type="datetime-local" required value="@ahora" max="@ahora" />
+                    </div>
+                    <div class="mb-3">
+                        <span class="form-label d-block">Foto del objeto</span>
+                        <label class="dropzone">
+                            <input type="file" name="Foto" accept=".jpg,.jpeg,.png,.webp" hidden data-dropzone data-preview="#rep-preview" />
+                            <img id="rep-preview" class="rounded mb-2" style="max-height: 140px" alt="Vista previa" hidden />
+                            <i class="bi bi-camera"></i>
+                            <span data-dropzone-text>Arrastra o haz clic para subir imagen</span>
+                        </label>
+                    </div>
+                    @if (encontrados)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label" for="rep-custodia">Dónde fue dejado en custodia</label>
+                            <select class="form-select" id="rep-custodia" name="Custodia" required>
+                                <option value="">Ej. Seguridad Central, con el reportante</option>
+                                @foreach (var c in Enum.GetValues<CustodiaObjeto>())
+                                {
+                                    <option value="@c">@c.Nombre()</option>
+                                }
+                            </select>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-3">
+                            <label class="form-label" for="rep-desc">Señas particulares</label>
+                            <textarea class="form-control" id="rep-desc" name="Descripcion" rows="2" maxlength="300" placeholder="Color, marca, stickers, contenido..."></textarea>
+                        </div>
+                    }
+                    <div class="mb-3">
+                        <label class="form-label" for="rep-wa">Número de WhatsApp @(encontrados ? "(opcional)" : "")</label>
+                        <div class="input-group">
+                            <span class="input-group-text">+51</span>
+                            <input class="form-control" id="rep-wa" name="WhatsApp" maxlength="9" inputmode="numeric" required="@(!encontrados)"
+                                   pattern="9[0-9]{8}" title="9 dígitos, empieza con 9" placeholder="987654321" />
+                        </div>
+                    </div>
+                    <button class="btn-guinda w-100" type="submit">@(encontrados ? "Reportar objeto encontrado" : "Publicar objeto perdido")</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reclamar pertenencia -->
+<div class="modal fade" id="modalReclamar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">🙋 Reclamar Pertenencia</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="reclamo-resumen mb-3">
+                    <div class="mini" data-rec="foto"><i class="bi bi-image"></i></div>
+                    <div>
+                        <div class="fw-bold" data-rec="titulo"></div>
+                        <div class="small text-muted">📍 <span data-rec="lugar"></span></div>
+                        <div class="small text-muted">📅 <span data-rec="fecha"></span></div>
+                    </div>
+                </div>
+                <form asp-action="Reclamar" method="post">
+                    <input type="hidden" name="ObjetoId" data-rec="id" />
+                    <div class="mb-3">
+                        <label class="form-label" for="rec-codigo">Código de alumno</label>
+                        <input class="form-control" id="rec-codigo" name="CodigoAlumno" required pattern="[0-9]{10}" maxlength="10" inputmode="numeric"
+                               title="10 dígitos" value="@Model.MiCodigo" placeholder="Ej. 2021123456" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="rec-nombre">Nombre completo</label>
+                        <input class="form-control" id="rec-nombre" name="NombreCompleto" required maxlength="120" value="@Model.MiNombre" placeholder="Según tu carné universitario" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="rec-desc">Describe el objeto para verificar</label>
+                        <textarea class="form-control" id="rec-desc" name="Descripcion" rows="3" required minlength="15" maxlength="500"
+                                  placeholder="Incluye detalles: color, marca, contenido, señas particulares..."></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label" for="rec-wa">Número de WhatsApp</label>
+                        <div class="input-group">
+                            <span class="input-group-text">+51</span>
+                            <input class="form-control" id="rec-wa" name="WhatsApp" required maxlength="9" inputmode="numeric"
+                                   pattern="9[0-9]{8}" title="9 dígitos, empieza con 9" placeholder="987654321" />
+                        </div>
+                    </div>
+                    <p class="small text-muted">Tu solicitud será revisada por el alumno que reportó el objeto o por Seguridad del campus.</p>
+                    <button class="btn-guinda w-100" type="submit">Enviar solicitud de reclamo</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Llena el resumen del modal "Reclamar" con los datos de la tarjeta.
+        document.getElementById('modalReclamar').addEventListener('show.bs.modal', e => {
+            const d = e.relatedTarget.dataset;
+            const modal = e.target;
+            const campo = k => modal.querySelector(`[data-rec="${k}"]`);
+            campo('id').value = d.id;
+            campo('titulo').textContent = d.titulo;
+            campo('lugar').textContent = d.lugar;
+            campo('fecha').textContent = d.fecha;
+            const foto = campo('foto');
+            foto.replaceChildren();
+            if (d.foto) {
+                const img = document.createElement('img');
+                img.src = d.foto;
+                img.alt = '';
+                foto.append(img);
+            } else {
+                foto.innerHTML = '<i class="bi bi-image"></i>';
+            }
+        });
+    </script>
+}
