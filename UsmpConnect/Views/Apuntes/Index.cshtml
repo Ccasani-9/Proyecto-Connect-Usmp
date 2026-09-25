@@ -1,0 +1,316 @@
+@model ApuntesIndexViewModel
+@{
+    ViewData["Title"] = "Banco de Apuntes";
+    var volverA = Context.Request.Path + Context.Request.QueryString;
+
+    // Enlace de los chips de tipo, conservando los demás filtros.
+    string Filtro(TipoDocumento? tipo) => Url.Action("Index", new { q = Model.Busqueda, ciclo = Model.Ciclo, cursoId = Model.CursoId, tipo, orden = Model.Orden })!;
+
+    var chips = new (TipoDocumento? Tipo, string Texto)[]
+    {
+        (null, "Todo"), (TipoDocumento.Resumen, "Resúmenes"), (TipoDocumento.Examen, "Exámenes"),
+        (TipoDocumento.GuiaLab, "Guías de Lab"), (TipoDocumento.Apuntes, "Apuntes de clase")
+    };
+}
+
+@section Styles {
+    <style>
+        .ap-filtros select { width: auto; min-width: 130px; }
+        .ap-fila { display: flex; align-items: center; gap: 16px; padding: 14px 18px; flex-wrap: wrap; }
+        .ap-formato { width: 44px; text-align: center; border-radius: 6px; padding: 5px 0; font-size: .72rem; font-weight: 800; flex-shrink: 0; }
+        .ap-formato.pdf { background: var(--bad-bg); color: var(--bad); }
+        .ap-formato.doc { background: var(--info-bg); color: var(--info); }
+        .ap-info { flex: 1 1 280px; min-width: 0; }
+        .ap-meta { color: var(--muted); font-size: .8rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 3px; }
+        .ap-autor { width: 130px; font-size: .85rem; display: flex; align-items: center; gap: 8px; }
+        .ap-nota { width: 90px; font-size: .85rem; }
+        .ap-nota b { color: #b7791f; }
+        .ap-acciones { display: flex; gap: 6px; flex-wrap: wrap; }
+        .ap-acciones .btn { font-size: .82rem; padding: 6px 12px; }
+        .btn-calificar { border: 1px solid #d4a017; color: #a16207; background: #fff; border-radius: 8px; font-weight: 700; }
+        .btn-calificar:hover, .btn-calificar.hecho { background: #fef7e0; color: #a16207; }
+        .estrellas-input { display: flex; flex-direction: row-reverse; justify-content: center; gap: 6px; font-size: 2.2rem; }
+        .estrellas-input input { display: none; }
+        .estrellas-input label { color: #d6d8dd; cursor: pointer; transition: color .1s; }
+        .estrellas-input label:hover, .estrellas-input label:hover ~ label,
+        .estrellas-input input:checked ~ label { color: #eab308; }
+        #visor { width: 100%; height: 75vh; border: 0; border-radius: 10px; background: #f4f5f7; }
+        @@media (max-width: 767.98px) { .ap-autor, .ap-nota { width: auto; } }
+    </style>
+}
+
+<div class="card-u page-head">
+    <div>
+        <h1>Banco de Apuntes y Recursos</h1>
+        <p>Comparte y descarga resúmenes, exámenes y guías de laboratorio de la comunidad USMP.</p>
+    </div>
+    <button class="btn-guinda" type="button" data-bs-toggle="modal" data-bs-target="#modalSubir">+ Subir Apunte o Guía</button>
+</div>
+
+<div class="card-u p mb-3">
+    <form method="get" class="ap-filtros d-flex flex-wrap gap-2 align-items-center mb-3" id="filtros">
+        @if (Model.Tipo is not null)
+        {
+            <input type="hidden" name="tipo" value="@Model.Tipo" />
+        }
+        <div class="search-box flex-grow-1" style="max-width: 340px">
+            <i class="bi bi-search"></i>
+            <input class="form-control" name="q" value="@Model.Busqueda" placeholder="Buscar apunte, examen, guía..." aria-label="Buscar" />
+        </div>
+        <div class="d-flex flex-wrap gap-2 ms-auto">
+            <select class="form-select" name="ciclo" aria-label="Ciclo" data-autoenviar>
+                <option value="">Ciclo</option>
+                @for (var c = 1; c <= 5; c++)
+                {
+                    <option value="@c" selected="@(Model.Ciclo == c)">@Curso.Romano(c) Ciclo</option>
+                }
+            </select>
+            <select class="form-select" name="cursoId" aria-label="Asignatura" data-autoenviar>
+                <option value="">Asignatura</option>
+                @foreach (var c in Model.Cursos.Where(c => Model.Ciclo is null || c.Ciclo == Model.Ciclo))
+                {
+                    <option value="@c.Id" selected="@(Model.CursoId == c.Id)">@c.Nombre</option>
+                }
+            </select>
+            <select class="form-select" name="orden" aria-label="Ordenar" data-autoenviar>
+                <option value="calificacion" selected="@(Model.Orden == "calificacion")">Mejor calificados</option>
+                <option value="descargas" selected="@(Model.Orden == "descargas")">Más descargados</option>
+                <option value="recientes" selected="@(Model.Orden == "recientes")">Más recientes</option>
+            </select>
+        </div>
+    </form>
+    <div class="chips">
+        @foreach (var (tipo, texto) in chips)
+        {
+            <a class="chip @(Model.Tipo == tipo ? "active" : "")" href="@Filtro(tipo)">@texto</a>
+        }
+    </div>
+</div>
+
+@if (Model.Apuntes.Count == 0)
+{
+    <div class="card-u vacio">
+        <i class="bi bi-folder2-open"></i>
+        No encontramos recursos con esos filtros. ¿Tienes uno? ¡Compártelo!
+    </div>
+}
+
+<div class="d-grid gap-2">
+    @foreach (var a in Model.Apuntes)
+    {
+        var propio = a.AutorId == Model.UsuarioId;
+        var miNota = Model.MisCalificaciones.GetValueOrDefault(a.Id);
+        <div class="card-u ap-fila">
+            <span class="ap-formato @a.Formato.ToLower()">@a.Formato</span>
+            <div class="ap-info">
+                <div class="fw-bold">@a.Titulo</div>
+                <div class="ap-meta">
+                    <span class="tag tag-muted">@a.Curso.Nombre</span>
+                    <span>Prof: @a.Profesor</span> • <span>@a.Tamano</span> • <span>@a.Descargas descargas</span>
+                </div>
+                @if (a.Descripcion is not null)
+                {
+                    <div class="ap-meta">@a.Descripcion</div>
+                }
+            </div>
+            <div class="ap-autor">
+                <span class="avatar avatar-soft avatar-sm">@a.Autor.Iniciales</span>
+                <span>@a.Autor.NombreCorto</span>
+            </div>
+            <div class="ap-nota">
+                @if (a.NumCalificaciones > 0)
+                {
+                    <b>★ @a.Promedio.ToString("0.0")</b> <span class="text-muted">(@a.NumCalificaciones)</span>
+                }
+                else
+                {
+                    <span class="text-muted">Sin calificar</span>
+                }
+            </div>
+            <div class="ap-acciones">
+                @if (a.EsPdf)
+                {
+                    <button class="btn btn-soft" type="button" data-bs-toggle="modal" data-bs-target="#modalVista"
+                            data-src="/Apuntes/Ver/@a.Id" data-titulo="@a.Titulo" data-descargar="/Apuntes/Descargar/@a.Id">Vista Previa</button>
+                }
+                else
+                {
+                    <button class="btn btn-soft" type="button" disabled title="La vista previa solo está disponible para PDF">Vista Previa</button>
+                }
+                <a class="btn btn-guinda" href="/Apuntes/Descargar/@a.Id">Descargar</a>
+                @if (propio)
+                {
+                    <form asp-action="Eliminar" asp-route-id="@a.Id" method="post" onsubmit="return confirm('¿Eliminar este apunte?')">
+                        <button class="btn btn-outline-danger" type="submit" title="Eliminar"><i class="bi bi-trash"></i></button>
+                    </form>
+                }
+                else
+                {
+                    <button class="btn btn-calificar @(miNota > 0 ? "hecho" : "")" type="button" data-bs-toggle="modal" data-bs-target="#modalCalificar"
+                            data-id="@a.Id" data-titulo="@a.Titulo" data-mia="@miNota">
+                        @(miNota > 0 ? $"Tu nota: {miNota} ★" : "Calificar")
+                    </button>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Subir apunte -->
+<div class="modal fade" id="modalSubir" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Subir Apunte o Guía</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <form asp-action="Subir" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label" for="sub-titulo">Título del recurso</label>
+                        <input class="form-control" id="sub-titulo" name="Titulo" required maxlength="120" placeholder="Ej. Resumen Final - Circuitos Eléctricos, etc." />
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-5">
+                            <label class="form-label" for="sub-ciclo">Ciclo</label>
+                            <select class="form-select" id="sub-ciclo">
+                                <option value="">Todos</option>
+                                @for (var c = 1; c <= 5; c++)
+                                {
+                                    <option value="@c">@Curso.Romano(c) Ciclo</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-sm-7">
+                            <label class="form-label" for="sub-curso">Asignatura</label>
+                            <select class="form-select" id="sub-curso" name="CursoId" required>
+                                <option value="">Seleccionar asignatura</option>
+                                @foreach (var c in Model.Cursos)
+                                {
+                                    <option value="@c.Id" data-ciclo="@c.Ciclo">@c.Nombre</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label" for="sub-profesor">Profesor</label>
+                            <input class="form-control" id="sub-profesor" name="Profesor" required maxlength="60" list="lista-profesores" placeholder="Ej. Ing. Ramírez" />
+                            <datalist id="lista-profesores">
+                                @foreach (var p in Model.Profesores)
+                                {
+                                    <option value="@p"></option>
+                                }
+                            </datalist>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label" for="sub-tipo">Tipo de documento</label>
+                            <select class="form-select" id="sub-tipo" name="Tipo">
+                                @foreach (var t in Enum.GetValues<TipoDocumento>())
+                                {
+                                    <option value="@t">@t.Nombre()</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="sub-desc">Descripción breve</label>
+                        <textarea class="form-control" id="sub-desc" name="Descripcion" rows="3" maxlength="500"
+                                  placeholder="Ej: Formulario útil para preparar el segundo laboratorio calificado..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <span class="form-label d-block">Archivo del recurso</span>
+                        <label class="dropzone">
+                            <input type="file" name="Archivo" accept=".pdf,.doc,.docx" required hidden data-dropzone />
+                            <i class="bi bi-file-earmark-arrow-up"></i>
+                            <span class="fw-semibold" data-dropzone-text>Arrastra tu archivo aquí o haz clic para seleccionar</span>
+                            <small class="d-block text-muted mt-1">PDF, DOC, DOCX — Máximo 25 MB</small>
+                        </label>
+                    </div>
+                    <button class="btn-guinda w-100" type="submit">Subir recurso</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Calificar -->
+<div class="modal fade" id="modalCalificar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Calificar apunte</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p class="text-muted small mb-2" data-cal="titulo"></p>
+                <form asp-action="Calificar" method="post">
+                    <input type="hidden" name="id" data-cal="id" />
+                    <input type="hidden" name="returnUrl" value="@volverA" />
+                    <div class="estrellas-input mb-3">
+                        @for (var i = 5; i >= 1; i--)
+                        {
+                            <input type="radio" name="estrellas" value="@i" id="estrella-@i" required />
+                            <label for="estrella-@i" title="@i estrella@(i > 1 ? "s" : "")">★</label>
+                        }
+                    </div>
+                    <button class="btn-guinda w-100" type="submit">Enviar calificación</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vista previa -->
+<div class="modal fade" id="modalVista" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-vista="titulo">Vista previa</h5>
+                <a class="btn btn-guinda btn-sm ms-auto me-2" data-vista="descargar" href="#">Descargar</a>
+                <button type="button" class="btn-close ms-0" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <iframe id="visor" title="Vista previa del apunte"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Filtros: al cambiar un select se aplica. Si cambia el ciclo, se limpia la asignatura.
+        document.querySelectorAll('[data-autoenviar]').forEach(s => s.addEventListener('change', () => {
+            if (s.name === 'ciclo') s.form.cursoId.value = '';
+            s.form.submit();
+        }));
+
+        // Subir: el ciclo filtra las asignaturas.
+        const subCiclo = document.getElementById('sub-ciclo'), subCurso = document.getElementById('sub-curso');
+        subCiclo.addEventListener('change', () => {
+            subCurso.querySelectorAll('option[data-ciclo]').forEach(o => {
+                o.hidden = o.disabled = subCiclo.value !== '' && o.dataset.ciclo !== subCiclo.value;
+            });
+            if (subCurso.selectedOptions[0]?.disabled) subCurso.value = '';
+        });
+
+        // Calificar: marca las estrellas que ya habías dado.
+        document.getElementById('modalCalificar').addEventListener('show.bs.modal', e => {
+            const d = e.relatedTarget.dataset, modal = e.target;
+            modal.querySelector('[data-cal="id"]').value = d.id;
+            modal.querySelector('[data-cal="titulo"]').textContent = d.titulo;
+            modal.querySelectorAll('input[name="estrellas"]').forEach(r => r.checked = r.value === d.mia);
+        });
+
+        // Vista previa del PDF en un iframe (se limpia al cerrar).
+        const visor = document.getElementById('visor');
+        const modalVista = document.getElementById('modalVista');
+        modalVista.addEventListener('show.bs.modal', e => {
+            const d = e.relatedTarget.dataset;
+            modalVista.querySelector('[data-vista="titulo"]').textContent = d.titulo;
+            modalVista.querySelector('[data-vista="descargar"]').href = d.descargar;
+            visor.src = d.src;
+        });
+        modalVista.addEventListener('hidden.bs.modal', () => visor.src = 'about:blank');
+    </script>
+}
