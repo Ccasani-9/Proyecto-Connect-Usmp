@@ -1,0 +1,23 @@
+@model CatedraBarraVM
+
+<div class="card-u cat-barra">
+    <form method="get" action="/Catedra" class="search-box">
+        @if (Model.Ciclo is not null)
+        {
+            <input type="hidden" name="ciclo" value="@Model.Ciclo" />
+        }
+        <i class="bi bi-search"></i>
+        <input class="form-control" name="q" value="@Model.Busqueda" placeholder="Buscar curso o docente..." aria-label="Buscar curso o docente" />
+    </form>
+    <div class="chips">
+        <a class="chip @(Model.Ciclo is null ? "active" : "")" href="/Catedra@(string.IsNullOrWhiteSpace(Model.Busqueda) ? "" : "?q=" + Uri.EscapeDataString(Model.Busqueda))">Todos</a>
+        @for (var c = 1; c <= 5; c++)
+        {
+            <a class="chip @(Model.Ciclo == c ? "active" : "")" href="@Url.Action("Index", "Catedra", new { q = Model.Busqueda, ciclo = c })">@Curso.Romano(c) Ciclo</a>
+        }
+    </div>
+    @if (Model.PuedeAportar)
+    {
+        <button class="btn-guinda" type="button" data-bs-toggle="modal" data-bs-target="#modalTip">+ Aportar un Tip</button>
+    }
+</div>
