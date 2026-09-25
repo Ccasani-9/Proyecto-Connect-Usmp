@@ -1,0 +1,160 @@
+@model CatedraCursoViewModel
+@{
+    ViewData["Title"] = Model.Curso.Nombre + " · Cátedra & Tips";
+}
+
+@section Styles {
+    <partial name="_Estilos" />
+}
+
+<partial name="_Barra" model="Model.Barra" />
+
+<div class="card-u p mb-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <a class="ver-todo d-inline-block mb-1" href="/Catedra"><i class="bi bi-arrow-left me-1"></i>Todos los cursos</a>
+        <h1 class="h4 fw-bold mb-1">@Model.Curso.Nombre</h1>
+        <div class="curso-meta">Código: @Model.Curso.Codigo │ Créditos: @Model.Curso.Creditos │ @Model.Curso.CicloRomano Ciclo</div>
+    </div>
+    <div style="min-width: 240px">
+        <div class="d-flex justify-content-between small mb-1">
+            <span class="text-muted fw-semibold">Dificultad Comunitaria</span>
+            <b style="color: var(--guinda)">@(Model.Dificultad is null ? "Sin datos" : $"{Model.Dificultad:0.0} / 5.0")</b>
+        </div>
+        <div class="dif-barra"><span style="width: @((Model.Dificultad ?? 0) / 5 * 100)%"></span></div>
+        <div class="text-muted mt-1" style="font-size: .72rem">@Model.OpinionesDificultad @(Model.OpinionesDificultad == 1 ? "opinión" : "opiniones")</div>
+    </div>
+</div>
+
+<h2 class="h6 fw-bold mb-2">Docentes que dictan esta cátedra <span class="text-muted fw-normal">(@Model.Docentes.Count)</span></h2>
+@if (Model.Docentes.Count == 0)
+{
+    <div class="card-u vacio mb-3">Este curso no tiene secciones en el periodo actual.</div>
+}
+<div class="row g-3 mb-4">
+    @foreach (var d in Model.Docentes)
+    {
+        <div class="col-lg-4 col-md-6">
+            <div class="card-u p h-100">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <span class="avatar avatar-soft" style="width: 40px; height: 40px">@d.Iniciales</span>
+                    <div>
+                        <div class="fw-bold">@d.Nombre</div>
+                        <div class="curso-meta">Sección: @d.Secciones</div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                    @if (d.Claridad is not null)
+                    {
+                        <span class="small">
+                            <span class="estrellas">@foreach (var e in CatedraUi.Estrellas(d.Claridad.Value)) { <i class="bi @e"></i> }</span>
+                            <b class="ms-1">@d.Claridad.Value.ToString("0.0")</b> <span class="text-muted">Claridad</span>
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="small text-muted">Sin opiniones aún</span>
+                    }
+                    @if (d.Exigencia is not null)
+                    {
+                        <span class="tag @d.Exigencia.Value.ClaseTag()">Exigencia: @d.Exigencia.Value.Nombre()</span>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+    <h2 class="h6 fw-bold m-0">Muro de Tips y Consejos</h2>
+    <div class="small">
+        <span class="text-muted me-1">Ordenar por:</span>
+        <a class="fw-bold @(Model.Orden == "utiles" ? "" : "text-muted")" href="/Catedra/Curso/@Model.Curso.Id">Más útiles primero</a>
+        <span class="text-muted mx-1">·</span>
+        <a class="fw-bold @(Model.Orden == "recientes" ? "" : "text-muted")" href="/Catedra/Curso/@Model.Curso.Id?orden=recientes">Más recientes</a>
+    </div>
+</div>
+
+@if (Model.Tips.Count == 0)
+{
+    <div class="card-u vacio">
+        <i class="bi bi-chat-square-text"></i>
+        Aún no hay tips para este curso. @(Model.Barra.PuedeAportar ? "¡Sé el primero en aportar uno!" : "")
+    </div>
+}
+
+<div class="d-grid gap-3">
+    @foreach (var t in Model.Tips)
+    {
+        <div class="card-u p" data-tip="@t.Id">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="avatar avatar-soft">@t.AutorIniciales</span>
+                    <div>
+                        <div class="fw-bold">@t.Autor</div>
+                        <div class="curso-meta" style="font-size: .75rem">@HoraPeru.Hace(t.Fecha) · Estudiante USMP</div>
+                    </div>
+                </div>
+                <span class="tag @(t.Docente is null ? "tag-muted" : "tag-guinda")">@(t.Docente ?? "General")</span>
+            </div>
+            <p class="my-3">@t.Texto</p>
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex gap-2">
+                    <button class="tip-voto @(t.MiVoto == 1 ? "activo" : "")" type="button" data-votar="1" disabled="@t.Propio"
+                            title="@(t.Propio ? "No puedes votar tu propio tip" : "Me sirvió")">👍 <span data-utiles>@t.Utiles</span></button>
+                    <button class="tip-voto @(t.MiVoto == -1 ? "activo" : "")" type="button" data-votar="-1" disabled="@t.Propio"
+                            title="@(t.Propio ? "No puedes votar tu propio tip" : "No me sirvió")">👎 <span data-no-utiles>@t.NoUtiles</span></button>
+                </div>
+                @if (t.Propio)
+                {
+                    <form asp-action="Eliminar" asp-route-id="@t.Id" method="post" onsubmit="return confirm('¿Eliminar tu tip?')">
+                        <button class="tip-link" type="submit">Eliminar</button>
+                    </form>
+                }
+                else if (t.Reportado)
+                {
+                    <span class="tip-link">Reportado</span>
+                }
+                else
+                {
+                    <button class="tip-link" type="button" data-reportar>Reportar</button>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@if (Model.Barra.PuedeAportar)
+{
+    <partial name="_AportarTip" model="Model.Formulario" />
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('click', async e => {
+            const votar = e.target.closest('[data-votar]');
+            const reportar = e.target.closest('[data-reportar]');
+            if (!votar && !reportar) return;
+
+            const tarjeta = e.target.closest('[data-tip]');
+            const id = tarjeta.dataset.tip;
+
+            if (votar) {
+                const resp = await usmpPost('/Catedra/Votar', { id, valor: votar.dataset.votar });
+                const datos = await resp.json().catch(() => ({}));
+                if (!resp.ok) { usmpToast(datos.error || 'No se pudo registrar tu voto.', 'error'); return; }
+                tarjeta.querySelector('[data-utiles]').textContent = datos.utiles;
+                tarjeta.querySelector('[data-no-utiles]').textContent = datos.noUtiles;
+                tarjeta.querySelectorAll('[data-votar]').forEach(b => b.classList.toggle('activo', Number(b.dataset.votar) === datos.miVoto));
+                return;
+            }
+
+            if (!confirm('¿Reportar este tip como inapropiado?')) return;
+            const resp = await usmpPost('/Catedra/Reportar', { id });
+            const datos = await resp.json().catch(() => ({}));
+            if (!resp.ok) { usmpToast(datos.error || 'No se pudo enviar el reporte.', 'error'); return; }
+            if (datos.oculto) tarjeta.remove();
+            else reportar.replaceWith(Object.assign(document.createElement('span'), { className: 'tip-link', textContent: 'Reportado' }));
+            usmpToast('Gracias, revisaremos este tip.');
+        });
+    </script>
+}
