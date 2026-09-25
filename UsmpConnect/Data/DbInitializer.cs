@@ -36,10 +36,16 @@ public static class DbInitializer
         {
             await db.Database.EnsureDeletedAsync();
 
-            // Los archivos subidos pertenecían a la BD anterior.
-            var uploads = Path.Combine(sp.GetRequiredService<IWebHostEnvironment>().WebRootPath, "uploads");
-            if (Directory.Exists(uploads))
-                Directory.Delete(uploads, recursive: true);
+            // Los archivos subidos pertenecían a la BD anterior. Se vacía la carpeta sin borrarla:
+            // en Docker el usuario de la app no tiene permiso sobre wwwroot, solo sobre wwwroot/uploads.
+            var uploads = new DirectoryInfo(Path.Combine(sp.GetRequiredService<IWebHostEnvironment>().WebRootPath, "uploads"));
+            if (uploads.Exists)
+            {
+                foreach (var carpeta in uploads.EnumerateDirectories())
+                    carpeta.Delete(recursive: true);
+                foreach (var archivo in uploads.EnumerateFiles())
+                    archivo.Delete();
+            }
         }
 
         if (!await db.Database.EnsureCreatedAsync())
