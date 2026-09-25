@@ -1,0 +1,12 @@
+# Blueprint de Render: despliega la rama main con el Dockerfile de la raíz.
+services:
+  - type: web
+    name: usmp-connect
+    runtime: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: Registro__CodigoDocente
+        sync: false
