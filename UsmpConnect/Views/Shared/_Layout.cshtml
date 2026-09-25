@@ -49,17 +49,14 @@
                 <span class="avatar">@User.GetIniciales()</span>
                 <span class="d-texto">
                     <span class="nombre d-block">@User.GetNombre()</span>
-                    <span class="escuela d-block">@(User.EsProfesor() ? "Docente · " : "")@User.GetEscuela()</span>
+                    <span class="escuela d-block">@User.GetEscuela()</span>
                 </span>
                 <i class="bi bi-chevron-down d-texto"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
                 <li><span class="dropdown-item-text small text-muted">@User.Identity?.Name</span></li>
                 <li><hr class="dropdown-divider"></li>
-                @if (!User.EsProfesor())
-                {
-                    <li><a class="dropdown-item" href="/Notas"><i class="bi bi-journal-check me-2"></i>Mis notas</a></li>
-                }
+                <li><a class="dropdown-item" href="/Notas"><i class="bi bi-journal-check me-2"></i>Mis notas</a></li>
                 <li><a class="dropdown-item" href="/Horario"><i class="bi bi-clock me-2"></i>Mi horario</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li>

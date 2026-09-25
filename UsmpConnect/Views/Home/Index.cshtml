@@ -40,78 +40,47 @@
 </section>
 
 <div class="card-u saludo">
-    ☀️ <b>¡@Model.Saludo, @Model.PrimerNombre!</b>
-    @(Model.EsProfesor ? "Aquí tienes tus secciones del periodo 2026-II." : "Un nuevo período comienza. ¡Ya tienes todo listo para arrancar!")
+    ☀️ <b>¡@Model.Saludo, @Model.PrimerNombre!</b> Un nuevo período comienza. ¡Ya tienes todo listo para arrancar!
 </div>
 
 <div class="row g-3">
-    <!-- Mis notas (alumno) / Mis secciones (docente) -->
+    <!-- Mis notas (alumno) -->
     <div class="col-xl-4 col-lg-6">
         <div class="card-u p h-100">
-            @if (Model.EsProfesor)
-            {
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h3 class="card-title-u">Mis secciones</h3>
-                    <span class="icon-bubble"><i class="bi bi-people"></i></span>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h3 class="card-title-u">Mis notas</h3>
+                <div class="d-flex align-items-center gap-3">
+                    <a class="ver-todo" href="/Notas">Ver todo &gt;</a>
+                    <span class="icon-bubble"><i class="bi bi-journal-bookmark"></i></span>
                 </div>
-                @foreach (var s in Model.Secciones)
-                {
-                    <div class="acordeon-item">
-                        <div class="d-flex justify-content-between align-items-start gap-2">
-                            <div>
-                                <div class="fw-semibold">@s.Curso</div>
-                                <div class="small text-muted">Sección @s.Codigo · @s.Alumnos alumnos</div>
-                                <div class="small text-muted">@s.Horario</div>
-                            </div>
-                            <span class="tag @(s.ConNotas == s.Alumnos && s.Alumnos > 0 ? "tag-ok" : "tag-warn")">@s.ConNotas/@s.Alumnos notas</span>
+            </div>
+            @for (var i = 0; i < Model.Notas.Count; i++)
+            {
+                var n = Model.Notas[i];
+                var abierto = n.EP.HasValue && i < 2;
+                <div class="acordeon-item">
+                    <button class="acordeon-btn" type="button" data-bs-toggle="collapse" data-bs-target="#nota@(i)" aria-expanded="@(abierto ? "true" : "false")">
+                        <span>@n.Curso</span><i class="bi @(abierto ? "bi-dash-lg" : "bi-plus-lg")"></i>
+                    </button>
+                    <div class="collapse @(abierto ? "show" : "")" id="nota@(i)">
+                        <div class="acordeon-body">
+                            @if (n.EP is null && n.EF is null)
+                            {
+                                <span class="small text-muted">Aún no hay notas registradas · @n.Docente</span>
+                            }
+                            else
+                            {
+                                <span class="tag @ClaseNota(n.EP)">EP: @F(n.EP)</span>
+                                <span class="tag @ClaseNota(n.EF)">EF: @F(n.EF)</span>
+                                <span class="tag @ClaseNota(n.Promedio)">Prom: @F(n.Promedio)</span>
+                            }
                         </div>
-                        <a class="btn btn-sm btn-outline-guinda mt-2" asp-controller="Notas" asp-action="Seccion" asp-route-id="@s.SeccionId">
-                            <i class="bi bi-pencil-square me-1"></i>Registrar notas
-                        </a>
                     </div>
-                }
-                @if (Model.Secciones.Count == 0)
-                {
-                    <div class="vacio"><i class="bi bi-easel"></i>No tienes secciones asignadas este periodo.</div>
-                }
+                </div>
             }
-            else
+            @if (Model.Notas.Count == 0)
             {
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h3 class="card-title-u">Mis notas</h3>
-                    <div class="d-flex align-items-center gap-3">
-                        <a class="ver-todo" href="/Notas">Ver todo &gt;</a>
-                        <span class="icon-bubble"><i class="bi bi-journal-bookmark"></i></span>
-                    </div>
-                </div>
-                @for (var i = 0; i < Model.Notas.Count; i++)
-                {
-                    var n = Model.Notas[i];
-                    var abierto = n.EP.HasValue && i < 2;
-                    <div class="acordeon-item">
-                        <button class="acordeon-btn" type="button" data-bs-toggle="collapse" data-bs-target="#nota@(i)" aria-expanded="@(abierto ? "true" : "false")">
-                            <span>@n.Curso</span><i class="bi @(abierto ? "bi-dash-lg" : "bi-plus-lg")"></i>
-                        </button>
-                        <div class="collapse @(abierto ? "show" : "")" id="nota@(i)">
-                            <div class="acordeon-body">
-                                @if (n.EP is null && n.EF is null)
-                                {
-                                    <span class="small text-muted">Aún no hay notas registradas · @n.Docente</span>
-                                }
-                                else
-                                {
-                                    <span class="tag @ClaseNota(n.EP)">EP: @F(n.EP)</span>
-                                    <span class="tag @ClaseNota(n.EF)">EF: @F(n.EF)</span>
-                                    <span class="tag @ClaseNota(n.Promedio)">Prom: @F(n.Promedio)</span>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                }
-                @if (Model.Notas.Count == 0)
-                {
-                    <div class="vacio"><i class="bi bi-journal"></i>No tienes cursos matriculados.</div>
-                }
+                <div class="vacio"><i class="bi bi-journal"></i>No tienes cursos matriculados.</div>
             }
         </div>
     </div>
