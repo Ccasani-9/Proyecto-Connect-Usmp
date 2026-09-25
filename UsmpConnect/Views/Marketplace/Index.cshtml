@@ -1,0 +1,381 @@
+@model UsmpConnect.ViewModels.MarketplaceIndexViewModel
+@using UsmpConnect.Models
+@using UsmpConnect.Services
+@{
+    ViewData["Title"] = "Marketplace Comunitario";
+    var miUserId = User.GetUserId();
+}
+
+<div class="card-u page-head mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Marketplace Comunitario</h1>
+        <p class="text-muted mb-0">Tablón de compra, venta y donación entre alumnos USMP</p>
+    </div>
+    <button class="btn-guinda" type="button" data-bs-toggle="modal" data-bs-target="#modalPublicar">
+        <i class="bi bi-plus-lg"></i> Publicar Artículo
+    </button>
+</div>
+
+@if (TempData["Ok"] is string ok)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@ok
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@error
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Buscador y Filtros por Categoría -->
+<div class="card-u p-3 mb-4">
+    <form method="get" class="d-flex flex-wrap gap-3 align-items-center">
+        <div class="search-box flex-grow-1" style="min-width: 260px;">
+            <i class="bi bi-search"></i>
+            <input type="text" name="q" value="@Model.Busqueda" placeholder="Buscar artículo, libro, calculadora..." class="form-control" />
+        </div>
+        <div class="chips d-flex flex-wrap gap-2">
+            <a href="/Marketplace@(string.IsNullOrEmpty(Model.Busqueda) ? "" : $"?q={Model.Busqueda}")"
+               class="chip @(Model.CategoriaFiltro == null ? "active" : "")">Todo</a>
+            <a href="/Marketplace?categoria=@((int)CategoriaMarketplace.CalculadorasHardware)@(string.IsNullOrEmpty(Model.Busqueda) ? "" : $"&q={Model.Busqueda}")"
+               class="chip @(Model.CategoriaFiltro == CategoriaMarketplace.CalculadorasHardware ? "active" : "")">Calculadoras/Hardware</a>
+            <a href="/Marketplace?categoria=@((int)CategoriaMarketplace.LibrosGuias)@(string.IsNullOrEmpty(Model.Busqueda) ? "" : $"&q={Model.Busqueda}")"
+               class="chip @(Model.CategoriaFiltro == CategoriaMarketplace.LibrosGuias ? "active" : "")">Libros y Guías</a>
+            <a href="/Marketplace?categoria=@((int)CategoriaMarketplace.BatasUniformes)@(string.IsNullOrEmpty(Model.Busqueda) ? "" : $"&q={Model.Busqueda}")"
+               class="chip @(Model.CategoriaFiltro == CategoriaMarketplace.BatasUniformes ? "active" : "")">Batas/Uniformes</a>
+            <a href="/Marketplace?categoria=@((int)CategoriaMarketplace.AlquilerCuartos)@(string.IsNullOrEmpty(Model.Busqueda) ? "" : $"&q={Model.Busqueda}")"
+               class="chip @(Model.CategoriaFiltro == CategoriaMarketplace.AlquilerCuartos ? "active" : "")">Alquiler de cuartos</a>
+        </div>
+    </form>
+</div>
+
+<!-- Listado de Artículos -->
+@if (!Model.Articulos.Any())
+{
+    <div class="card-u p-5 text-center vacio">
+        <i class="bi bi-bag-x display-4 text-muted mb-3 d-block"></i>
+        <h5 class="fw-bold">No se encontraron artículos</h5>
+        <p class="text-muted">Sé el primero en publicar un producto o cambia los filtros de búsqueda.</p>
+        <button class="btn-outline-guinda mt-2" data-bs-toggle="modal" data-bs-target="#modalPublicar">
+            <i class="bi bi-plus-circle me-1"></i> Publicar ahora
+        </button>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var item in Model.Articulos)
+        {
+            var badgeClass = item.EstadoItem switch
+            {
+                EstadoItem.Donacion => "badge-donacion",
+                EstadoItem.Nuevo => "badge-nuevo",
+                _ => "badge-usado"
+            };
+
+            var badgeText = item.EstadoItem switch
+            {
+                EstadoItem.Donacion => "DONACIÓN",
+                EstadoItem.Nuevo => "NUEVO",
+                EstadoItem.ComoNuevo => "COMO NUEVO",
+                _ => "USADO"
+            };
+
+            var waNumero = item.WhatsApp.StartsWith("51") ? item.WhatsApp : "51" + item.WhatsApp;
+            var waMensaje = Uri.EscapeDataString($"Hola! Vi tu publicación '{item.Titulo}' en USMP Connect y me interesa.");
+            var waUrl = $"https://wa.me/{waNumero}?text={waMensaje}";
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card-u marketplace-card h-100 d-flex flex-column">
+                    <!-- Foto o Placeholder -->
+                    <div class="item-img-wrap position-relative">
+                        <span class="item-badge @badgeClass">@badgeText</span>
+                        @if (!string.IsNullOrEmpty(item.ImagenUrl))
+                        {
+                            <img src="@item.ImagenUrl" alt="@item.Titulo" class="item-img" />
+                        }
+                        else
+                        {
+                            <div class="item-img-placeholder d-flex align-items-center justify-content-center">
+                                @if (item.Categoria == CategoriaMarketplace.CalculadorasHardware)
+                                {
+                                    <i class="bi bi-calculator"></i>
+                                }
+                                else if (item.Categoria == CategoriaMarketplace.BatasUniformes)
+                                {
+                                    <i class="bi bi-shield-shaded"></i>
+                                }
+                                else if (item.Categoria == CategoriaMarketplace.AlquilerCuartos)
+                                {
+                                    <i class="bi bi-door-open"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-book"></i>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Datos del Artículo -->
+                    <div class="p-3 d-flex flex-column flex-grow-1">
+                        <h5 class="fw-bold mb-1 item-titulo" title="@item.Titulo">@item.Titulo</h5>
+                        
+                        <div class="precio-wrap mb-2">
+                            <span class="precio @(item.EsDonacion ? "text-success" : "text-guinda")">@item.PrecioFormateado</span>
+                        </div>
+
+                        <!-- Estado con bolita -->
+                        <div class="mb-2 d-flex align-items-center gap-2 small">
+                            @if (item.Estado == EstadoPublicacion.Disponible)
+                            {
+                                <span class="dot dot-ok"></span>
+                                <span class="text-success fw-semibold">Disponible</span>
+                            }
+                            else if (item.Estado == EstadoPublicacion.Reservado)
+                            {
+                                <span class="dot dot-warn"></span>
+                                <span class="text-warning fw-semibold">Reservado</span>
+                            }
+                            else
+                            {
+                                <span class="dot dot-bad"></span>
+                                <span class="text-muted fw-semibold">Vendido</span>
+                            }
+                        </div>
+
+                        <!-- Vendedor y Escuela -->
+                        <div class="vendedor-info d-flex align-items-center gap-2 mb-3">
+                            <span class="avatar avatar-xs avatar-soft">@item.Vendedor.Iniciales</span>
+                            <span class="small text-muted text-truncate">@item.Vendedor.NombreCorto — @item.Vendedor.Escuela</span>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(item.NotasEntrega))
+                        {
+                            <p class="small text-muted bg-light p-2 rounded mb-3">
+                                <i class="bi bi-geo-alt me-1 text-guinda"></i>@item.NotasEntrega
+                            </p>
+                        }
+
+                        <!-- Botones de Acción -->
+                        <div class="mt-auto d-flex flex-column gap-2">
+                            @if (item.Estado != EstadoPublicacion.Vendido)
+                            {
+                                <a href="@waUrl" target="_blank" rel="noopener" class="btn btn-wa w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+                                    <i class="bi bi-whatsapp"></i>
+                                    <span>@(item.EsDonacion ? "Coordinar entrega" : "Contactar por WhatsApp")</span>
+                                </a>
+                            }
+                            else
+                            {
+                                <button class="btn btn-secondary w-100 py-2" disabled>
+                                    <i class="bi bi-check-all me-1"></i>Vendido / Entregado
+                                </button>
+                            }
+
+                            @if (item.VendedorId == miUserId)
+                            {
+                                <div class="d-flex gap-2">
+                                    <form asp-action="CambiarEstado" method="post" class="flex-grow-1">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="nuevoEstado" value="@(item.Estado == EstadoPublicacion.Disponible ? EstadoPublicacion.Reservado : EstadoPublicacion.Disponible)" />
+                                        <button type="submit" class="btn btn-sm btn-soft w-100">
+                                            @(item.Estado == EstadoPublicacion.Disponible ? "Marcar Reservado" : "Marcar Disponible")
+                                        </button>
+                                    </form>
+                                    <form asp-action="Eliminar" method="post" onsubmit="return confirm('¿Seguro que deseas eliminar esta publicación?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- Modal Publicar Artículo -->
+<div class="modal fade" id="modalPublicar" tabindex="-1" aria-labelledby="modalPublicarLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="modalPublicarLabel">Publicar Artículo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="Publicar" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="modal-body pt-3">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Título del artículo</label>
+                        <input type="text" name="Titulo" class="form-control" placeholder="Ej. Calculadora HP Prime, etc." required maxlength="120" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Categoría</label>
+                        <select name="Categoria" class="form-select" required>
+                            <option value="">Seleccionar categoría</option>
+                            <option value="@((int)CategoriaMarketplace.CalculadorasHardware)">Calculadoras / Hardware</option>
+                            <option value="@((int)CategoriaMarketplace.LibrosGuias)">Libros y Guías</option>
+                            <option value="@((int)CategoriaMarketplace.BatasUniformes)">Batas / Uniformes</option>
+                            <option value="@((int)CategoriaMarketplace.AlquilerCuartos)">Alquiler de cuartos</option>
+                            <option value="@((int)CategoriaMarketplace.Otros)">Otros</option>
+                        </select>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Precio sugerido (S/)</label>
+                            <input type="number" step="0.5" name="Precio" class="form-control" placeholder="0.00 (Gratis si es donación)" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Estado del ítem</label>
+                            <select name="EstadoItem" class="form-select" required>
+                                <option value="@((int)EstadoItem.Usado)">Usado</option>
+                                <option value="@((int)EstadoItem.Nuevo)">Nuevo</option>
+                                <option value="@((int)EstadoItem.ComoNuevo)">Como nuevo</option>
+                                <option value="@((int)EstadoItem.Donacion)">Donación</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Dropzone para foto -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Foto del artículo (opcional)</label>
+                        <label class="dropzone d-block" for="inputFotoMarketplace" style="cursor: pointer;">
+                            <i class="bi bi-camera"></i>
+                            <span class="d-block small" id="dropzoneText">Arrastra o haz clic para subir imagen</span>
+                            <span class="text-muted" style="font-size: .75rem;">JPG, PNG o WEBP - Máx 5 MB</span>
+                        </label>
+                        <input type="file" id="inputFotoMarketplace" name="imagen" class="d-none" accept=".jpg,.jpeg,.png,.webp" onchange="actualizarDropzone(this)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Número de WhatsApp</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted">+51</span>
+                            <input type="tel" name="WhatsApp" class="form-control" placeholder="987654321" required pattern="[0-9]{9}" maxlength="12" />
+                        </div>
+                        <span class="text-muted" style="font-size: .75rem;">Los alumnos interesados te escribirán a este número.</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Notas de entrega en campus</label>
+                        <input type="text" name="NotasEntrega" class="form-control" placeholder="Ej: Disponible en biblioteca de 2-6pm" maxlength="250" />
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 pt-0">
+                    <button type="submit" class="btn-guinda w-100 py-2">
+                        <i class="bi bi-upload me-1"></i> Publicar artículo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .marketplace-card {
+            border-radius: 14px;
+            overflow: hidden;
+            transition: transform .15s ease, box-shadow .15s ease;
+        }
+        .marketplace-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(0,0,0,.08);
+        }
+        .item-img-wrap {
+            height: 180px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .item-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .item-img-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #fbf7f8 0%, #f0e6e8 100%);
+            color: var(--guinda);
+            font-size: 3.5rem;
+        }
+        .item-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            padding: 4px 10px;
+            font-size: .75rem;
+            font-weight: 800;
+            border-radius: 6px;
+            letter-spacing: .4px;
+            z-index: 2;
+        }
+        .badge-usado {
+            background: #ffedd5;
+            color: #c2410c;
+        }
+        .badge-donacion {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .badge-nuevo {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .item-titulo {
+            font-size: 1.05rem;
+            line-height: 1.35;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 2.7rem;
+        }
+        .precio {
+            font-size: 1.25rem;
+            font-weight: 800;
+        }
+        .text-guinda {
+            color: var(--guinda);
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot-ok { background: #22c55e; }
+        .dot-warn { background: #f59e0b; }
+        .dot-bad { background: #ef4444; }
+        .avatar-xs {
+            width: 24px;
+            height: 24px;
+            font-size: .7rem;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        function actualizarDropzone(input) {
+            if (input.files && input.files[0]) {
+                document.getElementById('dropzoneText').textContent = "Seleccionado: " + input.files[0].name;
+            }
+        }
+    </script>
+}
