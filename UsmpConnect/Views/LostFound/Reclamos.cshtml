@@ -22,8 +22,7 @@
 </div>
 
 <p class="text-muted small">
-    Compara la descripción de cada alumno con el objeto. Aprueba solo si los detalles coinciden: al aprobar, el objeto
-    figura como entregado y las demás solicitudes se rechazan automáticamente. Cada alumno recibe una notificación.
+    Compara la descripción de cada alumno con el objeto. Si las características coinciden, aprueba la solicitud y confirma el punto de custodia oficial (Garita o Secretaría) para que el alumno se acerque a retirarlo con su carné universitario.
 </p>
 
 @if (Model.Reclamos.Count == 0)
@@ -48,22 +47,58 @@
                 </div>
                 <span class="tag tag-upper @ClaseEstado(r.Estado)">@r.Estado.Nombre()</span>
             </div>
-            <p class="my-3">“@r.Descripcion”</p>
-            <div class="d-flex gap-2 flex-wrap">
+            <div class="p-3 my-3 bg-light rounded-3 border">
+                <div class="small fw-bold text-muted mb-1"><i class="bi bi-chat-left-quote me-1"></i>Descripción privada dada por el alumno:</div>
+                <div class="text-dark">“@r.Descripcion”</div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap align-items-center">
                 <a class="btn btn-wa btn-sm px-3" target="_blank" rel="noopener"
                    href="@WhatsApp.Enlace(r.WhatsApp, $"Hola {r.NombreCompleto.Split(' ')[0]}, te escribo por tu reclamo de \"{Model.Titulo}\" en USMP Connect.")">
-                    <i class="bi bi-whatsapp me-1"></i>Escribirle
+                    <i class="bi bi-whatsapp me-1"></i>Consultar por WhatsApp
                 </a>
                 @if (r.Estado == EstadoReclamo.Pendiente && !entregado)
                 {
-                    <form asp-action="ResolverReclamo" asp-route-id="@r.Id" method="post">
-                        <input type="hidden" name="aprobar" value="true" />
-                        <button class="btn-guinda btn-sm py-1 px-3" type="submit"><i class="bi bi-check2 me-1"></i>Aprobar y entregar</button>
-                    </form>
-                    <form asp-action="ResolverReclamo" asp-route-id="@r.Id" method="post">
+                    <button class="btn-guinda btn-sm py-1 px-3" type="button" data-bs-toggle="modal" data-bs-target="#modalAprobar_@r.Id">
+                        <i class="bi bi-check2 me-1"></i>Aprobar Reclamo
+                    </button>
+                    <form asp-action="ResolverReclamo" asp-route-id="@r.Id" method="post" onsubmit="return confirm('¿Rechazar esta solicitud de reclamo?')">
                         <input type="hidden" name="aprobar" value="false" />
                         <button class="btn btn-soft btn-sm px-3" type="submit">Rechazar</button>
                     </form>
+
+                    <!-- Modal para confirmar aprobación y punto de custodia -->
+                    <div class="modal fade" id="modalAprobar_@r.Id" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <form asp-action="ResolverReclamo" asp-route-id="@r.Id" method="post">
+                                    <input type="hidden" name="aprobar" value="true" />
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Aprobar Entrega a @r.NombreCompleto</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p class="small text-muted mb-3">
+                                            Al aprobar, se le enviará una notificación privada al alumno indicándole exactamente en qué garita u oficina dejaste el objeto para que vaya a retirarlo.
+                                        </p>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold" for="sel-custodia-@r.Id">Punto de Entrega / Custodia</label>
+                                            <select class="form-select" id="sel-custodia-@r.Id" name="custodia" required>
+                                                @foreach (var c in Enum.GetValues<CustodiaObjeto>())
+                                                {
+                                                    <!option value="@c" @(Model.Custodia == c ? "selected" : "")>@c.Nombre()</!option>
+                                                }
+                                            </select>
+                                            <div class="form-text small">Selecciona la garita o secretaría donde el alumno encontrará el objeto.</div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn-guinda"><i class="bi bi-check-circle me-1"></i>Confirmar y Notificar Entrega</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 }
             </div>
         </div>

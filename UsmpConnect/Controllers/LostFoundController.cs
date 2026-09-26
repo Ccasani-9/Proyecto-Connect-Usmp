@@ -15,16 +15,38 @@ public class LostFoundController(ApplicationDbContext db, IAlmacenArchivos almac
 {
     private const long MaxFoto = 5 * 1024 * 1024;
 
-    public async Task<IActionResult> Index(TipoReporte tipo = TipoReporte.Encontrado)
+    public async Task<IActionResult> Index(string? tab = null, TipoReporte? tipo = null)
     {
         var userId = User.GetUserId();
 
+        // Determinar tab activa
+        var tabActiva = tab?.ToLowerInvariant();
+        if (string.IsNullOrEmpty(tabActiva))
+        {
+            tabActiva = (tipo == TipoReporte.Perdido) ? "extraviados" : "encontrados";
+        }
+
+        var tipoReporte = (tabActiva == "extraviados") ? TipoReporte.Perdido : TipoReporte.Encontrado;
+
         var objetos = await db.ObjetosPerdidos.AsNoTracking()
             .Include(o => o.Reportante)
-            .Include(o => o.Reclamos.Where(r => r.Estado == EstadoReclamo.Pendiente))
-            .Where(o => o.Tipo == tipo)
+            .Include(o => o.Reclamos)
+            .Where(o => o.Tipo == tipoReporte)
             .OrderBy(o => o.Estado)
             .ThenByDescending(o => o.FechaReporte)
+            .ToListAsync();
+
+        var misPublicaciones = await db.ObjetosPerdidos.AsNoTracking()
+            .Include(o => o.Reclamos)
+            .Where(o => o.ReportanteId == userId)
+            .OrderByDescending(o => o.FechaReporte)
+            .ToListAsync();
+
+        var misSolicitudes = await db.ReclamosObjetos.AsNoTracking()
+            .Include(r => r.Objeto)
+                .ThenInclude(o => o.Reportante)
+            .Where(r => r.UsuarioId == userId)
+            .OrderByDescending(r => r.Fecha)
             .ToListAsync();
 
         // Puede no existir si la sesión es de una BD anterior (la BD se recrea en cada arranque).
@@ -33,14 +55,22 @@ public class LostFoundController(ApplicationDbContext db, IAlmacenArchivos almac
             .Select(u => new { u.CodigoAlumno, u.Nombres, u.Apellidos })
             .FirstOrDefaultAsync();
 
+        var misReclamosSet = misSolicitudes
+            .Where(r => r.Estado == EstadoReclamo.Pendiente || r.Estado == EstadoReclamo.Aprobado)
+            .Select(r => r.ObjetoId)
+            .ToHashSet();
+
         return View(new LostFoundIndexViewModel
         {
-            Tipo = tipo,
+            TabActiva = tabActiva,
+            Tipo = tipoReporte,
             Objetos = objetos,
+            MisPublicaciones = misPublicaciones,
+            MisSolicitudes = misSolicitudes,
             UsuarioId = userId,
             MiCodigo = yo?.CodigoAlumno ?? "",
             MiNombre = yo is null ? "" : $"{yo.Nombres} {yo.Apellidos}".Trim(),
-            MisReclamos = objetos.Where(o => o.Reclamos.Any(r => r.UsuarioId == userId)).Select(o => o.Id).ToHashSet()
+            MisReclamos = misReclamosSet
         });
     }
 
@@ -149,7 +179,7 @@ public class LostFoundController(ApplicationDbContext db, IAlmacenArchivos almac
     }
 
     [HttpPost]
-    public async Task<IActionResult> ResolverReclamo(int id, bool aprobar)
+    public async Task<IActionResult> ResolverReclamo(int id, bool aprobar, CustodiaObjeto? custodia = null)
     {
         var userId = User.GetUserId();
         var reclamo = await db.ReclamosObjetos
@@ -169,7 +199,10 @@ public class LostFoundController(ApplicationDbContext db, IAlmacenArchivos almac
         if (aprobar)
         {
             reclamo.Estado = EstadoReclamo.Aprobado;
-            objeto.Estado = EstadoObjeto.Devuelto;
+            if (custodia.HasValue)
+            {
+                objeto.Custodia = custodia.Value;
+            }
             // Solo puede haber un dueño: las demás solicitudes se rechazan.
             rechazados.AddRange(objeto.Reclamos.Where(r => r.Id != reclamo.Id && r.Estado == EstadoReclamo.Pendiente));
         }
@@ -182,21 +215,45 @@ public class LostFoundController(ApplicationDbContext db, IAlmacenArchivos almac
 
         if (aprobar)
         {
-            var dondeRecoger = objeto.Custodia == CustodiaObjeto.Reportante && objeto.WhatsApp is not null
-                ? $"Escríbele a {User.GetNombre()} al WhatsApp {objeto.WhatsApp} para recogerlo."
-                : $"Recógelo: {objeto.Custodia?.Nombre().ToLower() ?? "coordina con quien lo encontró"}.";
+            var dondeRecoger = objeto.Custodia?.Nombre() ?? "Custodia Oficial FIA";
             await notificaciones.NotificarAsync(reclamo.UsuarioId,
-                $"¡Aprobaron tu reclamo de “{objeto.Titulo}”! {dondeRecoger}", "/ObjetosPerdidos", "check2-circle");
+                $"¡Aprobaron tu reclamo de “{objeto.Titulo}”! Retíralo en: {dondeRecoger}.",
+                "/ObjetosPerdidos?tab=mis-solicitudes", "check2-circle");
         }
         foreach (var r in rechazados)
         {
             await notificaciones.NotificarAsync(r.UsuarioId,
-                $"Tu reclamo de “{objeto.Titulo}” no fue aprobado. Si crees que es un error, acércate a Seguridad con tu carné.",
-                "/ObjetosPerdidos", "x-circle");
+                $"Tu reclamo de “{objeto.Titulo}” no fue aprobado. Las características descritas no coincidieron.",
+                "/ObjetosPerdidos?tab=mis-solicitudes", "x-circle");
         }
 
-        TempData["Toast"] = aprobar ? "Reclamo aprobado. El objeto figura como entregado." : "Reclamo rechazado.";
+        TempData["Toast"] = aprobar
+            ? "Reclamo aprobado. Se le notificó al alumno la ubicación de entrega para que retire su pertenencia."
+            : "Reclamo rechazado.";
         return RedirectToAction(nameof(Reclamos), new { id = objeto.Id });
+    }
+
+    /// <summary>El dueño que reclamó el objeto confirma que ya lo recogió en Garita/Custodia.</summary>
+    [HttpPost]
+    public async Task<IActionResult> ConfirmarRecepcion(int id)
+    {
+        var userId = User.GetUserId();
+        var reclamo = await db.ReclamosObjetos
+            .Include(r => r.Objeto)
+            .FirstOrDefaultAsync(r => r.Id == id && r.UsuarioId == userId && r.Estado == EstadoReclamo.Aprobado);
+
+        if (reclamo is null)
+            return NotFound();
+
+        reclamo.Objeto.Estado = EstadoObjeto.Devuelto;
+        await db.SaveChangesAsync();
+
+        await notificaciones.NotificarAsync(reclamo.Objeto.ReportanteId,
+            $"{User.GetNombre()} confirmó que ya recogió “{reclamo.Objeto.Titulo}”. ¡Objeto devuelto con éxito!",
+            "/ObjetosPerdidos?tab=mis-publicaciones", "bag-check");
+
+        TempData["Toast"] = "¡Confirmación exitosa! Nos alegra que hayas recuperado tu pertenencia.";
+        return RedirectToAction(nameof(Index), new { tab = "mis-solicitudes" });
     }
 
     /// <summary>Quien reportó marca el objeto como entregado (encontrado) o recuperado (perdido).</summary>
