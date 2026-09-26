@@ -14,6 +14,11 @@
     <img src="https://img.shields.io/badge/Algolia-Search-003DFF?logo=algolia" alt="Algolia" />
     <img src="https://img.shields.io/badge/Status-Producción-success" alt="Status" />
   </p>
+  <p>
+    <a href="https://usmpconnect.onrender.com/" target="_blank">
+      <img src="https://img.shields.io/badge/🌐_Sitio_Oficial_En_Vivo-usmpconnect.onrender.com-success?style=for-the-badge&logo=render" alt="Sitio Web En Vivo" />
+    </a>
+  </p>
 </div>
 
 ---
@@ -85,7 +90,7 @@ A diferencia de los sistemas administrativos tradicionales, USMP Connect consoli
 | **Frontend** | **Razor Views + Bootstrap 5 + Vanilla JS** | Interfaz responsive, accesible y ligera sin sobrecarga de frameworks SPA. |
 | **Identidad Visual** | **CSS Institucional USMP** | Paleta cromática oficial (Guinda `#8B1D2C`, blanco y gris perla). |
 | **Contenedores** | **Docker Multi-Stage Build** | Imagen optimizada sobre `mcr.microsoft.com/dotnet/aspnet:10.0` (usuario no-root `$APP_UID`). |
-| **Despliegue** | **Render.com Web Service** | Integración continua (CI/CD) conectada a la rama `main`. |
+| **Despliegue** | **Render Cloud PaaS** | [https://usmpconnect.onrender.com/](https://usmpconnect.onrender.com/) — Integración continua (CI/CD) conectada a `main`. |
 
 ---
 
