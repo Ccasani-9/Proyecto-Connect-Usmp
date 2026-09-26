@@ -79,7 +79,7 @@ public class TecnologiaController(
                 new(
                     "Render Cloud PaaS",
                     "Despliegue y Orquestación Docker",
-                    "usmp-connect.onrender.com",
+                    "usmpconnect.onrender.com",
                     true,
                     "En Vivo (Producción)",
                     "cloud-check-fill",
