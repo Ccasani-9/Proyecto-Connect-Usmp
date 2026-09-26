@@ -73,23 +73,28 @@ a:hover { color: var(--guinda-700); }
   box-shadow: 0 4px 10px rgba(0,0,0,0.15);
   color: #fff !important;
 }
-.topnav-btn img {
-  width: 28px; height: 28px; object-fit: contain; flex-shrink: 0;
-}
-.topnav-badge-white {
-  background: #ffffff;
-  border-radius: 8px;
-  padding: 3px 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
-  flex-shrink: 0;
-  height: 30px;
-}
-.topnav-badge-white img {
-  height: 20px;
+.topnav-btn img,
+.topnav-logo {
+  height: 28px;
   width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.22));
+  flex-shrink: 0;
+}
+.topnav-logo.logo-fia {
+  height: 24px;
+  width: auto;
+  filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+}
+.topnav-logo.logo-sap {
+  height: 22px;
+  width: auto;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+}
+.topnav-logo.logo-calc {
+  height: 28px;
+  width: 28px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
 }
 .topnav-btn i {
   font-size: 1.15rem;
