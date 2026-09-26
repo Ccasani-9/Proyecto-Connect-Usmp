@@ -5,15 +5,18 @@ namespace UsmpConnect.ViewModels;
 
 public class LostFoundIndexViewModel
 {
-    public TipoReporte Tipo { get; set; }
+    public string TabActiva { get; set; } = "encontrados";
+    public TipoReporte Tipo { get; set; } = TipoReporte.Encontrado;
     public List<ObjetoPerdido> Objetos { get; set; } = [];
+    public List<ObjetoPerdido> MisPublicaciones { get; set; } = [];
+    public List<ReclamoObjeto> MisSolicitudes { get; set; } = [];
     public string UsuarioId { get; set; } = "";
 
     /// <summary>Para autocompletar el formulario de reclamo.</summary>
     public string MiCodigo { get; set; } = "";
     public string MiNombre { get; set; } = "";
 
-    /// <summary>Objetos que el usuario ya reclamó y siguen pendientes de revisión.</summary>
+    /// <summary>Objetos que el usuario ya reclamó y siguen pendientes de revisión o aprobados.</summary>
     public HashSet<int> MisReclamos { get; set; } = [];
 }
 

@@ -33,6 +33,9 @@
   --bs-border-color: var(--border);
 }
 
+.text-guinda { color: var(--guinda) !important; }
+.badge-count-guinda { background: #fff !important; color: var(--guinda) !important; font-weight: 700 !important; }
+
 html { font-size: 14px; }
 body { background: var(--bg); color: var(--text); font-family: var(--bs-body-font-family); }
 a { color: var(--guinda); text-decoration: none; }
