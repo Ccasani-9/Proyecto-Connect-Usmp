@@ -37,8 +37,8 @@
 
 <div class="card-u p mb-3">
     <nav class="lf-tabs">
-        <a href="/LostFound" class="@(encontrados ? "active" : "")">Objetos Encontrados (En Custodia)</a>
-        <a href="/LostFound?tipo=Perdido" class="@(encontrados ? "" : "active")">Objetos Extraviados (Se Busca)</a>
+        <a href="/ObjetosPerdidos" class="@(encontrados ? "active" : "")">Objetos Encontrados (En Custodia)</a>
+        <a href="/ObjetosPerdidos?tipo=Perdido" class="@(encontrados ? "" : "active")">Objetos Extraviados (Se Busca)</a>
     </nav>
     <div class="chips" data-filtro="categoria">
         <button type="button" class="chip active" data-valor="todo">Todo</button>
@@ -122,7 +122,7 @@
                         {
                             if (encontrados && !devuelto)
                             {
-                                <a class="btn btn-outline-guinda py-2" href="/LostFound/Reclamos/@o.Id">
+                                <a class="btn btn-outline-guinda py-2" href="/ObjetosPerdidos/Reclamos/@o.Id">
                                     <i class="bi bi-inbox me-1"></i>Ver reclamos (@o.Reclamos.Count)
                                 </a>
                             }

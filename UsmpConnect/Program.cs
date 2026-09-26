@@ -105,6 +105,35 @@ if (!app.Environment.IsDevelopment())
 // Módulos que aún no existen (404) muestran la página "En construcción".
 app.UseStatusCodePagesWithReExecute("/Home/Estado/{0}");
 
+// Redirección amigable de URLs en inglés a español
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value ?? "";
+    if (path.Equals("/FoodSpots", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.Redirect("/Restaurantes" + context.Request.QueryString, permanent: true);
+        return;
+    }
+    if (path.StartsWith("/FoodSpots/", StringComparison.OrdinalIgnoreCase))
+    {
+        var newPath = "/Restaurantes" + path.Substring("/FoodSpots".Length) + context.Request.QueryString;
+        context.Response.Redirect(newPath, permanent: true);
+        return;
+    }
+    if (path.Equals("/LostFound", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.Redirect("/ObjetosPerdidos" + context.Request.QueryString, permanent: true);
+        return;
+    }
+    if (path.StartsWith("/LostFound/", StringComparison.OrdinalIgnoreCase))
+    {
+        var newPath = "/ObjetosPerdidos" + path.Substring("/LostFound".Length) + context.Request.QueryString;
+        context.Response.Redirect(newPath, permanent: true);
+        return;
+    }
+    await next();
+});
+
 app.UseStaticFiles(); // archivos subidos en wwwroot/uploads
 app.UseRouting();
 
@@ -112,6 +141,16 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+
+app.MapControllerRoute(
+    name: "restaurantes",
+    pattern: "Restaurantes/{action=Index}/{id?}",
+    defaults: new { controller = "FoodSpots" });
+
+app.MapControllerRoute(
+    name: "objetosperdidos",
+    pattern: "ObjetosPerdidos/{action=Index}/{id?}",
+    defaults: new { controller = "LostFound" });
 
 app.MapControllerRoute(
     name: "default",

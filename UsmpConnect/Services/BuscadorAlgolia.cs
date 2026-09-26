@@ -105,11 +105,11 @@ public class BuscadorAlgolia : IBuscadorAlgolia
             items.AddRange(restaurantes.Select(r => new AlgoliaItem
             {
                 ObjectID = $"rest_{r.Id}",
-                Tipo = "Food & Spots",
+                Tipo = "Restaurantes Cercanos",
                 Titulo = r.Nombre,
                 Descripcion = $"{r.Direccion} · {r.DistanciaTexto} · {r.RangoPrecios}",
                 Categoria = r.Categoria.ToString(),
-                Url = "/FoodSpots",
+                Url = "/Restaurantes",
                 Calificacion = r.CalificacionPromedio
             }));
 
@@ -222,11 +222,11 @@ public class BuscadorAlgolia : IBuscadorAlgolia
         resultados.AddRange(restos.Select(r => new AlgoliaItem
         {
             ObjectID = $"rest_{r.Id}",
-            Tipo = "Food & Spots",
+            Tipo = "Restaurantes Cercanos",
             Titulo = r.Nombre,
             Descripcion = $"{r.DistanciaTexto} · {r.RangoPrecios}",
             Categoria = r.Categoria.ToString(),
-            Url = "/FoodSpots",
+            Url = "/Restaurantes",
             Calificacion = r.CalificacionPromedio
         }));
 
