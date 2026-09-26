@@ -23,7 +23,7 @@
   --radius: 14px;
   --radius-sm: 8px;
   --shadow: 0 1px 2px rgba(16, 24, 40, .04);
-  --topbar-h: 60px;
+  --topbar-h: 64px;
   --sidebar-w: 210px;
 
   --bs-primary: var(--guinda);
@@ -42,20 +42,65 @@ a:hover { color: var(--guinda-700); }
 .topbar {
   position: fixed; inset: 0 0 auto 0; height: var(--topbar-h); z-index: 1030;
   background: var(--guinda); color: #fff;
-  display: flex; align-items: center; gap: 24px; padding: 0 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .14);
 }
-.brand { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 800; letter-spacing: .3px; font-size: 1.05rem; }
+.brand { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 800; letter-spacing: .3px; font-size: 1.1rem; text-decoration: none; }
 .brand:hover { color: #fff; }
+.brand img {
+  width: 38px; height: 38px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
+}
 .brand-logo {
   width: 32px; height: 32px; border-radius: 8px; background: #fff; color: var(--guinda);
   display: grid; place-items: center; font-weight: 900; font-size: 1.1rem;
 }
-.topnav { display: flex; gap: 28px; margin: 0 auto; }
-.topnav a, .topnav button {
-  color: #fff; font-size: .8rem; font-weight: 600; letter-spacing: .4px; display: flex; align-items: center; gap: 6px;
-  background: none; border: 0; padding: 0; opacity: .95;
+.topnav { display: flex; align-items: center; gap: 10px; margin: 0 auto; }
+.topnav-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(255, 255, 255, .12);
+  border: 1px solid rgba(255, 255, 255, .24);
+  color: #fff !important;
+  font-size: .82rem; font-weight: 700; letter-spacing: .3px;
+  padding: 7px 12px; border-radius: 10px;
+  text-decoration: none;
+  transition: all .18s ease;
+  white-space: nowrap;
 }
-.topnav a:hover, .topnav button:hover { opacity: 1; color: #fff; }
+.topnav-btn:hover {
+  background: rgba(255, 255, 255, .25);
+  border-color: rgba(255, 255, 255, .5);
+  transform: translateY(-1px);
+  color: #fff !important;
+}
+.topnav-btn img {
+  width: 22px; height: 22px; object-fit: contain; flex-shrink: 0;
+}
+.topnav-badge-white {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 2px 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  flex-shrink: 0;
+}
+.topnav-btn i {
+  font-size: 1.05rem;
+}
+.topnav-btn.btn-stack {
+  background: #fff; color: var(--guinda) !important; border-color: #fff; font-weight: 800;
+}
+.topnav-btn.btn-stack:hover {
+  background: var(--guinda-50); color: var(--guinda-700) !important;
+}
+.topnav-btn.btn-calc {
+  border-color: rgba(245, 184, 46, .6);
+}
+.topnav-btn.btn-calc:hover {
+  background: rgba(245, 184, 46, .2);
+  border-color: #f5b82e;
+}
 .badge-count { background: #f5b82e; color: #3b2400; border-radius: 999px; font-size: .68rem; font-weight: 800; padding: 1px 6px; }
 .btn-ayuda { background: rgba(255, 255, 255, .14); color: #fff; border: 0; border-radius: 999px; padding: 6px 14px; font-size: .8rem; font-weight: 600; }
 .btn-ayuda:hover { background: rgba(255, 255, 255, .22); color: #fff; }
