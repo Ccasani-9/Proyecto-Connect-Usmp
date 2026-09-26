@@ -60,7 +60,7 @@ public class LostFoundSeeder : IModuleSeeder
         ctx.Db.ObjetosPerdidos.AddRange(carne, audifonos, casaca, cuaderno, cargador, mochila,
             Perdido(DemoUsers.Alessandro, "USB Kingston 32 GB negra", CategoriaObjeto.Electronico, "Laboratorios FIA", "Lab. C-205",
                 hoy.AddDays(-1).AddHours(15), "987654321", "Tiene un llavero rojo y la carpeta \"Proyecto AED\".",
-                "https://images.unsplash.com/photo-1624823183493-5f63901b0b57?auto=format&fit=crop&w=600&q=80"),
+                "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=600&q=80"),
             Perdido(DemoUsers.Ana, "Llaves con llavero de Pikachu", CategoriaObjeto.Otros, "Cafetería Principal", "",
                 hoy.AddDays(-2).AddHours(13), "967812345", "Son 3 llaves, una de ellas de candado.",
                 "https://images.unsplash.com/photo-1582139329536-e7284fece509?auto=format&fit=crop&w=600&q=80"),
