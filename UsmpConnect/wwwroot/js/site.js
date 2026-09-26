@@ -73,7 +73,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     iniciarCalculadora();
+    iniciarPieHostWebSockets();
 });
+
+function iniciarPieHostWebSockets() {
+    if (!window.pieHostUrl || window.pieHostUrl.trim() === '') return;
+    try {
+        const ws = new WebSocket(window.pieHostUrl);
+        ws.onopen = () => {
+            console.log("⚡ [PieHost WebSockets] Conectado en tiempo real a USMP Connect.");
+        };
+        ws.onmessage = (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                if (msg.evento === 'nueva_resena') {
+                    usmpToast(`⚡ En Vivo: ${msg.datos.Usuario} calificó ${msg.datos.RestauranteNombre} (${msg.datos.NuevaCalificacion} ⭐)`);
+                }
+            } catch (e) {}
+        };
+    } catch (e) {
+        console.warn("PieHost WebSocket no disponible:", e);
+    }
+}
 
 function iniciarCalculadora() {
     const calc = document.getElementById('calc');

@@ -59,6 +59,8 @@ builder.Services.AddControllersWithViews(options =>
 // ---------- Servicios compartidos por todos los módulos ----------
 builder.Services.AddScoped<INotificacionService, NotificacionService>();
 builder.Services.AddSingleton<IAlmacenArchivos, AlmacenArchivosLocal>();
+builder.Services.AddServiciosNube();
+
 
 // Subidas de hasta 25 MB (Banco de Apuntes).
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(o => o.MultipartBodyLengthLimit = 26 * 1024 * 1024);

@@ -487,3 +487,7 @@ $RECYCLE.BIN/
 *.db-wal
 **/wwwroot/uploads/
 _entregas/
+appsettings.Local.json
+**/appsettings.Local.json
+.env
+
