@@ -153,20 +153,46 @@ public class BaseSeeder : IModuleSeeder
             Matricular(email, sIntro);
             Matricular(email, sFis1);
         }
-        Matricular(DemoUsers.Carlos, sFis1, 14);
-        Matricular(DemoUsers.Juan, sCalc, 10);
+        Matricular(DemoUsers.Carlos, sFis1, 14, null, 15);
+        Matricular(DemoUsers.Carlos, sAed, 12, 13, 14);
+        Matricular(DemoUsers.Juan, sCalc, 10, null, 12);
+        Matricular(DemoUsers.Juan, sAed, 15, 14, 16);
+        Matricular(DemoUsers.Pedro, sAed, 13, 12, 14);
+        Matricular(DemoUsers.Pedro, sCalc, 11, null, 13);
+        Matricular(DemoUsers.Sofia, sAed, 16, 17, 18);
+        Matricular(DemoUsers.Sofia, sIntro, 15, 16, 17);
 
-        // ---------- Calendario académico 2026-II ----------
+        // ---------- Calendario académico y Feriados Nacionales Perú (Sector Privado / Público - D. Leg. 713) ----------
         EventoAcademico E(int mes, int dia, string titulo, TipoEvento tipo) =>
             new() { Fecha = new DateOnly(2026, mes, dia), Titulo = titulo, Tipo = tipo };
 
+        EventoAcademico Feriado(int mes, int dia, string nombre) =>
+            new() { Fecha = new DateOnly(2026, mes, dia), Titulo = $"🇵🇪 Feriado: {nombre}", Tipo = TipoEvento.Feriado };
+
         db.Eventos.AddRange(
+            // Feriados oficiales en Perú (D. Leg. 713 - descansos remunerados obligatorios sector privado y público)
+            Feriado(1, 1, "Año Nuevo"),
+            Feriado(4, 2, "Jueves Santo"),
+            Feriado(4, 3, "Viernes Santo"),
+            Feriado(5, 1, "Día del Trabajo"),
+            Feriado(6, 7, "Batalla de Arica y Día de la Bandera"),
+            Feriado(6, 29, "San Pedro y San Pablo"),
+            Feriado(7, 23, "Día de la Fuerza Aérea del Perú"),
+            Feriado(7, 28, "Fiestas Patrias — Independencia"),
+            Feriado(7, 29, "Fiestas Patrias — FF.AA. y PNP"),
+            Feriado(8, 6, "Batalla de Junín"),
+            Feriado(8, 30, "Santa Rosa de Lima"),
+            Feriado(10, 8, "Combate de Angamos"),
+            Feriado(11, 1, "Día de Todos los Santos"),
+            Feriado(12, 8, "Inmaculada Concepción"),
+            Feriado(12, 9, "Batalla de Ayacucho"),
+            Feriado(12, 25, "Navidad"),
+
+            // Hitos académicos FIA
             E(8, 17, "Inicio de clases 2026-II", TipoEvento.Institucional),
             E(8, 28, "Plazo final add/drop", TipoEvento.Institucional),
-            E(8, 30, "Feriado — Santa Rosa de Lima", TipoEvento.Institucional),
             E(9, 30, "Entrega Proyecto AED — Avance 1", TipoEvento.Entrega),
             E(10, 5, "Inicio de exámenes parciales", TipoEvento.Evaluacion),
-            E(10, 8, "Feriado — Combate de Angamos", TipoEvento.Institucional),
             E(10, 9, "Fin de exámenes parciales", TipoEvento.Evaluacion),
             E(10, 23, "Entrega Proyecto Ing. de Software", TipoEvento.Entrega),
             E(11, 20, "Entrega final Proyecto AED", TipoEvento.Entrega),

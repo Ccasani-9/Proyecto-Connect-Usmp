@@ -7,7 +7,8 @@ public enum TipoEvento
     Institucional,
     Evaluacion,
     Entrega,
-    Personal
+    Personal,
+    Feriado = 4
 }
 
 /// <summary>

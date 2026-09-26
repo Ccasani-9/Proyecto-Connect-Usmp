@@ -47,7 +47,7 @@
         }
         .cal-cell {
             background: #fff;
-            min-height: 110px;
+            min-height: 115px;
             padding: 8px 6px;
             display: flex;
             flex-direction: column;
@@ -94,8 +94,8 @@
         }
         .cal-pill {
             font-size: .72rem;
-            line-height: 1.2;
-            padding: 2px 5px;
+            line-height: 1.25;
+            padding: 2px 6px;
             border-radius: 4px;
             white-space: nowrap;
             overflow: hidden;
@@ -110,10 +110,21 @@
             color: #7a152d;
             border-left: 2px solid var(--guinda);
         }
-        .cal-pill-examen {
-            background: #fef2f2;
+        .cal-pill-feriado {
+            background: #fee2e2;
             color: #991b1b;
             border-left: 2px solid #ef4444;
+            font-weight: 600;
+        }
+        .cal-pill-examen {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 2px solid #f59e0b;
+        }
+        .cal-pill-entrega {
+            background: #ede9fe;
+            color: #5b21b6;
+            border-left: 2px solid #8b5cf6;
         }
         .cal-pill-personal {
             background: #ecfdf5;
@@ -145,18 +156,23 @@
             padding-bottom: 12px;
             margin-bottom: 16px;
         }
+        .btn-toggle-horario {
+            transition: all .2s ease;
+        }
     </style>
 }
 
 <div class="card-u page-head">
     <div>
         <h1>Mi Calendario Académico</h1>
-        <p>Visualiza tus clases de la semana, exámenes y actividades programadas</p>
+        <p>Visualiza tus cursos semanales, exámenes, fechas clave y feriados nacionales de Ley</p>
     </div>
-    <div class="d-flex gap-2">
-        <a href="/Horario" class="btn btn-outline-secondary">
-            <i class="bi bi-clock-history me-1"></i>Ver Horario Semanal
-        </a>
+    <div class="d-flex align-items-center gap-2">
+        <!-- Botón Toggle de Horario Semanal: Activo por defecto -->
+        <button class="btn btn-guinda btn-toggle-horario" type="button" id="btnToggleHorario" data-activo="true" title="Alternar visualización de cursos semanales">
+            <i class="bi bi-clock-history me-1"></i>
+            <span>Horario de clases: <b id="txtToggleHorario">Visible</b></span>
+        </button>
         <button class="btn-guinda" type="button" data-bs-toggle="modal" data-bs-target="#modalEvento">
             <i class="bi bi-plus-lg me-1"></i>+ Nueva Actividad
         </button>
@@ -178,9 +194,10 @@
                     </button>
                     <button class="btn btn-sm btn-light border ms-2" type="button" id="btnIrHoy">Hoy</button>
                 </div>
-                <div class="d-flex align-items-center gap-3 small text-muted">
-                    <span class="d-flex align-items-center gap-1"><span style="width:10px;height:10px;background:var(--guinda);border-radius:2px;display:inline-block"></span> Clases</span>
-                    <span class="d-flex align-items-center gap-1"><span style="width:10px;height:10px;background:#ef4444;border-radius:2px;display:inline-block"></span> Exámenes</span>
+                <div class="d-flex align-items-center gap-3 small text-muted flex-wrap">
+                    <span class="d-flex align-items-center gap-1" id="leyendaClases"><span style="width:10px;height:10px;background:var(--guinda);border-radius:2px;display:inline-block"></span> Clases</span>
+                    <span class="d-flex align-items-center gap-1"><span style="width:10px;height:10px;background:#ef4444;border-radius:2px;display:inline-block"></span> Feriados Perú</span>
+                    <span class="d-flex align-items-center gap-1"><span style="width:10px;height:10px;background:#f59e0b;border-radius:2px;display:inline-block"></span> Exámenes</span>
                     <span class="d-flex align-items-center gap-1"><span style="width:10px;height:10px;background:#10b981;border-radius:2px;display:inline-block"></span> Personal</span>
                 </div>
             </div>
@@ -246,8 +263,6 @@
             const clases = @Json.Serialize(Model.Clases);
             const eventos = @Json.Serialize(Model.Eventos);
 
-            // Mapeo de DayOfWeek en .NET (Sunday=0, Monday=1..Saturday=6) a columna JS (Lunes=0..Domingo=6)
-            const dowMap = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 0: 6 };
             const mesesNombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Setiembre', 'Octubre', 'Noviembre', 'Diciembre'];
             const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
@@ -256,6 +271,13 @@
 
             let diaSeleccionadoIso = hoyIso;
 
+            // Por defecto SIEMPRE activado según indicación del usuario
+            let mostrarHorario = true;
+            const guardado = localStorage.getItem('usmp_ver_horario');
+            if (guardado !== null) {
+                mostrarHorario = guardado === 'true';
+            }
+
             const gridEl = document.getElementById('calGrid');
             const tituloMesEl = document.getElementById('calTituloMes');
             const diaTituloEl = document.getElementById('diaSeleccionadoTitulo');
@@ -263,9 +285,31 @@
             const listaDetallesEl = document.getElementById('listaDetallesDia');
             const btnAgregarDia = document.getElementById('btnAgregarParaEsteDia');
             const inputFechaModal = document.getElementById('evFecha');
+            const btnToggleHorario = document.getElementById('btnToggleHorario');
+            const txtToggleHorario = document.getElementById('txtToggleHorario');
+            const leyendaClases = document.getElementById('leyendaClases');
 
             function pad(n) { return String(n).padStart(2, '0'); }
             function toIso(y, m, d) { return `${y}-${pad(m + 1)}-${pad(d)}`; }
+
+            function actualizarBotonToggle() {
+                if (mostrarHorario) {
+                    btnToggleHorario.className = 'btn btn-guinda btn-toggle-horario';
+                    btnToggleHorario.innerHTML = '<i class="bi bi-clock-history me-1"></i> <span>Horario de clases: <b>Activado</b></span>';
+                    leyendaClases.style.opacity = '1';
+                } else {
+                    btnToggleHorario.className = 'btn btn-outline-secondary btn-toggle-horario';
+                    btnToggleHorario.innerHTML = '<i class="bi bi-eye-slash me-1"></i> <span>Horario de clases: <b>Oculto</b></span>';
+                    leyendaClases.style.opacity = '0.35';
+                }
+            }
+
+            btnToggleHorario.addEventListener('click', () => {
+                mostrarHorario = !mostrarHorario;
+                localStorage.setItem('usmp_ver_horario', String(mostrarHorario));
+                actualizarBotonToggle();
+                renderizarCalendario();
+            });
 
             function renderizarCalendario() {
                 tituloMesEl.textContent = `${mesesNombres[mesActual]} ${anioActual}`;
@@ -318,32 +362,49 @@
                 const pillsContainer = document.createElement('div');
                 pillsContainer.className = 'cal-pills';
 
-                // Clases del día (por día de la semana)
-                const clasesDelDia = clases.filter(c => c.dia === jsDow);
-                // Eventos de la fecha específica
+                // Clases del día (se repiten semanalmente por día de la semana)
+                const clasesDelDia = mostrarHorario ? clases.filter(c => c.dia === jsDow) : [];
+                // Eventos de la fecha específica (feriados, exámenes, entregas, notas personales)
                 const eventosDelDia = eventos.filter(e => e.fecha === iso);
 
                 let mostrados = 0;
-                const maxMostrar = 2;
+                const maxMostrar = 3;
 
-                // 1. Mostrar eventos primero
-                for (const ev of eventosDelDia) {
+                // 1. Mostrar feriados nacionales primero (máxima prioridad)
+                for (const ev of eventosDelDia.filter(e => e.tipo === 'Feriado' || e.titulo.toLowerCase().includes('feriado'))) {
                     if (mostrados >= maxMostrar) break;
                     const pill = document.createElement('div');
-                    pill.className = 'cal-pill ' + (ev.personal ? 'cal-pill-personal' : (ev.tipo === 'Examen' ? 'cal-pill-examen' : 'cal-pill-general'));
-                    pill.innerHTML = `<i class="bi ${ev.personal ? 'bi-pin-fill' : 'bi-calendar-event'}"></i> ${ev.titulo}`;
+                    pill.className = 'cal-pill cal-pill-feriado';
+                    pill.title = ev.titulo;
+                    pill.innerHTML = `<i class="bi bi-flag-fill"></i> ${ev.titulo.replace('🇵🇪 Feriado: ', '')}`;
                     pillsContainer.appendChild(pill);
                     mostrados++;
                 }
 
-                // 2. Mostrar clases
-                for (const cl of clasesDelDia) {
+                // 2. Mostrar exámenes y entregas
+                for (const ev of eventosDelDia.filter(e => e.tipo !== 'Feriado' && !e.titulo.toLowerCase().includes('feriado'))) {
                     if (mostrados >= maxMostrar) break;
                     const pill = document.createElement('div');
-                    pill.className = 'cal-pill cal-pill-clase';
-                    pill.innerHTML = `<i class="bi bi-clock"></i> ${cl.inicio.substring(0, 5)} ${cl.curso}`;
+                    const claseTipo = ev.personal ? 'cal-pill-personal' : (ev.tipo === 'Evaluacion' ? 'cal-pill-examen' : (ev.tipo === 'Entrega' ? 'cal-pill-entrega' : 'cal-pill-general'));
+                    pill.className = 'cal-pill ' + claseTipo;
+                    pill.title = ev.titulo;
+                    pill.innerHTML = `<i class="bi ${ev.personal ? 'bi-pin-fill' : (ev.tipo === 'Evaluacion' ? 'bi-exclamation-triangle' : 'bi-calendar-check')}"></i> ${ev.titulo}`;
                     pillsContainer.appendChild(pill);
                     mostrados++;
+                }
+
+                // 3. Mostrar clases semanales si el horario está activo
+                if (mostrarHorario) {
+                    for (const cl of clasesDelDia) {
+                        if (mostrados >= maxMostrar) break;
+                        const pill = document.createElement('div');
+                        pill.className = 'cal-pill cal-pill-clase';
+                        const hora = cl.inicio ? cl.inicio.substring(0, 5) : '';
+                        pill.title = `${hora} - ${cl.curso} (${cl.aula})`;
+                        pill.innerHTML = `<i class="bi bi-clock"></i> ${hora} ${cl.curso}`;
+                        pillsContainer.appendChild(pill);
+                        mostrados++;
+                    }
                 }
 
                 const totalItems = clasesDelDia.length + eventosDelDia.length;
@@ -378,70 +439,101 @@
                 const jsDow = d.getDay();
                 const clasesDelDia = clases.filter(c => c.dia === jsDow);
                 const eventosDelDia = eventos.filter(e => e.fecha === diaSeleccionadoIso);
+                const feriadosDelDia = eventosDelDia.filter(e => e.tipo === 'Feriado' || e.titulo.toLowerCase().includes('feriado'));
+                const otrosEventos = eventosDelDia.filter(e => !feriadosDelDia.includes(e));
 
-                if (clasesDelDia.length === 0 && eventosDelDia.length === 0) {
-                    listaDetallesEl.innerHTML = `
+                // 1. Mostrar banner patriótico de feriado oficial si aplica
+                if (feriadosDelDia.length > 0) {
+                    feriadosDelDia.forEach(f => {
+                        const divFeriado = document.createElement('div');
+                        divFeriado.className = 'alert alert-danger border-0 p-2 mb-3 d-flex align-items-center gap-2 small';
+                        divFeriado.style.borderRadius = '10px';
+                        divFeriado.innerHTML = `
+                            <i class="bi bi-flag-fill text-danger fs-5 ms-1"></i>
+                            <div>
+                                <strong class="text-danger">${f.titulo}</strong>
+                                <div class="text-muted" style="font-size:.78rem">Feriado nacional oficial remunerado (Sector Privado y Público — D. Leg. 713).</div>
+                            </div>
+                        `;
+                        listaDetallesEl.appendChild(divFeriado);
+                    });
+                }
+
+                // 2. Si no hay nada que mostrar en este día
+                const hayClasesParaMostrar = mostrarHorario && clasesDelDia.length > 0;
+                if (!hayClasesParaMostrar && otrosEventos.length === 0 && feriadosDelDia.length === 0) {
+                    listaDetallesEl.innerHTML += `
                         <div class="text-center py-4 text-muted">
                             <i class="bi bi-cup-hot fs-2 d-block mb-2 text-secondary"></i>
-                            <div class="fw-semibold">Sin clases ni actividades</div>
-                            <small>No hay eventos registrados para este día.</small>
+                            <div class="fw-semibold">Sin actividades para este día</div>
+                            <small>${mostrarHorario ? 'No tienes clases ni recordatorios agendados.' : 'El horario de clases está oculto.'}</small>
                         </div>
                     `;
-                } else {
-                    // Sección Clases
-                    if (clasesDelDia.length > 0) {
-                        const secClases = document.createElement('div');
-                        secClases.className = 'mb-4';
-                        secClases.innerHTML = `<div class="fw-bold small text-muted text-uppercase mb-2"><i class="bi bi-book me-1"></i>Clases universitarias (${clasesDelDia.length})</div>`;
-                        
-                        clasesDelDia.forEach(c => {
-                            const item = document.createElement('div');
-                            item.className = 'p-2 rounded mb-2 border';
-                            item.style.background = '#fdfbfb';
-                            item.innerHTML = `
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div class="fw-bold" style="color:var(--guinda)">${c.curso}</div>
-                                    <span class="badge bg-light text-dark border">${c.rango}</span>
-                                </div>
-                                <div class="small text-muted mt-1"><i class="bi bi-geo-alt me-1"></i>${c.aula} · ${c.detalle}</div>
+                    return;
+                }
+
+                // 3. Sección de Actividades y Eventos
+                if (otrosEventos.length > 0) {
+                    const secEventos = document.createElement('div');
+                    secEventos.className = 'mb-3';
+                    secEventos.innerHTML = `<div class="fw-bold small text-muted text-uppercase mb-2"><i class="bi bi-calendar-check me-1"></i>Actividades y recordatorios (${otrosEventos.length})</div>`;
+
+                    otrosEventos.forEach(ev => {
+                        const item = document.createElement('div');
+                        item.className = 'p-2 rounded mb-2 border d-flex justify-content-between align-items-center';
+                        item.style.background = ev.personal ? '#f0fdf4' : (ev.tipo === 'Evaluacion' ? '#fffbeb' : '#eff6ff');
+
+                        let deleteHtml = '';
+                        if (ev.personal) {
+                            deleteHtml = `
+                                <form action="/Eventos/Eliminar" method="post" class="m-0" onsubmit="return confirm('¿Eliminar este recordatorio?')">
+                                    <input type="hidden" name="id" value="${ev.id}" />
+                                    <input type="hidden" name="returnUrl" value="/Calendario" />
+                                    <button class="btn btn-sm btn-link text-danger p-0 ms-2" type="submit" title="Eliminar"><i class="bi bi-trash"></i></button>
+                                </form>
                             `;
-                            secClases.appendChild(item);
-                        });
-                        listaDetallesEl.appendChild(secClases);
+                        }
+
+                        item.innerHTML = `
+                            <div>
+                                <div class="fw-semibold ${ev.personal ? 'text-success' : 'text-primary'}">${ev.titulo}</div>
+                                <small class="text-muted">${ev.personal ? 'Recordatorio Personal' : ev.tipo}</small>
+                            </div>
+                            ${deleteHtml}
+                        `;
+                        secEventos.appendChild(item);
+                    });
+                    listaDetallesEl.appendChild(secEventos);
+                }
+
+                // 4. Sección de Clases universitarias
+                if (clasesDelDia.length > 0) {
+                    const secClases = document.createElement('div');
+                    secClases.className = 'mb-3';
+                    if (!mostrarHorario) {
+                        secClases.style.opacity = '0.55';
                     }
-
-                    // Sección Actividades y Eventos
-                    if (eventosDelDia.length > 0) {
-                        const secEventos = document.createElement('div');
-                        secEventos.innerHTML = `<div class="fw-bold small text-muted text-uppercase mb-2"><i class="bi bi-calendar-check me-1"></i>Actividades y recordatorios (${eventosDelDia.length})</div>`;
-
-                        eventosDelDia.forEach(ev => {
-                            const item = document.createElement('div');
-                            item.className = 'p-2 rounded mb-2 border d-flex justify-content-between align-items-center';
-                            item.style.background = ev.personal ? '#f0fdf4' : '#eff6ff';
-
-                            let deleteHtml = '';
-                            if (ev.personal) {
-                                deleteHtml = `
-                                    <form action="/Eventos/Eliminar" method="post" class="m-0" onsubmit="return confirm('¿Eliminar este recordatorio?')">
-                                        <input type="hidden" name="id" value="${ev.id}" />
-                                        <input type="hidden" name="returnUrl" value="/Calendario" />
-                                        <button class="btn btn-sm btn-link text-danger p-0 ms-2" type="submit" title="Eliminar"><i class="bi bi-trash"></i></button>
-                                    </form>
-                                `;
-                            }
-
-                            item.innerHTML = `
-                                <div>
-                                    <div class="fw-semibold ${ev.personal ? 'text-success' : 'text-primary'}">${ev.titulo}</div>
-                                    <small class="text-muted">${ev.personal ? 'Recordatorio Personal' : ev.tipo}</small>
-                                </div>
-                                ${deleteHtml}
-                            `;
-                            secEventos.appendChild(item);
-                        });
-                        listaDetallesEl.appendChild(secEventos);
-                    }
+                    secClases.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold small text-muted text-uppercase"><i class="bi bi-book me-1"></i>Clases del día (${clasesDelDia.length})</span>
+                            ${!mostrarHorario ? '<span class="badge bg-secondary-subtle text-secondary" style="font-size:.7rem">Oculto en calendario</span>' : ''}
+                        </div>
+                    `;
+                    
+                    clasesDelDia.forEach(c => {
+                        const item = document.createElement('div');
+                        item.className = 'p-2 rounded mb-2 border';
+                        item.style.background = '#fdfbfb';
+                        item.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="fw-bold" style="color:var(--guinda)">${c.curso}</div>
+                                <span class="badge bg-light text-dark border">${c.rango}</span>
+                            </div>
+                            <div class="small text-muted mt-1"><i class="bi bi-geo-alt me-1"></i>${c.aula} · ${c.detalle}</div>
+                        `;
+                        secClases.appendChild(item);
+                    });
+                    listaDetallesEl.appendChild(secClases);
                 }
             }
 
@@ -472,6 +564,7 @@
                 modal.show();
             });
 
+            actualizarBotonToggle();
             renderizarCalendario();
         })();
     </script>
