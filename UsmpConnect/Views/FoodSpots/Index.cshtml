@@ -81,10 +81,10 @@
 <!-- Mapa Interactivo Leaflet -->
 <div class="card-u p mb-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
             <i class="bi bi-map-fill text-danger fs-5"></i>
-            <h2 class="h5 fw-bold mb-0">Mapa Interactivo de Huariques</h2>
-            <small class="text-muted">(Centrado en Av. La Fontana 1250, Santa Patricia - La Molina)</small>
+            <h2 class="h5 fw-bold mb-0">Mapa de Huariques USMP FIA</h2>
+            <small class="text-muted">(Zona Campus: Av. La Fontana, Av. Flora Tristán, Av. Los Constructores, Av. La Molina)</small>
         </div>
         <button class="btn btn-sm btn-soft" type="button" onclick="centrarEnFia()">
             <i class="bi bi-crosshair me-1"></i>Centrar en la FIA
@@ -268,26 +268,47 @@ else
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let map;
-        const fiaCoords = [-12.0722, -76.9532];
+        // Coordenadas reales del Campus USMP FIA (Av. La Fontana 1250, Urb. Santa Patricia)
+        const fiaCoords = [-12.07203, -76.94205];
+        // Cuadrante estricto delimitado por: Av. La Fontana (Sur), Av. Flora Tristán (Este), Av. Los Constructores (Norte) y Av. La Molina (Oeste)
+        const fiaBounds = L.latLngBounds(
+            [-12.0770, -76.9575], // Suroeste (Av. La Fontana / Av. La Molina)
+            [-12.0605, -76.9370]  // Noreste (Av. Los Constructores / Av. Flora Tristán)
+        );
         const marcadores = {};
 
         document.addEventListener("DOMContentLoaded", function () {
-            // Inicializar mapa de OpenStreetMap
-            map = L.map('mapa-fia').setView(fiaCoords, 16);
+            // Inicializar mapa de OpenStreetMap limitado estrictamente al cuadrante del campus
+            map = L.map('mapa-fia', {
+                maxBounds: fiaBounds,
+                maxBoundsViscosity: 1.0,
+                minZoom: 15,
+                maxZoom: 19
+            }).setView(fiaCoords, 16);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                minZoom: 15,
                 maxZoom: 19,
-                attribution: '&copy; OpenStreetMap · USMP FIA'
+                attribution: '&copy; OpenStreetMap · Cuadrante Campus USMP FIA'
+            }).addTo(map);
+
+            // Resaltar perímetro del cuadrante
+            L.rectangle(fiaBounds, {
+                color: "#7a152d",
+                weight: 2,
+                dashArray: "4, 6",
+                fillColor: "#7a152d",
+                fillOpacity: 0.03
             }).addTo(map);
 
             // Marcador Campus USMP FIA
             const fiaIcon = L.divIcon({
                 className: 'custom-fia-pin',
-                html: '<div style="background:#b91c1c; color:#fff; padding:6px 10px; border-radius:20px; font-weight:bold; font-size:12px; box-shadow:0 3px 8px rgba(0,0,0,0.3); border:2px solid #fff; white-space:nowrap;"><i class="bi bi-mortarboard-fill me-1"></i>CAMPUS FIA USMP</div>',
-                iconSize: [140, 30],
-                iconAnchor: [70, 15]
+                html: '<div style="background:#7a152d; color:#fff; padding:6px 12px; border-radius:20px; font-weight:bold; font-size:12px; box-shadow:0 3px 8px rgba(0,0,0,0.35); border:2px solid #fff; white-space:nowrap;"><i class="bi bi-mortarboard-fill me-1"></i>CAMPUS FIA USMP</div>',
+                iconSize: [150, 32],
+                iconAnchor: [75, 16]
             });
-            L.marker(fiaCoords, { icon: fiaIcon }).addTo(map).bindPopup("<b>Facultad de Ingeniería y Arquitectura (FIA)</b><br>Av. La Fontana 1250, Santa Patricia - La Molina").openPopup();
+            L.marker(fiaCoords, { icon: fiaIcon }).addTo(map).bindPopup("<b>Facultad de Ingeniería y Arquitectura (FIA)</b><br>Av. La Fontana 1250, Santa Patricia - La Molina<br><small class='text-muted'>Pabellón Central & Laboratorios</small>").openPopup();
 
             // Marcadores de restaurantes
             const restos = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Restaurantes.Select(r => new {
@@ -325,13 +346,13 @@ else
 
         function centrarEnFia() {
             if (map) {
-                map.flyTo(fiaCoords, 16);
+                map.flyTo(fiaCoords, 16, { duration: 1.0 });
             }
         }
 
         function irARestauranteEnMapa(lat, lng, nombre) {
             if (map) {
-                map.flyTo([lat, lng], 17, { duration: 1.2 });
+                map.flyTo([lat, lng], 17, { duration: 1.0 });
                 // Desplazar suave hacia el mapa
                 document.getElementById('mapa-fia').scrollIntoView({ behavior: 'smooth', block: 'center' });
             }

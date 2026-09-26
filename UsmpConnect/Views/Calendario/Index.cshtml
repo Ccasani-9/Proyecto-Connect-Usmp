@@ -30,7 +30,7 @@
         }
         .cal-grid-header {
             display: grid;
-            grid-template-columns: repeat(7, 1fr);
+            grid-template-columns: repeat(7, minmax(0, 1fr));
             text-align: center;
             font-weight: 600;
             font-size: .85rem;
@@ -38,12 +38,14 @@
             padding: 10px 0;
             border-bottom: 1px solid var(--border);
             background: #fff;
+            width: 100%;
         }
         .cal-grid {
             display: grid;
-            grid-template-columns: repeat(7, 1fr);
+            grid-template-columns: repeat(7, minmax(0, 1fr));
             background: var(--border);
             gap: 1px;
+            width: 100%;
         }
         .cal-cell {
             background: #fff;
@@ -54,6 +56,9 @@
             cursor: pointer;
             transition: background .15s ease, box-shadow .15s ease;
             position: relative;
+            min-width: 0;
+            overflow: hidden;
+            box-sizing: border-box;
         }
         .cal-cell:hover {
             background: #fdf5f5;
@@ -91,19 +96,31 @@
             flex-direction: column;
             gap: 3px;
             overflow: hidden;
+            min-width: 0;
+            width: 100%;
         }
         .cal-pill {
             font-size: .72rem;
             line-height: 1.25;
             padding: 2px 6px;
             border-radius: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
             font-weight: 500;
             display: flex;
             align-items: center;
             gap: 4px;
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        .cal-pill span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+        .cal-pill i {
+            flex-shrink: 0;
         }
         .cal-pill-clase {
             background: #f3e8ee;
@@ -376,7 +393,7 @@
                     const pill = document.createElement('div');
                     pill.className = 'cal-pill cal-pill-feriado';
                     pill.title = ev.titulo;
-                    pill.innerHTML = `<i class="bi bi-flag-fill"></i> ${ev.titulo.replace('🇵🇪 Feriado: ', '')}`;
+                    pill.innerHTML = `<i class="bi bi-flag-fill"></i> <span>${ev.titulo.replace('🇵🇪 Feriado: ', '')}</span>`;
                     pillsContainer.appendChild(pill);
                     mostrados++;
                 }
@@ -388,7 +405,7 @@
                     const claseTipo = ev.personal ? 'cal-pill-personal' : (ev.tipo === 'Evaluacion' ? 'cal-pill-examen' : (ev.tipo === 'Entrega' ? 'cal-pill-entrega' : 'cal-pill-general'));
                     pill.className = 'cal-pill ' + claseTipo;
                     pill.title = ev.titulo;
-                    pill.innerHTML = `<i class="bi ${ev.personal ? 'bi-pin-fill' : (ev.tipo === 'Evaluacion' ? 'bi-exclamation-triangle' : 'bi-calendar-check')}"></i> ${ev.titulo}`;
+                    pill.innerHTML = `<i class="bi ${ev.personal ? 'bi-pin-fill' : (ev.tipo === 'Evaluacion' ? 'bi-exclamation-triangle' : 'bi-calendar-check')}"></i> <span>${ev.titulo}</span>`;
                     pillsContainer.appendChild(pill);
                     mostrados++;
                 }
@@ -401,7 +418,7 @@
                         pill.className = 'cal-pill cal-pill-clase';
                         const hora = cl.inicio ? cl.inicio.substring(0, 5) : '';
                         pill.title = `${hora} - ${cl.curso} (${cl.aula})`;
-                        pill.innerHTML = `<i class="bi bi-clock"></i> ${hora} ${cl.curso}`;
+                        pill.innerHTML = `<i class="bi bi-clock"></i> <span>${hora} ${cl.curso}</span>`;
                         pillsContainer.appendChild(pill);
                         mostrados++;
                     }

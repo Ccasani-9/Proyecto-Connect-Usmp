@@ -11,7 +11,53 @@ public class FoodSpotsSeeder : IModuleSeeder
     {
         var db = ctx.Db;
         if (await db.Restaurantes.AnyAsync())
+        {
+            // Sincronizar coordenadas reales en bases de datos ya creadas
+            var existentes = await db.Restaurantes.ToListAsync();
+            foreach (var r in existentes)
+            {
+                if (r.Nombre.Contains("Cafetería Central"))
+                {
+                    r.Latitud = -12.07203;
+                    r.Longitud = -76.94205;
+                    r.Direccion = "Campus FIA USMP · Al costado del Pabellón B";
+                }
+                else if (r.Nombre.Contains("Doña Rossi"))
+                {
+                    r.Latitud = -12.07270;
+                    r.Longitud = -76.94235;
+                    r.Direccion = "Av. La Fontana 1270 · Frente a Puerta 1 FIA";
+                }
+                else if (r.Nombre.Contains("Dragón Dorado"))
+                {
+                    r.Latitud = -12.07285;
+                    r.Longitud = -76.94420;
+                    r.Direccion = "Av. La Fontana 1310 · Urb. Santa Patricia";
+                }
+                else if (r.Nombre.Contains("Chinito"))
+                {
+                    r.Latitud = -12.06450;
+                    r.Longitud = -76.94380;
+                    r.Direccion = "Av. Los Constructores 680 · Urb. Santa Patricia";
+                    r.DistanciaTexto = "A 3 min en Av. Los Constructores";
+                }
+                else if (r.Nombre.Contains("Punto Criollo"))
+                {
+                    r.Latitud = -12.07050;
+                    r.Longitud = -76.94220;
+                    r.Direccion = "Calle Las Calandrias 142 · Espalda Campus FIA";
+                }
+                else if (r.Nombre.Contains("Tambo"))
+                {
+                    r.Latitud = -12.07310;
+                    r.Longitud = -76.94080;
+                    r.Direccion = "Av. La Fontana con Av. Flora Tristán";
+                    r.DistanciaTexto = "A 100m en el cruce con Flora Tristán";
+                }
+            }
+            await db.SaveChangesAsync();
             return;
+        }
 
         var maria = await ctx.Users.FindByEmailAsync(DemoUsers.Maria);
         var juan = await ctx.Users.FindByEmailAsync(DemoUsers.Juan);
@@ -30,8 +76,8 @@ public class FoodSpotsSeeder : IModuleSeeder
             HorarioAtencion = "Lun - Sáb: 7:30 AM - 8:30 PM",
             TelefonoWhatsApp = "987654321",
             FotoUrl = "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=80",
-            Latitud = -12.0722,
-            Longitud = -76.9532,
+            Latitud = -12.07203,
+            Longitud = -76.94205,
             CalificacionPromedio = 4.6,
             TotalResenas = 3
         };
@@ -48,8 +94,8 @@ public class FoodSpotsSeeder : IModuleSeeder
             HorarioAtencion = "Lun - Vie: 11:30 AM - 4:30 PM",
             TelefonoWhatsApp = "991234567",
             FotoUrl = "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
-            Latitud = -12.0718,
-            Longitud = -76.9528,
+            Latitud = -12.07270,
+            Longitud = -76.94235,
             CalificacionPromedio = 4.9,
             TotalResenas = 2
         };
@@ -60,14 +106,14 @@ public class FoodSpotsSeeder : IModuleSeeder
             Descripcion = "Chifa rápido con porciones contundentes para grupos de estudio. Aeropuertos gigantes, sopa wantán especial y chaufas al wok.",
             Categoria = CategoriaRestaurante.Chifa,
             Rango = RangoPrecio.Economico,
-            Direccion = "Av. La Fontana 1310",
-            DistanciaTexto = "A 1 cuadra de la FIA (100m)",
+            Direccion = "Av. La Fontana 1310 · Urb. Santa Patricia",
+            DistanciaTexto = "A 1 cuadra de la FIA (120m)",
             RangoPrecios = "S/ 11.00 - S/ 18.00",
             HorarioAtencion = "Lun - Dom: 12:00 PM - 10:00 PM",
             TelefonoWhatsApp = "978112233",
             FotoUrl = "https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=600&q=80",
-            Latitud = -12.0714,
-            Longitud = -76.9521,
+            Latitud = -12.07285,
+            Longitud = -76.94420,
             CalificacionPromedio = 4.5,
             TotalResenas = 2
         };
@@ -78,14 +124,14 @@ public class FoodSpotsSeeder : IModuleSeeder
             Descripcion = "Famoso por su chicharrón crocante con camote frito y sarza criolla. Ideal para desayunos antes de exámenes o almuerzos rápidos.",
             Categoria = CategoriaRestaurante.ComidaRapida,
             Rango = RangoPrecio.Medio,
-            Direccion = "Av. La Fontana 1180",
-            DistanciaTexto = "A 2 minutos a pie (180m)",
+            Direccion = "Av. Los Constructores 680 · Urb. Santa Patricia",
+            DistanciaTexto = "A 3 min en Av. Los Constructores",
             RangoPrecios = "S/ 14.00 - S/ 22.00",
             HorarioAtencion = "Lun - Dom: 7:00 AM - 9:00 PM",
             TelefonoWhatsApp = "982334455",
             FotoUrl = "https://images.unsplash.com/photo-1509722747041-616f39b57569?auto=format&fit=crop&w=600&q=80",
-            Latitud = -12.0731,
-            Longitud = -76.9546,
+            Latitud = -12.06450,
+            Longitud = -76.94380,
             CalificacionPromedio = 4.8,
             TotalResenas = 1
         };
@@ -96,14 +142,14 @@ public class FoodSpotsSeeder : IModuleSeeder
             Descripcion = "Almuerzos caseros, seco de res, lomo saltado y milanesas con papas fritas. Menú universitario rápido con chicha morada.",
             Categoria = CategoriaRestaurante.MenuCriollo,
             Rango = RangoPrecio.Economico,
-            Direccion = "Calle Los Mirtos 142 · Frente a la FIA",
-            DistanciaTexto = "A 80m de la entrada peatonal",
+            Direccion = "Calle Las Calandrias 142 · Espalda Campus FIA",
+            DistanciaTexto = "A 80m de la puerta posterior",
             RangoPrecios = "S/ 9.00 - S/ 13.50",
             HorarioAtencion = "Lun - Sáb: 11:30 AM - 5:00 PM",
             TelefonoWhatsApp = "965443322",
             FotoUrl = "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80",
-            Latitud = -12.0726,
-            Longitud = -76.9522,
+            Latitud = -12.07050,
+            Longitud = -76.94220,
             CalificacionPromedio = 4.7,
             TotalResenas = 1
         };
@@ -114,14 +160,14 @@ public class FoodSpotsSeeder : IModuleSeeder
             Descripcion = "Bebidas, sánguches empaquetados, empanadas, café caliente y snacks rápidos para recargar energías entre laboratorios.",
             Categoria = CategoriaRestaurante.ComidaRapida,
             Rango = RangoPrecio.Economico,
-            Direccion = "Av. La Fontana con Calle Los Biólogos",
-            DistanciaTexto = "A 120m de la facultad",
+            Direccion = "Av. La Fontana con Av. Flora Tristán",
+            DistanciaTexto = "A 100m en el cruce con Flora Tristán",
             RangoPrecios = "S/ 4.00 - S/ 11.00",
             HorarioAtencion = "Lun - Dom: 24 Horas",
             TelefonoWhatsApp = "998877665",
             FotoUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80",
-            Latitud = -12.0719,
-            Longitud = -76.9539,
+            Latitud = -12.07310,
+            Longitud = -76.94080,
             CalificacionPromedio = 4.4,
             TotalResenas = 1
         };
