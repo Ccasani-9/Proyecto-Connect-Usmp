@@ -132,7 +132,7 @@ public class LostFoundController(ApplicationDbContext db, IAlmacenArchivos almac
 
         await notificaciones.NotificarAsync(objeto.ReportanteId,
             $"{User.GetNombre()} dice que “{objeto.Titulo}” es suyo. Revisa su solicitud.",
-            $"/LostFound/Reclamos/{objeto.Id}", "person-raised-hand");
+            $"/ObjetosPerdidos/Reclamos/{objeto.Id}", "person-raised-hand");
 
         TempData["Toast"] = "Solicitud enviada. Te avisaremos en Noticias cuando la revisen.";
         return RedirectToAction(nameof(Index));
@@ -186,13 +186,13 @@ public class LostFoundController(ApplicationDbContext db, IAlmacenArchivos almac
                 ? $"Escríbele a {User.GetNombre()} al WhatsApp {objeto.WhatsApp} para recogerlo."
                 : $"Recógelo: {objeto.Custodia?.Nombre().ToLower() ?? "coordina con quien lo encontró"}.";
             await notificaciones.NotificarAsync(reclamo.UsuarioId,
-                $"¡Aprobaron tu reclamo de “{objeto.Titulo}”! {dondeRecoger}", "/LostFound", "check2-circle");
+                $"¡Aprobaron tu reclamo de “{objeto.Titulo}”! {dondeRecoger}", "/ObjetosPerdidos", "check2-circle");
         }
         foreach (var r in rechazados)
         {
             await notificaciones.NotificarAsync(r.UsuarioId,
                 $"Tu reclamo de “{objeto.Titulo}” no fue aprobado. Si crees que es un error, acércate a Seguridad con tu carné.",
-                "/LostFound", "x-circle");
+                "/ObjetosPerdidos", "x-circle");
         }
 
         TempData["Toast"] = aprobar ? "Reclamo aprobado. El objeto figura como entregado." : "Reclamo rechazado.";

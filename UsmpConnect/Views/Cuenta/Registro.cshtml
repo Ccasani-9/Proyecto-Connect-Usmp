@@ -4,21 +4,13 @@
 @{
     Layout = "_LayoutAuth";
     ViewData["Title"] = "Crear cuenta";
-    var esDocente = Model.Tipo == Roles.Profesor;
 }
 
 <h2>Crear cuenta</h2>
-<p class="text-muted mb-4">Únete a la comunidad USMP Connect.</p>
+<p class="text-muted mb-4">Únete a la comunidad de estudiantes USMP Connect.</p>
 
 <form asp-action="Registro" method="post" novalidate id="formRegistro">
     <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
-
-    <div class="tipo-toggle mb-3">
-        <input type="radio" asp-for="Tipo" value="@Roles.Alumno" id="tipoAlumno" />
-        <label for="tipoAlumno"><i class="bi bi-mortarboard"></i> Soy alumno</label>
-        <input type="radio" asp-for="Tipo" value="@Roles.Profesor" id="tipoDocente" />
-        <label for="tipoDocente"><i class="bi bi-person-workspace"></i> Soy docente</label>
-    </div>
 
     <div class="row g-3">
         <div class="col-6">
@@ -32,24 +24,10 @@
             <span asp-validation-for="Apellidos"></span>
         </div>
 
-        <div class="col-12" data-solo="Alumno" hidden="@esDocente">
+        <div class="col-12">
             <label asp-for="CodigoAlumno" class="form-label"></label>
             <input asp-for="CodigoAlumno" class="form-control" placeholder="Ej. 2021123456" inputmode="numeric" />
             <span asp-validation-for="CodigoAlumno"></span>
-        </div>
-
-        <div class="col-4" data-solo="Profesor" hidden="@(!esDocente)">
-            <label asp-for="Titulo" class="form-label"></label>
-            <select asp-for="Titulo" class="form-select">
-                <option value="">—</option>
-                <option>Ing.</option><option>Lic.</option><option>Mg.</option><option>Dr.</option><option>Arq.</option><option>Abg.</option>
-            </select>
-            <span asp-validation-for="Titulo"></span>
-        </div>
-        <div class="col-8" data-solo="Profesor" hidden="@(!esDocente)">
-            <label asp-for="CodigoDocente" class="form-label"></label>
-            <input asp-for="CodigoDocente" class="form-control" placeholder="Te lo da tu facultad" />
-            <span asp-validation-for="CodigoDocente"></span>
         </div>
 
         <div class="col-12">
@@ -83,9 +61,4 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        document.querySelectorAll('input[name="Tipo"]').forEach(r => r.addEventListener('change', () => {
-            document.querySelectorAll('[data-solo]').forEach(el => el.hidden = el.dataset.solo !== r.value);
-        }));
-    </script>
 }

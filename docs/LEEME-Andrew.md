@@ -63,32 +63,79 @@ Los apuntes de ejemplo no tienen un archivo guardado: su PDF se genera al moment
 | `Views/Catedra/_Barra.cshtml`, `_AportarTip.cshtml`, `_Estilos.cshtml` | Partes compartidas por las dos vistas |
 | `Views/Apuntes/Index.cshtml` | Lista, filtros y modales "Subir", "Calificar" y "Vista previa" |
 
-No se modificó ningún archivo base del proyecto. Todo se conecta solo, siguiendo `docs/GUIA-MODULOS.md`.
+## 3. Food & Spots FIA (`/FoodSpots`)
 
-## Conceptos que se aplican (para la exposición)
+Huariques, cafeterías y restaurantes recomendados por y para alumnos de la FIA USMP alrededor del campus La Fontana.
 
-- **MVC**: el controlador consulta la BD con EF Core, arma un ViewModel y la vista Razor lo muestra.
-  Las vistas parciales (`_Barra`, `_AportarTip`) evitan repetir código.
-- **Entity Framework Core**: `GroupBy` + `Average` para la dificultad comunitaria; índices **únicos**
-  (`TipId + UsuarioId`) para que nadie vote, reporte o califique dos veces.
-- **Contadores desnormalizados**: `Utiles`, `NoUtiles`, `SumaEstrellas` y `NumCalificaciones` se guardan
-  en la tabla para no recalcularlos en cada visita. El detalle de quién votó está en `VotoTip` y `CalificacionApunte`.
-- **AJAX**: votar y reportar usan `fetch` (`usmpPost` de `site.js`) y el controlador responde JSON.
-- **Seguridad**: todo exige login; los POST validan el token antiforgery; solo los alumnos aportan tips
-  (`[Authorize(Roles = Roles.Alumno)]`); solo el autor puede eliminar lo suyo; los archivos se validan por
-  extensión y tamaño.
-- **Archivos**: `IAlmacenArchivos` guarda lo subido; el controlador devuelve el archivo con
-  `PhysicalFile` o `File`: sin nombre se abre en el navegador (vista previa) y con nombre se descarga.
+- **Mapa Interactivo (Leaflet.js + OpenStreetMap)**:
+  - Centrado en el campus de la Facultad (`Av. La Fontana 1250, La Molina`, coordenadas `-12.0722, -76.9632`).
+  - Marcador principal de la FIA ("CAMPUS FIA USMP") y pines dinámicos de cada restaurante con su calificación en estrellas, rango de precios y botón directo a la carta.
+  - Botón de geolocalización rápida "Centrar en la FIA".
+- **Tarjetas de Restaurantes**:
+  - Foto, categoría (Menú Criollo, Comida Rápida, Chifa, Cafetería & Huarique, Pastelería, Saludable), distancia a pie desde la puerta principal (ej. "A 40m de puerta 1", "Dentro del campus") y rango de precios.
+  - Calificación en estrellas con promedio y total de opiniones.
+  - Plato estrella recomendado con precio.
+  - Botón **"Ver en mapa"** (centra y hace zoom al pin correspondiente) y botón **"Ver carta"**.
+- **Modal de Detalle & Reseñas**:
+  - Lista completa de platos de la carta con precios y badge de "Popular".
+  - Botón directo para pedir o consultar por WhatsApp (`wa.me/51...`).
+  - Muro de reseñas de alumnos con calificación (1 a 5 estrellas) y comentarios.
+  - Formulario interactivo para que cualquier alumno aporte su reseña.
 
-## Cómo probarlo
+---
+
+## 4. Stack Tecnológico Cloud (Exigido por el Docente)
+
+Andrew implementó la capa de infraestructura cloud del proyecto con un patrón de **Graceful Fallback**: si las variables de entorno están activas, utiliza los servicios en la nube; si no, conmuta automáticamente a memoria local sin caerse jamás.
+
+| Tecnología | Rol en USMP Connect | Dónde se aplica en el código |
+|---|---|---|
+| **SQLite + EF Core** | Base de datos relacional con 11 tablas | `ApplicationDbContext`, migraciones/seeders automáticos |
+| **Redis Cloud** (`cloud.redis.io`) | Caché ultrarrápida (sub-milisegundo) | `IRedisCacheService` en `FoodSpotsController` para catálogos y restaurantes |
+| **CloudAMQP** (`customer.cloudamqp.com`) | Cola de mensajería asíncrona RabbitMQ | `IColaMensajes` para encolar auditorías y alertas de nuevas reseñas |
+| **Algolia** (`dashboard.algolia.com`) | Motor de búsqueda inteligente instantáneo | `IBuscadorAlgolia` con indexación REST y búsqueda typo-tolerant |
+| **PieHost** (`piehost.com`) | WebSockets para tiempo real | `IPieHostService` y `site.js` para emitir alertas en vivo al publicar reseñas |
+| **Render** (`onrender.com`) | Despliegue en contenedor Docker | `Dockerfile`, `render.yaml` en producción continua |
+
+### Panel de Diagnóstico (`/Tecnologia`)
+Disponible en el menú superior (**STACK CLOUD**) o navegando a `/Tecnologia`. Muestra el estado en vivo de los 6 servicios con tarjetas explicativas y métricas de la base de datos.
+
+### Seguridad de Credenciales
+Ninguna API Key ni cadena de conexión sensible está expuesta en GitHub.
+- **En local**: se gestionan mediante `dotnet user-secrets` y `appsettings.Local.json` (incluido en `.gitignore`).
+- **En Render**: se inyectan como variables de entorno (`Redis__ConnectionString`, `CloudAMQP__Url`, etc.).
+
+---
+
+## Archivos del módulo
+
+| Archivo | Qué contiene |
+|---|---|
+| `Models/FoodSpots.cs` | Entidades `Restaurante`, `PlatoRestaurante`, `ResenaRestaurante` y enums |
+| `Data/ApplicationDbContext.FoodSpots.cs` | `DbSet` de restaurantes, platos y reseñas |
+| `Data/Seed/FoodSpotsSeeder.cs` | 6 restaurantes reales de la FIA, platos y reseñas iniciales |
+| `ViewModels/FoodSpotsViewModels.cs` | ViewModels de lista, detalle, platos y formulario de reseñas |
+| `Controllers/FoodSpotsController.cs` | `Index` (con Redis), `Detalle`, `Resenar` (con CloudAMQP y PieHost), `Buscar` (Algolia) |
+| `Views/FoodSpots/Index.cshtml` | Vista con mapa interactivo Leaflet y modal de carta y reseñas |
+| `Services/CacheService.cs` | Cliente de Redis Cache con fallback en memoria |
+| `Services/ColaMensajes.cs` | Productor CloudAMQP (RabbitMQ) con fallback local |
+| `Services/BuscadorAlgolia.cs` | Motor Algolia Search con indexador y búsqueda instantánea |
+| `Services/PieHostService.cs` | Emisor WebSockets PieHost para tiempo real |
+| `Controllers/TecnologiaController.cs` | Dashboard de verificación de infraestructura para el profesor |
+| `Views/Tecnologia/Index.cshtml` | Vista con semáforos y métricas de los 6 servicios |
+
+---
+
+## Cómo probarlo en la sustentación
 
 ```bash
 cd UsmpConnect
 dotnet run
 ```
 
-Abrir http://localhost:5175 (clave de todas las cuentas: `Usmp2026!`):
+Abrir http://localhost:5175 (clave: `Usmp2026!`):
+1. **Verificar el Stack Tecnológico**: Haz clic en **STACK CLOUD** en la barra superior o entra a `/Tecnologia` para mostrarle al profesor los 6 servicios operativos.
+2. **Food & Spots**: Entra a `/FoodSpots`, navega por el mapa interactivo alrededor de la FIA, haz clic en "Ver en mapa", abre la carta de "Doña Rossi", consulta por WhatsApp y publica una reseña.
+3. **Comprobar Redis**: Al cargar `/FoodSpots`, verás la etiqueta `Redis Cache (Hit ⚡)`.
+4. **Comprobar WebSockets**: Abre dos pestañas del navegador; al publicar una reseña en una, saldrá el aviso en vivo por WebSocket en la otra.
 
-- `alessandro.morales@usmp.pe` (alumno): aportar tips, votar, reportar, subir y calificar apuntes.
-- `jramirez@usmp.pe` (docente): puede ver los tips sobre sus cursos, pero no aportar.
-- Curso con más datos: **Algoritmos y Estructuras de Datos** (III Ciclo), con 3 docentes y 7 tips.

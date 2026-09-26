@@ -1,4 +1,5 @@
 @using UsmpConnect.Services
+@inject UsmpConnect.Services.IPieHostService PieHost
 @{
     var controlador = (ViewContext.RouteData.Values["controller"] as string ?? "").ToLowerInvariant();
     var enInicio = controlador is "home" or "notas" or "horario";
@@ -6,13 +7,13 @@
     // Menú lateral. Cada módulo vive en su propio controlador; si aún no existe, se muestra "En construcción".
     var menu = new[]
     {
-        (Texto: "Inicio",           Icono: "house",    Activo: "house-fill",    Url: "/",            Controlador: "home"),
-        (Texto: "Food & Spots",     Icono: "geo-alt",  Activo: "geo-alt-fill",  Url: "/FoodSpots",   Controlador: "foodspots"),
-        (Texto: "Cátedra & Tips",   Icono: "bookmark", Activo: "bookmark-fill", Url: "/Catedra",     Controlador: "catedra"),
-        (Texto: "Marketplace",      Icono: "bag",      Activo: "bag-fill",      Url: "/Marketplace", Controlador: "marketplace"),
-        (Texto: "Banco de Apuntes", Icono: "folder",   Activo: "folder-fill",   Url: "/Apuntes",     Controlador: "apuntes"),
-        (Texto: "Lost & Found",     Icono: "search",   Activo: "search",        Url: "/LostFound",   Controlador: "lostfound"),
-        (Texto: "Mi Calendario",    Icono: "calendar", Activo: "calendar-fill", Url: "/Calendario",  Controlador: "calendario"),
+        (Texto: "Inicio",                 Icono: "house",    Activo: "house-fill",    Url: "/",                 Controlador: "home"),
+        (Texto: "Restaurantes Cercanos",  Icono: "geo-alt",  Activo: "geo-alt-fill",  Url: "/Restaurantes",     Controlador: "foodspots"),
+        (Texto: "Cátedra & Tips",         Icono: "bookmark", Activo: "bookmark-fill", Url: "/Catedra",          Controlador: "catedra"),
+        (Texto: "Marketplace",            Icono: "bag",      Activo: "bag-fill",      Url: "/Marketplace",      Controlador: "marketplace"),
+        (Texto: "Banco de Apuntes",       Icono: "folder",   Activo: "folder-fill",   Url: "/Apuntes",          Controlador: "apuntes"),
+        (Texto: "Objetos Perdidos",       Icono: "search",   Activo: "search",        Url: "/ObjetosPerdidos",  Controlador: "lostfound"),
+        (Texto: "Mi Calendario",          Icono: "calendar", Activo: "calendar-fill", Url: "/Calendario",       Controlador: "calendario"),
     };
 }
 <!DOCTYPE html>
@@ -24,6 +25,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="icon" type="image/png" href="~/img/logo_USMP-CONNECT.png" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
@@ -33,33 +35,43 @@
         <button class="sidebar-toggle" type="button" onclick="document.body.classList.toggle('sidebar-open')" aria-label="Menú">
             <i class="bi bi-list"></i>
         </button>
-        <a class="brand" href="/"><span class="brand-logo">M</span> MI USMP HUB</a>
+        <a class="brand d-flex align-items-center gap-2" href="/">
+            <img src="~/img/logo_USMP-CONNECT.png" alt="Mascota USMP" style="width:46px; height:46px; object-fit:contain;" />
+            <span>USMP CONNECT</span>
+        </a>
 
         <nav class="topnav">
-            <a href="https://outlook.office.com/mail/" target="_blank" rel="noopener"><i class="bi bi-envelope"></i> CORREO</a>
-            <a href="https://www.usmp.edu.pe/" target="_blank" rel="noopener"><i class="bi bi-book"></i> AULA VIRTUAL</a>
-            <a href="https://www.usmp.edu.pe/" target="_blank" rel="noopener"><i class="bi bi-gear"></i> SAP</a>
-            @await Component.InvokeAsync("Notificaciones")
+            <a href="https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?client_id=9199bf20-a13f-4107-85dc-02114787ef48&scope=https%3A%2F%2Foutlook.office.com%2F.default%20openid%20profile%20offline_access&redirect_uri=https%3A%2F%2Foutlook.office365.com%2Fmail%2F&client-request-id=1023e2ef-8ccb-5fc3-0c09-e2c86dec9525&response_mode=fragment&client_info=1&clidata=1&domain_hint=usmp.pe&nonce=01a0df17-5978-7f34-b4a8-9e473baee784&state=eyJpZCI6IjAxYTBkZjE3LTU5NzgtNzc5OC05MTA0LTFjMzZkNzU3NzNjMyIsIm1ldGEiOnsiaW50ZXJhY3Rpb25UeXBlIjoicmVkaXJlY3QifX0%3D%7CaHR0cHM6Ly9vdXRsb29rLm9mZmljZTM2NS5jb20vbWFpbC8_dmQ9bWFpbA&claims=%7B%22id_token%22%3A%7B%22signin_state%22%3A%7B%22essential%22%3Afalse%7D%2C%22login_hint%22%3A%7B%22essential%22%3Afalse%7D%7D%2C%22access_token%22%3A%7B%22xms_cc%22%3A%7B%22values%22%3A%5B%22CP1%22%5D%7D%7D%7D&x-client-SKU=msal.js.browser&x-client-VER=5.19.0&response_type=code&code_challenge=09tz2C8IeI74z2glo_UDAuU0z4r1btglrAW1VgEpniY&code_challenge_method=S256&sso_reload=true" target="_blank" rel="noopener" class="topnav-btn" title="Correo Institucional Outlook 365">
+                <img src="~/img/logo_OUTLOOK.png" alt="Outlook" class="topnav-logo" />
+                <span>CORREO</span>
+            </a>
+            <a href="https://campusvirtual.aulavirtualusmp.pe/mdlfia425/login/index.php" target="_blank" rel="noopener" class="topnav-btn" title="Campus Virtual Moodle FIA">
+                <img src="~/img/Logo-FIA.png" alt="FIA" class="topnav-logo logo-fia" />
+                <span>AULA VIRTUAL</span>
+            </a>
+            <a href="https://fioriprd.udm.hec.ondemand.com/sap/bc/ui2/flp?sap-client=400" target="_blank" rel="noopener" class="topnav-btn" title="Portal SAP Fiori USMP">
+                <img src="~/img/logo_SAP.png" alt="SAP" class="topnav-logo logo-sap" />
+                <span>SAP</span>
+            </a>
+            <a href="https://calculadorafiausmp.com/" target="_blank" rel="noopener" class="topnav-btn btn-calc" title="Calculadora FIA USMP Oficial">
+                <img src="~/img/logo_CALCULADORA_FIA.png" alt="Calculadora FIA" class="topnav-logo logo-calc" />
+                <span>CALCULADORA FIA</span>
+            </a>
         </nav>
-
-        <button class="btn-ayuda" type="button" data-bs-toggle="modal" data-bs-target="#modalAyuda">¿Necesitas ayuda?</button>
 
         <div class="dropdown">
             <button class="user-chip" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <span class="avatar">@User.GetIniciales()</span>
                 <span class="d-texto">
                     <span class="nombre d-block">@User.GetNombre()</span>
-                    <span class="escuela d-block">@(User.EsProfesor() ? "Docente · " : "")@User.GetEscuela()</span>
+                    <span class="escuela d-block">@User.GetEscuela()</span>
                 </span>
                 <i class="bi bi-chevron-down d-texto"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
                 <li><span class="dropdown-item-text small text-muted">@User.Identity?.Name</span></li>
                 <li><hr class="dropdown-divider"></li>
-                @if (!User.EsProfesor())
-                {
-                    <li><a class="dropdown-item" href="/Notas"><i class="bi bi-journal-check me-2"></i>Mis notas</a></li>
-                }
+                <li><a class="dropdown-item" href="/Notas"><i class="bi bi-journal-check me-2"></i>Mis notas</a></li>
                 <li><a class="dropdown-item" href="/Horario"><i class="bi bi-clock me-2"></i>Mi horario</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
@@ -79,11 +91,32 @@
                 <li><a href="@item.Url" class="@(activo ? "active" : "")"><i class="bi bi-@(activo ? item.Activo : item.Icono)"></i>@item.Texto</a></li>
             }
         </ul>
+
+        <div class="sidebar-mobile-links">
+            <span class="sidebar-section-title">Portales FIA</span>
+            <a href="https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?client_id=9199bf20-a13f-4107-85dc-02114787ef48&scope=https%3A%2F%2Foutlook.office.com%2F.default%20openid%20profile%20offline_access&redirect_uri=https%3A%2F%2Foutlook.office365.com%2Fmail%2F&client-request-id=1023e2ef-8ccb-5fc3-0c09-e2c86dec9525&response_mode=fragment&client_info=1&clidata=1&domain_hint=usmp.pe&nonce=01a0df17-5978-7f34-b4a8-9e473baee784&state=eyJpZCI6IjAxYTBkZjE3LTU5NzgtNzc5OC05MTA0LTFjMzZkNzU3NzNjMyIsIm1ldGEiOnsiaW50ZXJhY3Rpb25UeXBlIjoicmVkaXJlY3QifX0%3D%7CaHR0cHM6Ly9vdXRsb29rLm9mZmljZTM2NS5jb20vbWFpbC8_dmQ9bWFpbA&claims=%7B%22id_token%22%3A%7B%22signin_state%22%3A%7B%22essential%22%3Afalse%7D%2C%22login_hint%22%3A%7B%22essential%22%3Afalse%7D%7D%2C%22access_token%22%3A%7B%22xms_cc%22%3A%7B%22values%22%3A%5B%22CP1%22%5D%7D%7D%7D&x-client-SKU=msal.js.browser&x-client-VER=5.19.0&response_type=code&code_challenge=09tz2C8IeI74z2glo_UDAuU0z4r1btglrAW1VgEpniY&code_challenge_method=S256&sso_reload=true" target="_blank" rel="noopener" class="mobile-portal-link">
+                <img src="~/img/logo_OUTLOOK.png" alt="Outlook" />
+                <span>Correo USMP</span>
+            </a>
+            <a href="https://campusvirtual.aulavirtualusmp.pe/mdlfia425/login/index.php" target="_blank" rel="noopener" class="mobile-portal-link">
+                <img src="~/img/Logo-FIA.png" alt="FIA" style="filter: brightness(0);" />
+                <span>Aula Virtual FIA</span>
+            </a>
+            <a href="https://fioriprd.udm.hec.ondemand.com/sap/bc/ui2/flp?sap-client=400" target="_blank" rel="noopener" class="mobile-portal-link">
+                <img src="~/img/logo_SAP.png" alt="SAP" />
+                <span>Portal SAP</span>
+            </a>
+            <a href="https://calculadorafiausmp.com/" target="_blank" rel="noopener" class="mobile-portal-link">
+                <img src="~/img/logo_CALCULADORA_FIA.png" alt="Calculadora" />
+                <span>Calculadora FIA</span>
+            </a>
+        </div>
+
         <div class="sidebar-footer">
-            <button class="btn-guinda w-100" type="button" data-bs-toggle="modal" data-bs-target="#modalCalculadora">CalculadoraFIA</button>
-            <small>Periodo 2026-II</small>
+            <small>Periodo 2026-II · FIA USMP</small>
         </div>
     </aside>
+    <div class="sidebar-backdrop" onclick="document.body.classList.remove('sidebar-open')"></div>
 
     <main class="main" onclick="document.body.classList.remove('sidebar-open')">
         @RenderBody()
@@ -102,6 +135,7 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>window.pieHostUrl = '@Html.Raw(PieHost.WebSocketClientUrl)';</script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

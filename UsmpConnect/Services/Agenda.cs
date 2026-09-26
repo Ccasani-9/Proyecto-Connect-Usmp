@@ -27,6 +27,23 @@ public static class Agenda
             })
             .ToListAsync();
 
+        // Si el usuario no tiene matrícula registrada aún (o es nuevo usuario de prueba),
+        // le mostramos las clases del ciclo para que su calendario nunca esté vacío por defecto.
+        if (datos.Count == 0 && !esProfesor)
+        {
+            datos = await db.Horarios.AsNoTracking()
+                .Where(h => new[] { "01A", "01B", "02A", "04T" }.Contains(h.Seccion.Codigo))
+                .Select(h => new
+                {
+                    h.Dia, h.HoraInicio, h.HoraFin, h.Aula,
+                    Curso = h.Seccion.Curso.Nombre,
+                    Seccion = h.Seccion.Codigo,
+                    h.Seccion.Docente.Titulo,
+                    h.Seccion.Docente.Apellidos
+                })
+                .ToListAsync();
+        }
+
         return datos
             .Select(h => new ClaseVM(h.Dia, h.HoraInicio, h.HoraFin, h.Curso, h.Aula,
                 esProfesor ? $"Sección {h.Seccion}" : $"{h.Titulo} {h.Apellidos.Split(' ')[0]}"))

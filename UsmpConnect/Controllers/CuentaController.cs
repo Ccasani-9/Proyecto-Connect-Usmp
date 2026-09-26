@@ -48,15 +48,7 @@ public class CuentaController(
         if (!string.IsNullOrEmpty(dominio) && !model.Email.Trim().EndsWith("@" + dominio, StringComparison.OrdinalIgnoreCase))
             ModelState.AddModelError(nameof(model.Email), $"Usa tu correo institucional @{dominio}");
 
-        var esDocente = model.Tipo == Roles.Profesor;
-        if (esDocente)
-        {
-            if (model.CodigoDocente != config["Registro:CodigoDocente"])
-                ModelState.AddModelError(nameof(model.CodigoDocente), "Código de invitación docente inválido");
-            if (string.IsNullOrWhiteSpace(model.Titulo))
-                ModelState.AddModelError(nameof(model.Titulo), "Selecciona tu título");
-        }
-        else if (string.IsNullOrWhiteSpace(model.CodigoAlumno))
+        if (string.IsNullOrWhiteSpace(model.CodigoAlumno))
         {
             ModelState.AddModelError(nameof(model.CodigoAlumno), "Ingresa tu código de alumno");
         }
@@ -74,8 +66,7 @@ public class CuentaController(
             Nombres = model.Nombres.Trim(),
             Apellidos = model.Apellidos.Trim(),
             Escuela = model.Escuela,
-            Titulo = esDocente ? model.Titulo : null,
-            CodigoAlumno = esDocente ? null : model.CodigoAlumno
+            CodigoAlumno = model.CodigoAlumno.Trim()
         };
 
         var result = await userManager.CreateAsync(user, model.Password);
@@ -86,8 +77,8 @@ public class CuentaController(
             return View(model);
         }
 
-        await userManager.AddToRoleAsync(user, esDocente ? Roles.Profesor : Roles.Alumno);
-        await notificaciones.NotificarAsync(user.Id, $"¡Bienvenido a USMP Connect, {user.Nombres}! Tu cuenta de {(esDocente ? "docente" : "alumno")} está lista.", icono: "stars");
+        await userManager.AddToRoleAsync(user, Roles.Alumno);
+        await notificaciones.NotificarAsync(user.Id, $"¡Bienvenido a USMP Connect, {user.Nombres}! Tu cuenta de alumno está lista.", icono: "stars");
         await signInManager.SignInAsync(user, isPersistent: false);
         TempData["Toast"] = "Cuenta creada correctamente. ¡Bienvenido!";
         return RedirectToAction("Index", "Home");

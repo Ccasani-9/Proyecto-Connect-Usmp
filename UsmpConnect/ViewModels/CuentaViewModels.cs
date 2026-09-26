@@ -33,15 +33,10 @@ public class RegistroViewModel
     [StringLength(60)]
     public string Apellidos { get; set; } = "";
 
-    [RegularExpression(@"^\d{10}$", ErrorMessage = "El código tiene 10 dígitos")]
+    [Required(ErrorMessage = "Ingresa tu código de alumno")]
+    [RegularExpression(@"^\d{10}$", ErrorMessage = "El código universitario debe tener 10 dígitos")]
     [Display(Name = "Código de alumno")]
-    public string? CodigoAlumno { get; set; }
-
-    [Display(Name = "Título")]
-    public string? Titulo { get; set; }
-
-    [Display(Name = "Código de invitación docente")]
-    public string? CodigoDocente { get; set; }
+    public string CodigoAlumno { get; set; } = "";
 
     [Required(ErrorMessage = "Selecciona tu escuela")]
     public string Escuela { get; set; } = "";

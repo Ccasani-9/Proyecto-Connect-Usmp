@@ -59,6 +59,8 @@ builder.Services.AddControllersWithViews(options =>
 // ---------- Servicios compartidos por todos los módulos ----------
 builder.Services.AddScoped<INotificacionService, NotificacionService>();
 builder.Services.AddSingleton<IAlmacenArchivos, AlmacenArchivosLocal>();
+builder.Services.AddServiciosNube();
+
 
 // Subidas de hasta 25 MB (Banco de Apuntes).
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(o => o.MultipartBodyLengthLimit = 26 * 1024 * 1024);
@@ -76,6 +78,25 @@ var app = builder.Build();
 
 await DbInitializer.InitializeAsync(app.Services);
 
+// Sincronización en segundo plano con Algolia si está configurado
+_ = Task.Run(async () =>
+{
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var algolia = scope.ServiceProvider.GetRequiredService<IBuscadorAlgolia>();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        if (algolia.IsConfigured)
+        {
+            await algolia.SincronizarTodoAsync(db);
+        }
+    }
+    catch
+    {
+        // Silencioso: no interrumpe el arranque
+    }
+});
+
 app.UseForwardedHeaders();
 
 if (!app.Environment.IsDevelopment())
@@ -84,6 +105,35 @@ if (!app.Environment.IsDevelopment())
 // Módulos que aún no existen (404) muestran la página "En construcción".
 app.UseStatusCodePagesWithReExecute("/Home/Estado/{0}");
 
+// Redirección amigable de URLs en inglés a español
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value ?? "";
+    if (path.Equals("/FoodSpots", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.Redirect("/Restaurantes" + context.Request.QueryString, permanent: true);
+        return;
+    }
+    if (path.StartsWith("/FoodSpots/", StringComparison.OrdinalIgnoreCase))
+    {
+        var newPath = "/Restaurantes" + path.Substring("/FoodSpots".Length) + context.Request.QueryString;
+        context.Response.Redirect(newPath, permanent: true);
+        return;
+    }
+    if (path.Equals("/LostFound", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.Redirect("/ObjetosPerdidos" + context.Request.QueryString, permanent: true);
+        return;
+    }
+    if (path.StartsWith("/LostFound/", StringComparison.OrdinalIgnoreCase))
+    {
+        var newPath = "/ObjetosPerdidos" + path.Substring("/LostFound".Length) + context.Request.QueryString;
+        context.Response.Redirect(newPath, permanent: true);
+        return;
+    }
+    await next();
+});
+
 app.UseStaticFiles(); // archivos subidos en wwwroot/uploads
 app.UseRouting();
 
@@ -91,6 +141,16 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+
+app.MapControllerRoute(
+    name: "restaurantes",
+    pattern: "Restaurantes/{action=Index}/{id?}",
+    defaults: new { controller = "FoodSpots" });
+
+app.MapControllerRoute(
+    name: "objetosperdidos",
+    pattern: "ObjetosPerdidos/{action=Index}/{id?}",
+    defaults: new { controller = "LostFound" });
 
 app.MapControllerRoute(
     name: "default",

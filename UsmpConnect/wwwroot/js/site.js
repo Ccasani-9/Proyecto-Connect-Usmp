@@ -73,7 +73,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     iniciarCalculadora();
+    iniciarPieHostWebSockets();
 });
+
+function iniciarPieHostWebSockets() {
+    if (!window.pieHostUrl || window.pieHostUrl.trim() === '') return;
+    try {
+        const ws = new WebSocket(window.pieHostUrl);
+        ws.onmessage = (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                if (msg.evento === 'nueva_resena') {
+                    usmpToast(`${msg.datos.Usuario} calificó ${msg.datos.RestauranteNombre} (${msg.datos.NuevaCalificacion} ⭐)`);
+                }
+            } catch (e) {}
+        };
+    } catch (e) {
+        // Fallback silencioso
+    }
+}
 
 function iniciarCalculadora() {
     const calc = document.getElementById('calc');
