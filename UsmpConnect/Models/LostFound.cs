@@ -20,9 +20,12 @@ public enum CategoriaObjeto
 /// <summary>Dónde quedó el objeto encontrado mientras aparece su dueño.</summary>
 public enum CustodiaObjeto
 {
-    [Display(Name = "En custodia de Seguridad")] Seguridad,
-    [Display(Name = "Con el alumno reportante")] Reportante,
-    [Display(Name = "En la Secretaría de la Facultad")] Secretaria
+    [Display(Name = "Garita Puerta 1 - Principal (Av. La Fontana)")] GaritaPuerta1 = 10,
+    [Display(Name = "Garita Puerta 2 (Av. Los Frutales)")] GaritaPuerta2 = 11,
+    [Display(Name = "Garita Puerta 3 (Acceso Peatonal)")] GaritaPuerta3 = 12,
+    [Display(Name = "Mesa de Partes / Secretaría Académica (Pabellón A)")] Secretaria = 2,
+    [Display(Name = "Oficina de Seguridad Central FIA")] Seguridad = 0,
+    [Display(Name = "Con el alumno reportante")] Reportante = 1
 }
 
 public enum EstadoObjeto

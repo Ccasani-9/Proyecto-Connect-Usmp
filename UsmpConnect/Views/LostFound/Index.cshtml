@@ -1,6 +1,6 @@
 @model LostFoundIndexViewModel
 @{
-    ViewData["Title"] = "Lost & Found";
+    ViewData["Title"] = "Objetos Perdidos";
     var encontrados = Model.Tipo == TipoReporte.Encontrado;
     var ahora = HoraPeru.Ahora.ToString("yyyy-MM-ddTHH:mm");
 }
@@ -27,18 +27,18 @@
 
 <div class="card-u page-head">
     <div>
-        <h1>Lost &amp; Found (Objetos Perdidos)</h1>
-        <p>Reporta objetos encontrados o busca tus pertenencias extraviadas en campus</p>
+        <h1>Objetos Perdidos (Campus FIA)</h1>
+        <p>Reporta objetos encontrados bajo custodia oficial o busca tus pertenencias extraviadas</p>
     </div>
     <button class="btn-guinda" type="button" data-bs-toggle="modal" data-bs-target="#modalReportar">
-        @(encontrados ? "+ Reportar Objeto Encontrado" : "+ Reportar Objeto Perdido")
+        @(encontrados ? "+ Reportar Objeto Encontrado" : "+ Publicar Objeto Perdido")
     </button>
 </div>
 
 <div class="card-u p mb-3">
     <nav class="lf-tabs">
-        <a href="/LostFound" class="@(encontrados ? "active" : "")">Objetos Encontrados (Esperando dueño)</a>
-        <a href="/LostFound?tipo=Perdido" class="@(encontrados ? "" : "active")">Objetos que Busco (Extraviados)</a>
+        <a href="/LostFound" class="@(encontrados ? "active" : "")">Objetos Encontrados (En Custodia)</a>
+        <a href="/LostFound?tipo=Perdido" class="@(encontrados ? "" : "active")">Objetos Extraviados (Se Busca)</a>
     </nav>
     <div class="chips" data-filtro="categoria">
         <button type="button" class="chip active" data-valor="todo">Todo</button>
@@ -91,12 +91,25 @@
                     <div class="lf-custodia small text-muted">
                         @if (encontrados)
                         {
-                            <i class="bi bi-@(devuelto ? "check2-circle" : o.Custodia == CustodiaObjeto.Reportante ? "person" : "shield-check") me-1"></i>
-                            @(devuelto ? EstadoObjeto.Devuelto.Nombre() : o.Custodia?.Nombre())
+                            <div class="d-flex align-items-center gap-1 text-dark fw-semibold mb-1">
+                                <i class="bi bi-shield-check text-primary"></i>
+                                <span>Custodia: @(devuelto ? EstadoObjeto.Devuelto.Nombre() : o.Custodia?.Nombre())</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(o.WhatsApp) && !devuelto && !propio)
+                            {
+                                <div class="mt-2">
+                                    <a class="btn btn-sm btn-outline-success py-1 px-2 d-inline-flex align-items-center gap-1" target="_blank" rel="noopener"
+                                       href="@WhatsApp.Enlace(o.WhatsApp, $"Hola, vi tu reporte de \"{o.Titulo}\" en USMP Connect y quería coordinar la entrega.")">
+                                        <i class="bi bi-whatsapp"></i>Consultar por WhatsApp
+                                    </a>
+                                </div>
+                            }
                         }
                         else
                         {
-                            <i class="bi bi-person me-1"></i>@o.Reportante.NombreCorto
+                            <div class="d-flex align-items-center gap-1 mb-1">
+                                <i class="bi bi-person me-1"></i>Reportado por @o.Reportante.NombreCorto
+                            </div>
                             @if (o.Descripcion is not null)
                             {
                                 <div class="mt-1">@o.Descripcion</div>
@@ -259,6 +272,14 @@
                         <div class="fw-bold" data-rec="titulo"></div>
                         <div class="small text-muted">📍 <span data-rec="lugar"></span></div>
                         <div class="small text-muted">📅 <span data-rec="fecha"></span></div>
+                    </div>
+                <div class="alert alert-light border d-flex gap-2 align-items-start py-2 px-3 mb-3" style="background:#f8f9fa; border-radius:10px;">
+                    <i class="bi bi-shield-check text-primary fs-5 mt-1"></i>
+                    <div class="small">
+                        <strong class="text-dark">Procedimiento oficial de entrega FIA:</strong>
+                        <div class="text-muted mt-1">
+                            El objeto se encuentra bajo custodia en Garita o Secretaría. Al enviar tu solicitud, el reportante y seguridad validarán tu información. Para el retiro físico se exigirá la presentación de tu <strong>Carné Universitario USMP</strong> o DNI físico.
+                        </div>
                     </div>
                 </div>
                 <form asp-action="Reclamar" method="post">

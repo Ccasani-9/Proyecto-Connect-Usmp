@@ -11,7 +11,16 @@ public class CalendarioController(ApplicationDbContext db) : Controller
     public async Task<IActionResult> Index()
     {
         var userId = User.GetUserId();
-        ViewData["Hoy"] = HoraPeru.Ahora.DayOfWeek;
-        return View("~/Views/Horario/Index.cshtml", await Agenda.ClasesSemanaAsync(db, userId, false));
+        var clases = await Agenda.ClasesSemanaAsync(db, userId, false);
+        var eventos = await Agenda.EventosAsync(db, userId);
+
+        var vm = new CalendarioViewModel
+        {
+            Clases = clases,
+            Eventos = eventos,
+            FechaHoy = HoraPeru.Hoy
+        };
+
+        return View(vm);
     }
 }

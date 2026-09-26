@@ -1,6 +1,6 @@
 @model List<UsmpConnect.ViewModels.NotaCursoVM>
 @{
-    ViewData["Title"] = "Mis notas";
+    ViewData["Title"] = "Mis Notas Académicas";
     static string ClaseNota(decimal? n) => n switch { null => "tag-muted", >= 13 => "tag-ok", >= 10.5m => "tag-warn", _ => "tag-bad" };
     static string F(decimal? n) => n?.ToString("0.0") ?? "—";
 
@@ -11,12 +11,17 @@
 
 <div class="card-u page-head">
     <div>
-        <h1>Mis notas · 2026-II</h1>
-        <p>EP = Examen parcial · EF = Examen final · Promedio = (EP + EF) / 2</p>
+        <h1>Mis Notas · Periodo 2026-II</h1>
+        <p>Sistema de evaluación FIA USMP: <b>PF = (PP × 30%) + (EP × 30%) + (EF × 40%)</b></p>
     </div>
-    <div class="text-end">
-        <div class="small text-muted">Promedio ponderado (cursos con nota final)</div>
-        <div class="fs-3 fw-bold" style="color:var(--guinda)">@(ponderado?.ToString("0.00") ?? "—")</div>
+    <div class="d-flex align-items-center gap-4">
+        <a href="https://calculadorafiausmp.com/" target="_blank" rel="noopener" class="btn btn-outline-secondary">
+            <i class="bi bi-calculator me-1"></i>Calculadora FIA Externa
+        </a>
+        <div class="text-end">
+            <div class="small text-muted">Promedio ponderado estimado</div>
+            <div class="fs-3 fw-bold" style="color:var(--guinda)">@(ponderado?.ToString("0.00") ?? "—")</div>
+        </div>
     </div>
 </div>
 
@@ -24,7 +29,18 @@
     <div class="table-responsive">
         <table class="table-u">
             <thead>
-                <tr><th>Curso</th><th>Docente</th><th class="text-center">Créditos</th><th class="text-center">EP</th><th class="text-center">EF</th><th class="text-center">Promedio</th><th>Estado</th></tr>
+                <tr>
+                    <th>Curso</th>
+                    <th>Docente</th>
+                    <th class="text-center">Créditos</th>
+                    <th class="text-center">PP (30%)</th>
+                    <th class="text-center">EP (30%)</th>
+                    <th class="text-center">EF (40%)</th>
+                    <th class="text-center">Meta EF (p/ 10.5)</th>
+                    <th class="text-center">Promedio Final</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acción</th>
+                </tr>
             </thead>
             <tbody>
                 @foreach (var n in Model)
@@ -33,13 +49,50 @@
                         <td class="fw-semibold">@n.Curso</td>
                         <td class="text-muted">@n.Docente</td>
                         <td class="text-center">@n.Creditos</td>
+                        <td class="text-center"><span class="tag @ClaseNota(n.PP)">@F(n.PP)</span></td>
                         <td class="text-center"><span class="tag @ClaseNota(n.EP)">@F(n.EP)</span></td>
                         <td class="text-center"><span class="tag @ClaseNota(n.EF)">@F(n.EF)</span></td>
+                        <td class="text-center">
+                            @if (n.Promedio.HasValue)
+                            {
+                                <span class="small text-muted">—</span>
+                            }
+                            else if (n.EfParaAprobar.HasValue)
+                            {
+                                if (n.EfParaAprobar.Value <= 20)
+                                {
+                                    <span class="badge bg-warning-subtle text-dark border">≥ @F(n.EfParaAprobar)</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger-subtle text-danger border">Sustitutorio</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="small text-muted">Pendiente EP</span>
+                            }
+                        </td>
                         <td class="text-center"><span class="tag @ClaseNota(n.Promedio)">@F(n.Promedio)</span></td>
                         <td>
-                            @if (n.Promedio is null) { <span class="small text-muted">En curso</span> }
-                            else if (n.Promedio >= 10.5m) { <span class="small fw-semibold" style="color:var(--ok)">Aprobado</span> }
-                            else { <span class="small fw-semibold" style="color:var(--bad)">Desaprobado</span> }
+                            @if (n.Promedio is null)
+                            {
+                                <span class="small text-muted">En curso</span>
+                            }
+                            else if (n.Promedio >= 10.5m)
+                            {
+                                <span class="small fw-semibold" style="color:var(--ok)">Aprobado</span>
+                            }
+                            else
+                            {
+                                <span class="small fw-semibold" style="color:var(--bad)">Desaprobado</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-guinda" type="button" data-bs-toggle="modal" data-bs-target="#modalEditarNota"
+                                    data-id="@n.MatriculaId" data-curso="@n.Curso" data-pp="@n.PP" data-ep="@n.EP" data-ef="@n.EF">
+                                <i class="bi bi-pencil-square me-1"></i>Modificar
+                            </button>
                         </td>
                     </tr>
                 }
@@ -47,3 +100,115 @@
         </table>
     </div>
 </div>
+
+<!-- Modal: Editar / Registrar Notas del Alumno -->
+<div class="modal fade" id="modalEditarNota" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" asp-action="ActualizarNota" method="post">
+            <input type="hidden" name="matriculaId" id="editMatriculaId" />
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title mb-0">Modificar mis notas</h5>
+                    <small class="text-muted" id="editCursoNombre"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-light border small text-muted mb-3" style="background:#f8f9fa">
+                    <i class="bi bi-info-circle me-1 text-primary"></i>
+                    Fórmula oficial FIA: <code>PF = (PP × 0.3) + (EP × 0.3) + (EF × 0.4)</code>.<br />
+                    Puedes ingresar notas proyectadas para saber cuánto necesitas en tu Examen Final.
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-4">
+                        <label class="form-label" for="inputPP">PP (30%)</label>
+                        <input type="number" step="0.1" min="0" max="20" class="form-control text-center" id="inputPP" name="pp" placeholder="0 - 20" />
+                        <small class="text-muted d-block text-center mt-1">Prácticas</small>
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label" for="inputEP">EP (30%)</label>
+                        <input type="number" step="0.1" min="0" max="20" class="form-control text-center" id="inputEP" name="ep" placeholder="0 - 20" />
+                        <small class="text-muted d-block text-center mt-1">Parcial</small>
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label" for="inputEF">EF (40%)</label>
+                        <input type="number" step="0.1" min="0" max="20" class="form-control text-center" id="inputEF" name="ef" placeholder="0 - 20" />
+                        <small class="text-muted d-block text-center mt-1">Final</small>
+                    </div>
+                </div>
+
+                <div class="card p-3 border mb-3" style="background:#fffcfc; border-color:var(--guinda-100) !important;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small fw-semibold text-muted">Promedio Calculado:</span>
+                        <span class="fs-4 fw-bold" id="previewPromedio" style="color:var(--guinda)">—</span>
+                    </div>
+                    <div class="small text-muted mt-1" id="previewMeta"></div>
+                </div>
+
+                <button class="btn-guinda w-100" type="submit">Guardar mis notas</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const modal = document.getElementById('modalEditarNota');
+            const idInput = document.getElementById('editMatriculaId');
+            const cursoLabel = document.getElementById('editCursoNombre');
+            const ppInput = document.getElementById('inputPP');
+            const epInput = document.getElementById('inputEP');
+            const efInput = document.getElementById('inputEF');
+            const prevProm = document.getElementById('previewPromedio');
+            const prevMeta = document.getElementById('previewMeta');
+
+            function recalcular() {
+                const pp = parseFloat(ppInput.value);
+                const ep = parseFloat(epInput.value);
+                const ef = parseFloat(efInput.value);
+
+                const hasPP = !isNaN(pp);
+                const hasEP = !isNaN(ep);
+                const hasEF = !isNaN(ef);
+
+                if (hasPP && hasEP && hasEF) {
+                    const pf = (pp * 0.3) + (ep * 0.3) + (ef * 0.4);
+                    prevProm.textContent = pf.toFixed(1);
+                    prevMeta.textContent = pf >= 10.5 ? '✅ Condición: Aprobado' : '❌ Condición: Desaprobado';
+                } else if (hasEP && hasEF && !hasPP) {
+                    const pf = (ep + ef) / 2;
+                    prevProm.textContent = pf.toFixed(1);
+                    prevMeta.textContent = pf >= 10.5 ? '✅ Condición: Aprobado' : '❌ Condición: Desaprobado';
+                } else {
+                    prevProm.textContent = '—';
+                    if (hasPP && hasEP && !hasEF) {
+                        const efReq = (10.5 - (pp * 0.3) - (ep * 0.3)) / 0.4;
+                        if (efReq <= 0) {
+                            prevMeta.textContent = '🎯 ¡Ya tienes asegurado el 10.5!';
+                        } else if (efReq <= 20) {
+                            prevMeta.textContent = `🎯 Necesitas ${efReq.toFixed(1)} en el EF para aprobar con 10.5`;
+                        } else {
+                            prevMeta.textContent = `⚠️ Matemáticamente requieres ${efReq.toFixed(1)}, necesitarás rendir examen sustitutorio.`;
+                        }
+                    } else {
+                        prevMeta.textContent = 'Ingresa tus notas para ver el cálculo estimado.';
+                    }
+                }
+            }
+
+            modal.addEventListener('show.bs.modal', e => {
+                const d = e.relatedTarget.dataset;
+                idInput.value = d.id;
+                cursoLabel.textContent = d.curso;
+                ppInput.value = d.pp || '';
+                epInput.value = d.ep || '';
+                efInput.value = d.ef || '';
+                recalcular();
+            });
+
+            [ppInput, epInput, efInput].forEach(inp => inp.addEventListener('input', recalcular));
+        })();
+    </script>
+}

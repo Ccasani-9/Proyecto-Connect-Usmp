@@ -127,18 +127,18 @@ public class BaseSeeder : IModuleSeeder
         S(so, "05A", DemoUsers.Sanchez, (DayOfWeek.Wednesday, 18, 21, "Lab. C-303"));
 
         // ---------- Matrículas y notas ----------
-        void Matricular(string alumno, Seccion seccion, decimal? ep = null, decimal? ef = null)
+        void Matricular(string alumno, Seccion seccion, decimal? ep = null, decimal? ef = null, decimal? pp = null)
         {
             var m = new Matricula { AlumnoId = u[alumno].Id, Seccion = seccion };
-            if (ep.HasValue || ef.HasValue)
-                m.Nota = new Nota { EP = ep, EF = ef, ActualizadoEn = DateTime.UtcNow };
+            if (ep.HasValue || ef.HasValue || pp.HasValue)
+                m.Nota = new Nota { PP = pp, EP = ep, EF = ef, ActualizadoEn = DateTime.UtcNow };
             db.Matriculas.Add(m);
         }
 
-        Matricular(DemoUsers.Alessandro, sAed, 15, 16);
-        Matricular(DemoUsers.Alessandro, sCalc, 12, 11);
-        Matricular(DemoUsers.Alessandro, sIntro, 14);
-        Matricular(DemoUsers.Alessandro, sFis1);
+        Matricular(DemoUsers.Alessandro, sAed, 15, 16, 17);
+        Matricular(DemoUsers.Alessandro, sCalc, 12, 11, 14);
+        Matricular(DemoUsers.Alessandro, sIntro, 14, null, 15);
+        Matricular(DemoUsers.Alessandro, sFis1, null, null, 13);
         Matricular(DemoUsers.Alessandro, sCom1);
 
         var companeros = new[]

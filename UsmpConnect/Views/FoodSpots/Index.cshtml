@@ -63,10 +63,10 @@
 <div class="card-u page-head mb-3">
     <div>
         <div class="d-flex align-items-center gap-2 mb-1">
-            <h1 class="h3 fw-bold mb-0">Food &amp; Spots FIA</h1>
-            <span class="tag tag-guinda"><i class="bi bi-geo-alt-fill me-1"></i>Campus La Fontana</span>
+            <h1 class="h3 fw-bold mb-0">Restaurantes Cercanos a la FIA</h1>
+            <span class="tag tag-guinda"><i class="bi bi-geo-alt-fill me-1"></i>Av. La Fontana 1250</span>
         </div>
-        <p class="text-muted mb-0">Huariques, cafeterías y restaurantes recomendados por y para alumnos de la USMP.</p>
+        <p class="text-muted mb-0">Huariques, menús caseros y cafeterías para almorzar entre clases cerca al campus universitario.</p>
     </div>
     <div class="d-flex align-items-center gap-2 flex-wrap">
         <span class="tag tag-ok" title="Tecnología de Caché"><i class="bi bi-lightning-charge-fill me-1"></i>@Model.FuenteDatos</span>
@@ -84,7 +84,7 @@
         <div class="d-flex align-items-center gap-2">
             <i class="bi bi-map-fill text-danger fs-5"></i>
             <h2 class="h5 fw-bold mb-0">Mapa Interactivo de Huariques</h2>
-            <small class="text-muted">(Centrado en Av. La Fontana 1250, La Molina)</small>
+            <small class="text-muted">(Centrado en Av. La Fontana 1250, Santa Patricia - La Molina)</small>
         </div>
         <button class="btn btn-sm btn-soft" type="button" onclick="centrarEnFia()">
             <i class="bi bi-crosshair me-1"></i>Centrar en la FIA
@@ -99,7 +99,7 @@
         <div class="col-lg-6">
             <form method="get" class="search-box">
                 <i class="bi bi-search"></i>
-                <input type="text" name="q" value="@Model.Busqueda" class="form-control" placeholder="Buscar por nombre, plato, chifa, menú..." />
+                <input type="text" name="q" value="@Model.Busqueda" class="form-control" placeholder="Buscar por nombre, chifa, menú, sanguchería..." />
                 @if (Model.CategoriaActual.HasValue)
                 {
                     <input type="hidden" name="categoria" value="@Model.CategoriaActual" />
@@ -168,26 +168,12 @@ else
                         <i class="bi bi-clock me-1"></i>@r.DistanciaTexto · <span class="text-success">@r.HorarioAtencion</span>
                     </div>
 
-                    <!-- Platos destacados -->
-                    @if (r.PlatosPopulares.Count > 0)
-                    {
-                        <div class="bg-light p-2 rounded mb-3 small">
-                            <span class="fw-semibold text-secondary d-block mb-1">
-                                <i class="bi bi-fire text-danger me-1"></i>Plato estrella:
-                            </span>
-                            <div class="d-flex justify-content-between">
-                                <span class="text-truncate">@r.PlatosPopulares[0].Nombre</span>
-                                <span class="fw-bold text-success ms-2">S/ @r.PlatosPopulares[0].Precio.ToString("0.00")</span>
-                            </div>
-                        </div>
-                    }
-
                     <div class="mt-auto d-flex gap-2">
                         <button class="btn btn-sm btn-outline-secondary w-50" type="button" onclick="irARestauranteEnMapa(@r.Latitud, @r.Longitud, '@r.Nombre.Replace("'", "\\'")')">
                             <i class="bi bi-pin-map me-1"></i>Ver en mapa
                         </button>
                         <button class="btn btn-sm btn-guinda w-50" type="button" onclick="abrirModalDetalle(@r.Id)">
-                            <i class="bi bi-card-text me-1"></i>Ver carta
+                            <i class="bi bi-chat-heart me-1"></i>Ver reseñas
                         </button>
                     </div>
                 </div>
@@ -230,12 +216,6 @@ else
                         </div>
                     </div>
                 </div>
-
-                <hr class="my-3" />
-
-                <!-- Lista de Platos -->
-                <h3 class="h6 fw-bold mb-2"><i class="bi bi-journal-text me-1"></i>Carta &amp; Platos Populares</h3>
-                <div id="modalPlatosLista" class="mb-4"></div>
 
                 <hr class="my-3" />
 
@@ -288,7 +268,7 @@ else
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let map;
-        const fiaCoords = [-12.0722, -76.9632];
+        const fiaCoords = [-12.0722, -76.9532];
         const marcadores = {};
 
         document.addEventListener("DOMContentLoaded", function () {
@@ -307,7 +287,7 @@ else
                 iconSize: [140, 30],
                 iconAnchor: [70, 15]
             });
-            L.marker(fiaCoords, { icon: fiaIcon }).addTo(map).bindPopup("<b>Facultad de Ingeniería y Arquitectura (FIA)</b><br>Av. La Fontana 1250, La Molina").openPopup();
+            L.marker(fiaCoords, { icon: fiaIcon }).addTo(map).bindPopup("<b>Facultad de Ingeniería y Arquitectura (FIA)</b><br>Av. La Fontana 1250, Santa Patricia - La Molina").openPopup();
 
             // Marcadores de restaurantes
             const restos = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Restaurantes.Select(r => new {
@@ -336,7 +316,7 @@ else
                         <b>${r.Nombre}</b><br/>
                         <span style="color:#16a34a; font-weight:600;">${r.RangoPrecios}</span><br/>
                         <small style="color:#6b7280;">${r.DistanciaTexto}</small><br/>
-                        <button onclick="abrirModalDetalle(${r.Id})" class="btn btn-sm btn-guinda w-100 mt-2" style="font-size:11px; padding:2px 8px;">Ver Carta</button>
+                        <button onclick="abrirModalDetalle(${r.Id})" class="btn btn-sm btn-guinda w-100 mt-2" style="font-size:11px; padding:2px 8px;">Ver Reseñas</button>
                     </div>
                 `);
                 marcadores[r.Id] = m;
@@ -383,23 +363,6 @@ else
                     `;
                 } else {
                     document.getElementById('modalBtnWaContainer').innerHTML = '';
-                }
-
-                // Platos
-                const listaPlatos = document.getElementById('modalPlatosLista');
-                if (d.platos && d.platos.length > 0) {
-                    listaPlatos.innerHTML = d.platos.map(p => `
-                        <div class="plato-item">
-                            <div>
-                                <span class="fw-semibold">${p.nombre}</span>
-                                ${p.esPopular ? '<span class="badge bg-danger ms-1" style="font-size:10px;">Popular</span>' : ''}
-                                ${p.descripcion ? `<div class="small text-muted">${p.descripcion}</div>` : ''}
-                            </div>
-                            <span class="fw-bold text-success ms-3" style="white-space:nowrap;">S/ ${p.precio.toFixed(2)}</span>
-                        </div>
-                    `).join('');
-                } else {
-                    listaPlatos.innerHTML = '<p class="text-muted small">No hay platos registrados en la carta.</p>';
                 }
 
                 // Reseñas

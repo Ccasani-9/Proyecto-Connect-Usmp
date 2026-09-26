@@ -64,12 +64,13 @@
                     </button>
                     <div class="collapse @(abierto ? "show" : "")" id="nota@(i)">
                         <div class="acordeon-body">
-                            @if (n.EP is null && n.EF is null)
+                            @if (n.PP is null && n.EP is null && n.EF is null)
                             {
                                 <span class="small text-muted">Aún no hay notas registradas · @n.Docente</span>
                             }
                             else
                             {
+                                @if (n.PP.HasValue) { <span class="tag @ClaseNota(n.PP)">PP: @F(n.PP)</span> }
                                 <span class="tag @ClaseNota(n.EP)">EP: @F(n.EP)</span>
                                 <span class="tag @ClaseNota(n.EF)">EF: @F(n.EF)</span>
                                 <span class="tag @ClaseNota(n.Promedio)">Prom: @F(n.Promedio)</span>
@@ -256,7 +257,13 @@
                     if (f === hoy) clases.push('hoy');
                     if (conEvento.has(f)) clases.push('evento');
                     const titulos = eventos.filter(e => e.fecha === f).map(e => e.titulo).join('\n');
-                    cal.insertAdjacentHTML('beforeend', `<div class="${clases.join(' ')}" title="${titulos.replace(/"/g, '&quot;')}"><span>${d.getDate()}</span></div>`);
+                    const elem = document.createElement('div');
+                    elem.className = clases.join(' ');
+                    elem.title = titulos ? `${titulos}\n(Clic para abrir Mi Calendario)` : 'Clic para abrir Mi Calendario';
+                    elem.innerHTML = `<span>${d.getDate()}</span>`;
+                    elem.style.cursor = 'pointer';
+                    elem.addEventListener('click', () => { window.location.href = '/Calendario'; });
+                    cal.appendChild(elem);
                 }
             }
             document.querySelectorAll('[data-cal]').forEach(b => b.addEventListener('click', () => {

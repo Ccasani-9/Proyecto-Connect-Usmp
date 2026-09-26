@@ -93,6 +93,9 @@ public class Nota
     public Matricula Matricula { get; set; } = null!;
 
     [Range(0, 20)]
+    public decimal? PP { get; set; }
+
+    [Range(0, 20)]
     public decimal? EP { get; set; }
 
     [Range(0, 20)]
@@ -100,5 +103,9 @@ public class Nota
 
     public DateTime? ActualizadoEn { get; set; }
 
-    public decimal? Promedio => EP.HasValue && EF.HasValue ? Math.Round((EP.Value + EF.Value) / 2, 1) : null;
+    public decimal? Promedio => (PP.HasValue && EP.HasValue && EF.HasValue)
+        ? Math.Round((PP.Value * 0.3m) + (EP.Value * 0.3m) + (EF.Value * 0.4m), 1)
+        : (EP.HasValue && EF.HasValue)
+            ? Math.Round((EP.Value + EF.Value) / 2m, 1)
+            : null;
 }

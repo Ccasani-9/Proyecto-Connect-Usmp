@@ -25,13 +25,13 @@ public class FoodSpotsSeeder : IModuleSeeder
             Categoria = CategoriaRestaurante.CafeteriaHuarique,
             Rango = RangoPrecio.Economico,
             Direccion = "Campus FIA USMP · Al costado del Pabellón B",
-            DistanciaTexto = "Dentro del Campus (0 min)",
+            DistanciaTexto = "Dentro del Campus FIA (0 min)",
             RangoPrecios = "S/ 5.00 - S/ 13.00",
             HorarioAtencion = "Lun - Sáb: 7:30 AM - 8:30 PM",
             TelefonoWhatsApp = "987654321",
             FotoUrl = "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=80",
             Latitud = -12.0722,
-            Longitud = -76.9632,
+            Longitud = -76.9532,
             CalificacionPromedio = 4.6,
             TotalResenas = 3
         };
@@ -39,89 +39,89 @@ public class FoodSpotsSeeder : IModuleSeeder
         var r2 = new Restaurante
         {
             Nombre = "Huarique Doña Rossi",
-            Descripcion = "El clásico huarique de los estudiantes de sistemas e industrial. Platos bien servidos, sazón casera de mamá y refresco ilimitado.",
+            Descripcion = "El clásico huarique de los estudiantes de sistemas e industrial. Platos bien servidos, sazón casera y menú económico.",
             Categoria = CategoriaRestaurante.MenuCriollo,
             Rango = RangoPrecio.Economico,
-            Direccion = "Av. La Fontana 1285 · Frente a la Puerta 1",
-            DistanciaTexto = "A 40m de la puerta principal",
+            Direccion = "Av. La Fontana 1270 · Frente a Puerta 1 FIA",
+            DistanciaTexto = "A 40m cruzando Av. La Fontana",
             RangoPrecios = "S/ 9.50 - S/ 14.00",
             HorarioAtencion = "Lun - Vie: 11:30 AM - 4:30 PM",
             TelefonoWhatsApp = "991234567",
             FotoUrl = "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
             Latitud = -12.0718,
-            Longitud = -76.9625,
+            Longitud = -76.9528,
             CalificacionPromedio = 4.9,
             TotalResenas = 2
         };
 
         var r3 = new Restaurante
         {
-            Nombre = "Chifa Dragón Dorado La Molina",
+            Nombre = "Chifa Dragón Dorado La Fontana",
             Descripcion = "Chifa rápido con porciones contundentes para grupos de estudio. Aeropuertos gigantes, sopa wantán especial y chaufas al wok.",
             Categoria = CategoriaRestaurante.Chifa,
             Rango = RangoPrecio.Economico,
-            Direccion = "Av. La Fontana 1320",
-            DistanciaTexto = "A 2 minutos a pie (120m)",
+            Direccion = "Av. La Fontana 1310",
+            DistanciaTexto = "A 1 cuadra de la FIA (100m)",
             RangoPrecios = "S/ 11.00 - S/ 18.00",
             HorarioAtencion = "Lun - Dom: 12:00 PM - 10:00 PM",
             TelefonoWhatsApp = "978112233",
             FotoUrl = "https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=600&q=80",
-            Latitud = -12.0728,
-            Longitud = -76.9620,
+            Latitud = -12.0714,
+            Longitud = -76.9521,
             CalificacionPromedio = 4.5,
             TotalResenas = 2
         };
 
         var r4 = new Restaurante
         {
-            Nombre = "Sanguchería El Chinito (La Fontana)",
+            Nombre = "Sanguchería El Chinito (La Molina)",
             Descripcion = "Famoso por su chicharrón crocante con camote frito y sarza criolla. Ideal para desayunos antes de exámenes o almuerzos rápidos.",
             Categoria = CategoriaRestaurante.ComidaRapida,
             Rango = RangoPrecio.Medio,
-            Direccion = "Av. La Fontana 1150 · C.C. La Fontana",
-            DistanciaTexto = "A 4 minutos a pie (250m)",
+            Direccion = "Av. La Fontana 1180",
+            DistanciaTexto = "A 2 minutos a pie (180m)",
             RangoPrecios = "S/ 14.00 - S/ 22.00",
             HorarioAtencion = "Lun - Dom: 7:00 AM - 9:00 PM",
             TelefonoWhatsApp = "982334455",
             FotoUrl = "https://images.unsplash.com/photo-1509722747041-616f39b57569?auto=format&fit=crop&w=600&q=80",
-            Latitud = -12.0735,
-            Longitud = -76.9645,
+            Latitud = -12.0731,
+            Longitud = -76.9546,
             CalificacionPromedio = 4.8,
             TotalResenas = 1
         };
 
         var r5 = new Restaurante
         {
-            Nombre = "Green Box Healthy & Bowls",
-            Descripcion = "Comida saludable, bowls de quinua, pollo al grill, wraps integrales y ensaladas frescas con jugos naturales prensados al frío.",
-            Categoria = CategoriaRestaurante.Saludable,
-            Rango = RangoPrecio.Medio,
-            Direccion = "Av. Los Frutales 410 · Esquina con La Fontana",
-            DistanciaTexto = "A 5 minutos a pie (350m)",
-            RangoPrecios = "S/ 13.00 - S/ 19.00",
-            HorarioAtencion = "Lun - Vie: 9:00 AM - 6:00 PM",
+            Nombre = "Huarique El Punto Criollo",
+            Descripcion = "Almuerzos caseros, seco de res, lomo saltado y milanesas con papas fritas. Menú universitario rápido con chicha morada.",
+            Categoria = CategoriaRestaurante.MenuCriollo,
+            Rango = RangoPrecio.Economico,
+            Direccion = "Calle Los Mirtos 142 · Frente a la FIA",
+            DistanciaTexto = "A 80m de la entrada peatonal",
+            RangoPrecios = "S/ 9.00 - S/ 13.50",
+            HorarioAtencion = "Lun - Sáb: 11:30 AM - 5:00 PM",
             TelefonoWhatsApp = "965443322",
             FotoUrl = "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80",
-            Latitud = -12.0705,
-            Longitud = -76.9650,
+            Latitud = -12.0726,
+            Longitud = -76.9522,
             CalificacionPromedio = 4.7,
             TotalResenas = 1
         };
 
         var r6 = new Restaurante
         {
-            Nombre = "Bembos La Fontana",
-            Descripcion = "Hamburguesas a la parrilla, papas onduladas y combos con bebida para recargar energías entre laboratorios largos.",
+            Nombre = "Tambo+ / Snack Fontana",
+            Descripcion = "Bebidas, sánguches empaquetados, empanadas, café caliente y snacks rápidos para recargar energías entre laboratorios.",
             Categoria = CategoriaRestaurante.ComidaRapida,
-            Rango = RangoPrecio.Medio,
-            Direccion = "Av. Javier Prado Este / Av. La Fontana",
-            DistanciaTexto = "A 6 minutos a pie (400m)",
-            RangoPrecios = "S/ 12.90 - S/ 24.90",
-            HorarioAtencion = "Lun - Dom: 11:00 AM - 11:00 PM",
+            Rango = RangoPrecio.Economico,
+            Direccion = "Av. La Fontana con Calle Los Biólogos",
+            DistanciaTexto = "A 120m de la facultad",
+            RangoPrecios = "S/ 4.00 - S/ 11.00",
+            HorarioAtencion = "Lun - Dom: 24 Horas",
             TelefonoWhatsApp = "998877665",
             FotoUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80",
-            Latitud = -12.0745,
-            Longitud = -76.9615,
+            Latitud = -12.0719,
+            Longitud = -76.9539,
             CalificacionPromedio = 4.4,
             TotalResenas = 1
         };
