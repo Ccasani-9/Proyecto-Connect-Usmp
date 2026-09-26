@@ -1,0 +1,71 @@
+@model ObjetoPerdido
+@{
+    ViewData["Title"] = "Reclamos · " + Model.Titulo;
+    var entregado = Model.Estado == EstadoObjeto.Devuelto;
+
+    static string ClaseEstado(EstadoReclamo e) => e switch
+    {
+        EstadoReclamo.Aprobado => "tag-ok",
+        EstadoReclamo.Rechazado => "tag-bad",
+        _ => "tag-warn"
+    };
+}
+
+<a class="ver-todo d-inline-block mb-3" href="/LostFound"><i class="bi bi-arrow-left me-1"></i>Volver a Lost &amp; Found</a>
+
+<div class="card-u page-head">
+    <div>
+        <h1>Reclamos de “@Model.Titulo”</h1>
+        <p><i class="bi bi-geo-alt me-1"></i>@Model.Ubicacion · <i class="bi bi-calendar3 mx-1"></i>@LostFoundUi.FechaCorta(Model.FechaHallazgo)</p>
+    </div>
+    <span class="tag tag-upper @(entregado ? "tag-info" : "tag-ok")">@(entregado ? "Entregado a su dueño" : Model.Custodia?.Nombre())</span>
+</div>
+
+<p class="text-muted small">
+    Compara la descripción de cada alumno con el objeto. Aprueba solo si los detalles coinciden: al aprobar, el objeto
+    figura como entregado y las demás solicitudes se rechazan automáticamente. Cada alumno recibe una notificación.
+</p>
+
+@if (Model.Reclamos.Count == 0)
+{
+    <div class="card-u vacio">
+        <i class="bi bi-inbox"></i>
+        Nadie ha reclamado este objeto todavía.
+    </div>
+}
+
+<div class="d-grid gap-3">
+    @foreach (var r in Model.Reclamos)
+    {
+        <div class="card-u p">
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                <div class="d-flex gap-3">
+                    <span class="avatar avatar-soft">@string.Concat(r.NombreCompleto.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => p[0]))</span>
+                    <div>
+                        <div class="fw-bold">@r.NombreCompleto</div>
+                        <div class="small text-muted">Código @r.CodigoAlumno · @HoraPeru.Hace(r.Fecha)</div>
+                    </div>
+                </div>
+                <span class="tag tag-upper @ClaseEstado(r.Estado)">@r.Estado.Nombre()</span>
+            </div>
+            <p class="my-3">“@r.Descripcion”</p>
+            <div class="d-flex gap-2 flex-wrap">
+                <a class="btn btn-wa btn-sm px-3" target="_blank" rel="noopener"
+                   href="@WhatsApp.Enlace(r.WhatsApp, $"Hola {r.NombreCompleto.Split(' ')[0]}, te escribo por tu reclamo de \"{Model.Titulo}\" en USMP Connect.")">
+                    <i class="bi bi-whatsapp me-1"></i>Escribirle
+                </a>
+                @if (r.Estado == EstadoReclamo.Pendiente && !entregado)
+                {
+                    <form asp-action="ResolverReclamo" asp-route-id="@r.Id" method="post">
+                        <input type="hidden" name="aprobar" value="true" />
+                        <button class="btn-guinda btn-sm py-1 px-3" type="submit"><i class="bi bi-check2 me-1"></i>Aprobar y entregar</button>
+                    </form>
+                    <form asp-action="ResolverReclamo" asp-route-id="@r.Id" method="post">
+                        <input type="hidden" name="aprobar" value="false" />
+                        <button class="btn btn-soft btn-sm px-3" type="submit">Rechazar</button>
+                    </form>
+                }
+            </div>
+        </div>
+    }
+</div>
