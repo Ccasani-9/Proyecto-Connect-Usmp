@@ -78,6 +78,25 @@ var app = builder.Build();
 
 await DbInitializer.InitializeAsync(app.Services);
 
+// Sincronización en segundo plano con Algolia si está configurado
+_ = Task.Run(async () =>
+{
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var algolia = scope.ServiceProvider.GetRequiredService<IBuscadorAlgolia>();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        if (algolia.IsConfigured)
+        {
+            await algolia.SincronizarTodoAsync(db);
+        }
+    }
+    catch
+    {
+        // Silencioso: no interrumpe el arranque
+    }
+});
+
 app.UseForwardedHeaders();
 
 if (!app.Environment.IsDevelopment())

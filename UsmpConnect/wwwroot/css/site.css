@@ -23,7 +23,7 @@
   --radius: 14px;
   --radius-sm: 8px;
   --shadow: 0 1px 2px rgba(16, 24, 40, .04);
-  --topbar-h: 64px;
+  --topbar-h: 76px;
   --sidebar-w: 210px;
 
   --bs-primary: var(--guinda);
@@ -42,77 +42,77 @@ a:hover { color: var(--guinda-700); }
 .topbar {
   position: fixed; inset: 0 0 auto 0; height: var(--topbar-h); z-index: 1030;
   background: var(--guinda); color: #fff;
-  display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, .14);
+  display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 0 24px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, .16);
 }
-.brand { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 800; letter-spacing: .3px; font-size: 1.1rem; text-decoration: none; }
+.brand { display: flex; align-items: center; gap: 12px; color: #fff; font-weight: 800; letter-spacing: .4px; font-size: 1.22rem; text-decoration: none; }
 .brand:hover { color: #fff; }
 .brand img {
-  width: 38px; height: 38px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
+  width: 48px; height: 48px; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.28));
 }
 .brand-logo {
-  width: 32px; height: 32px; border-radius: 8px; background: #fff; color: var(--guinda);
-  display: grid; place-items: center; font-weight: 900; font-size: 1.1rem;
+  width: 38px; height: 38px; border-radius: 9px; background: #fff; color: var(--guinda);
+  display: grid; place-items: center; font-weight: 900; font-size: 1.2rem;
 }
-.topnav { display: flex; align-items: center; gap: 10px; margin: 0 auto; }
+.topnav { display: flex; align-items: center; gap: 14px; margin: 0 auto; }
 .topnav-btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: rgba(255, 255, 255, .12);
-  border: 1px solid rgba(255, 255, 255, .24);
+  display: inline-flex; align-items: center; gap: 10px;
+  background: rgba(255, 255, 255, .14);
+  border: 1px solid rgba(255, 255, 255, .28);
   color: #fff !important;
-  font-size: .82rem; font-weight: 700; letter-spacing: .3px;
-  padding: 7px 12px; border-radius: 10px;
+  font-size: .88rem; font-weight: 700; letter-spacing: .3px;
+  padding: 8px 16px; border-radius: 12px;
   text-decoration: none;
   transition: all .18s ease;
   white-space: nowrap;
 }
 .topnav-btn:hover {
-  background: rgba(255, 255, 255, .25);
-  border-color: rgba(255, 255, 255, .5);
+  background: rgba(255, 255, 255, .28);
+  border-color: rgba(255, 255, 255, .55);
   transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
   color: #fff !important;
 }
 .topnav-btn img {
-  width: 22px; height: 22px; object-fit: contain; flex-shrink: 0;
+  width: 28px; height: 28px; object-fit: contain; flex-shrink: 0;
 }
 .topnav-badge-white {
   background: #ffffff;
-  border-radius: 6px;
-  padding: 2px 5px;
+  border-radius: 8px;
+  padding: 3px 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
   flex-shrink: 0;
+  height: 30px;
+}
+.topnav-badge-white img {
+  height: 20px;
+  width: auto;
 }
 .topnav-btn i {
-  font-size: 1.05rem;
-}
-.topnav-btn.btn-stack {
-  background: #fff; color: var(--guinda) !important; border-color: #fff; font-weight: 800;
-}
-.topnav-btn.btn-stack:hover {
-  background: var(--guinda-50); color: var(--guinda-700) !important;
+  font-size: 1.15rem;
 }
 .topnav-btn.btn-calc {
-  border-color: rgba(245, 184, 46, .6);
+  border-color: rgba(245, 184, 46, .65);
 }
 .topnav-btn.btn-calc:hover {
-  background: rgba(245, 184, 46, .2);
+  background: rgba(245, 184, 46, .24);
   border-color: #f5b82e;
 }
 .badge-count { background: #f5b82e; color: #3b2400; border-radius: 999px; font-size: .68rem; font-weight: 800; padding: 1px 6px; }
 .btn-ayuda { background: rgba(255, 255, 255, .14); color: #fff; border: 0; border-radius: 999px; padding: 6px 14px; font-size: .8rem; font-weight: 600; }
 .btn-ayuda:hover { background: rgba(255, 255, 255, .22); color: #fff; }
 .user-chip {
-  display: flex; align-items: center; gap: 10px; background: rgba(255, 255, 255, .1); border: 0; color: #fff;
-  border-radius: 10px; padding: 6px 10px; text-align: left;
+  display: flex; align-items: center; gap: 12px; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .2); color: #fff;
+  border-radius: 12px; padding: 7px 14px; text-align: left;
 }
-.user-chip .nombre { font-weight: 700; font-size: .82rem; line-height: 1.1; }
-.user-chip .escuela { font-size: .7rem; opacity: .8; }
+.user-chip .nombre { font-weight: 700; font-size: .88rem; line-height: 1.1; }
+.user-chip .escuela { font-size: .72rem; opacity: .85; }
 .avatar {
-  width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0;
-  font-weight: 700; font-size: .75rem; background: #f5b82e; color: #3b2400;
+  width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0;
+  font-weight: 700; font-size: .82rem; background: #f5b82e; color: #3b2400;
 }
 .avatar-soft { background: #eef0f3; color: var(--muted); }
 .avatar-sm { width: 26px; height: 26px; font-size: .65rem; }
