@@ -45,11 +45,13 @@ public static class ClaimsPrincipalExtensions
     public const string NombreClaim = "usmp:nombre";
     public const string EscuelaClaim = "usmp:escuela";
     public const string InicialesClaim = "usmp:iniciales";
+    public const string FotoClaim = "usmp:foto";
 
     public static string GetUserId(this ClaimsPrincipal user) => user.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
     public static string GetNombre(this ClaimsPrincipal user) => user.FindFirstValue(NombreClaim) ?? user.Identity?.Name ?? "";
     public static string GetEscuela(this ClaimsPrincipal user) => user.FindFirstValue(EscuelaClaim) ?? "";
     public static string GetIniciales(this ClaimsPrincipal user) => user.FindFirstValue(InicialesClaim) ?? "?";
+    public static string? GetFoto(this ClaimsPrincipal user) => user.FindFirstValue(FotoClaim);
     public static bool EsProfesor(this ClaimsPrincipal user) => user.IsInRole(Roles.Profesor);
 }
 
@@ -68,6 +70,10 @@ public class UsmpClaimsFactory(
             esDocente ? $"{user.Titulo} {user.NombreCompleto}" : user.NombreCompleto));
         identity.AddClaim(new Claim(ClaimsPrincipalExtensions.EscuelaClaim, user.Escuela));
         identity.AddClaim(new Claim(ClaimsPrincipalExtensions.InicialesClaim, user.Iniciales));
+        if (!string.IsNullOrEmpty(user.FotoUrl))
+        {
+            identity.AddClaim(new Claim(ClaimsPrincipalExtensions.FotoClaim, user.FotoUrl));
+        }
         return identity;
     }
 }

@@ -16,6 +16,7 @@ namespace UsmpConnect.Controllers;
 /// </summary>
 public class CatedraController(ApplicationDbContext db) : Controller
 {
+    [AllowAnonymous]
     public async Task<IActionResult> Index(string? q, int? ciclo)
     {
         var cursos = await db.Cursos.AsNoTracking()
@@ -49,6 +50,7 @@ public class CatedraController(ApplicationDbContext db) : Controller
         });
     }
 
+    [AllowAnonymous]
     public async Task<IActionResult> Curso(int id, string orden = "utiles")
     {
         var curso = await db.Cursos.AsNoTracking()

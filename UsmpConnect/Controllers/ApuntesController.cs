@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UsmpConnect.Data;
@@ -13,6 +14,7 @@ public class ApuntesController(ApplicationDbContext db, IAlmacenArchivos almacen
 {
     private const long MaxArchivo = 25 * 1024 * 1024;
 
+    [AllowAnonymous]
     public async Task<IActionResult> Index(string? q, int? ciclo, int? cursoId, TipoDocumento? tipo, string orden = "calificacion")
     {
         var userId = User.GetUserId();
@@ -113,6 +115,7 @@ public class ApuntesController(ApplicationDbContext db, IAlmacenArchivos almacen
     }
 
     /// <summary>Vista previa: muestra el PDF dentro del navegador. Los Word se descargan.</summary>
+    [AllowAnonymous]
     public async Task<IActionResult> Ver(int id)
     {
         var apunte = await db.Apuntes.AsNoTracking().Include(a => a.Curso).FirstOrDefaultAsync(a => a.Id == id);

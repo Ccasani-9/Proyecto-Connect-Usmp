@@ -38,6 +38,58 @@ public class CuentaController(
         return View(model);
     }
 
+    public class GoogleLoginDto
+    {
+        public string Email { get; set; } = "";
+        public string? Nombre { get; set; }
+        public string? FotoUrl { get; set; }
+    }
+
+    [HttpPost]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto? model)
+    {
+        if (model == null || string.IsNullOrWhiteSpace(model.Email))
+            return BadRequest(new { error = "Correo no proporcionado por Google." });
+
+        var user = await userManager.FindByEmailAsync(model.Email);
+        if (user == null)
+        {
+            var nombreCompleto = string.IsNullOrWhiteSpace(model.Nombre) ? "Estudiante" : model.Nombre.Trim();
+            var partes = nombreCompleto.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+            var nombres = partes.Length > 0 ? partes[0] : "Estudiante";
+            var apellidos = partes.Length > 1 ? partes[1] : "";
+
+            user = new ApplicationUser
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                EmailConfirmed = true,
+                Nombres = nombres,
+                Apellidos = apellidos,
+                Escuela = "Ingeniería de Computación y Sistemas",
+                CodigoAlumno = "202610" + Random.Shared.Next(1000, 9999),
+                FotoUrl = model.FotoUrl
+            };
+            var createResult = await userManager.CreateAsync(user, "Usmp2026!");
+            if (!createResult.Succeeded)
+            {
+                return BadRequest(new { error = string.Join(", ", createResult.Errors.Select(e => e.Description)) });
+            }
+        }
+        else
+        {
+            if (!string.IsNullOrEmpty(model.FotoUrl) && user.FotoUrl != model.FotoUrl)
+            {
+                user.FotoUrl = model.FotoUrl;
+                await userManager.UpdateAsync(user);
+            }
+        }
+
+        await signInManager.SignInAsync(user, isPersistent: true);
+        return Ok(new { redirectUrl = "/" });
+    }
+
     [HttpGet]
     public IActionResult Registro() => View(new RegistroViewModel());
 

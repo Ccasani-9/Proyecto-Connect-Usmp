@@ -16,6 +16,7 @@ public class MarketplaceController(ApplicationDbContext db, IAlmacenArchivos alm
     private const long MaxImagenBytes = 5 * 1024 * 1024; // 5 MB para fotos
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> Index(string? q, CategoriaMarketplace? categoria)
     {
         var query = db.Articulos

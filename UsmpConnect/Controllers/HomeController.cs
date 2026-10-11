@@ -11,6 +11,7 @@ namespace UsmpConnect.Controllers;
 
 public class HomeController(ApplicationDbContext db) : Controller
 {
+    [AllowAnonymous]
     public async Task<IActionResult> Index()
     {
         var userId = User.GetUserId();
@@ -20,9 +21,12 @@ public class HomeController(ApplicationDbContext db) : Controller
         var semana = await Agenda.ClasesSemanaAsync(db, userId, false);
         var eventos = await Agenda.EventosAsync(db, userId);
 
+        var nombre = User.GetNombre();
+        var primerNombre = !string.IsNullOrWhiteSpace(nombre) ? (nombre.Split(' ').FirstOrDefault() ?? "") : "Comunidad USMP";
+
         var vm = new InicioViewModel
         {
-            PrimerNombre = User.GetNombre().Split(' ').FirstOrDefault() ?? "",
+            PrimerNombre = primerNombre,
             Saludo = hora < 12 ? "Buenos días" : hora < 19 ? "Buenas tardes" : "Buenas noches",
             EsProfesor = false,
             Hoy = Agenda.Dia(semana, hoy, "HOY"),
