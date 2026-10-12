@@ -13,7 +13,8 @@ public class FoodSpotsController(
     IRedisCacheService cache,
     IColaMensajes cola,
     IBuscadorAlgolia algolia,
-    IPieHostService pieHost) : Controller
+    IPieHostService pieHost,
+    IConfiguration config) : Controller
 {
     [AllowAnonymous]
     public async Task<IActionResult> Index(CategoriaRestaurante? categoria, string? q)
@@ -80,7 +81,8 @@ public class FoodSpotsController(
             Restaurantes = restaurantesVm,
             CategoriaActual = categoria,
             Busqueda = q,
-            FuenteDatos = fuente
+            FuenteDatos = fuente,
+            GoogleMapsApiKey = config["GoogleMaps:ApiKey"] ?? ""
         };
 
         return View(vm);

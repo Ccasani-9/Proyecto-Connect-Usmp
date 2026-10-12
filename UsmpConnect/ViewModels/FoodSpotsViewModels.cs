@@ -47,6 +47,7 @@ public class FoodSpotsIndexVM
     public string? Busqueda { get; set; }
     public int TotalLugares => Restaurantes.Count;
     public string FuenteDatos { get; set; } = "SQLite"; // "Redis Cache (Hit)" o "SQLite"
+    public string GoogleMapsApiKey { get; set; } = string.Empty;
 }
 
 public class CrearResenaVM
