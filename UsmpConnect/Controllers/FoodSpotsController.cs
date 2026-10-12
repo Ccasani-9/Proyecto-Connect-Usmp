@@ -89,6 +89,7 @@ public class FoodSpotsController(
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> Detalle(int id)
     {
         var r = await db.Restaurantes
@@ -118,7 +119,7 @@ public class FoodSpotsController(
             r.Id,
             r.Nombre,
             r.Descripcion,
-            Categoria = r.Categoria.ToString(),
+            Categoria = r.Categoria.Nombre(),
             r.Direccion,
             r.DistanciaTexto,
             r.RangoPrecios,

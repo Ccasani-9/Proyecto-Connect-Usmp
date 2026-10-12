@@ -26,10 +26,11 @@
             box-shadow: 0 10px 25px -5px rgba(0,0,0,.08);
         }
         .food-card-img {
-            height: 165px;
+            height: 175px;
             width: 100%;
             object-fit: cover;
             position: relative;
+            background-color: #f3f4f6;
         }
         .food-card-body {
             padding: 1.25rem;
@@ -41,12 +42,17 @@
             color: #f59e0b;
         }
         #mapa-fia {
-            height: 400px;
+            height: 430px;
             width: 100%;
             border-radius: 1rem;
             border: 1px solid var(--border, #e5e7eb);
             box-shadow: 0 4px 12px rgba(0,0,0,.04);
             z-index: 10;
+        }
+        .dist-filter-btn.active {
+            background-color: #7a152d !important;
+            color: #fff !important;
+            border-color: #7a152d !important;
         }
     </style>
 }
@@ -59,12 +65,15 @@
             <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size:0.75rem;">
                 <i class="bi bi-google me-1"></i>Google Maps &amp; Places
             </span>
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1" style="font-size:0.75rem;">
+                <i class="bi bi-camera-fill me-1"></i>Fotos Reales de Locales
+            </span>
         </div>
-        <p class="text-muted mb-0">Huariques, cafeterías y locales gastronómicos reales alrededor del campus universitario FIA USMP.</p>
+        <p class="text-muted mb-0">Directorio universitario interactivo con todos los restaurantes, cafeterías y huariques reales alrededor del campus FIA USMP.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
         <span class="badge bg-light text-secondary border px-3 py-2" style="font-size: .84rem; font-weight: 600;">
-            <i class="bi bi-compass me-1 text-danger"></i>Guía Estudiantil FIA
+            <i class="bi bi-compass me-1 text-danger"></i>@Model.Restaurantes.Count Locales Reconocidos
         </span>
     </div>
 </div>
@@ -74,12 +83,31 @@
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2 flex-wrap">
             <i class="bi bi-geo-alt-fill text-danger fs-5"></i>
-            <h2 class="h5 fw-bold mb-0">Mapa Interactivo de Locales y Huariques</h2>
-            <small class="text-muted">(Av. La Fontana, Av. Flora Tristán, Av. Los Constructores)</small>
+            <h2 class="h5 fw-bold mb-0">Mapa Interactivo de Locales Alrededor del Campus</h2>
+            <small class="text-muted">(Av. La Fontana &amp; Av. Flora Tristán)</small>
         </div>
-        <button class="btn btn-sm btn-soft" type="button" onclick="centrarEnFia()">
-            <i class="bi bi-crosshair me-1"></i>Centrar en Campus FIA
-        </button>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <!-- Filtro de cercanía en el mapa -->
+            <div class="btn-group btn-group-sm" role="group" aria-label="Filtro de distancia">
+                <button type="button" class="btn btn-outline-secondary dist-filter-btn active" onclick="filtrarPorDistancia(9999, this)">
+                    Todos (@Model.Restaurantes.Count)
+                </button>
+                <button type="button" class="btn btn-outline-secondary dist-filter-btn" onclick="filtrarPorDistancia(200, this)">
+                    &lt; 200m (Al toque)
+                </button>
+                <button type="button" class="btn btn-outline-secondary dist-filter-btn" onclick="filtrarPorDistancia(500, this)">
+                    &lt; 500m (Caminando)
+                </button>
+            </div>
+
+            <!-- Botones de geolocalización -->
+            <button class="btn btn-sm btn-soft" type="button" onclick="miUbicacion()" title="Ver tu ubicación GPS actual">
+                <i class="bi bi-cursor-fill text-primary me-1"></i>Mi Ubicación
+            </button>
+            <button class="btn btn-sm btn-soft" type="button" onclick="centrarEnFia()" title="Regresar al campus universitario">
+                <i class="bi bi-crosshair me-1 text-danger"></i>Campus FIA
+            </button>
+        </div>
     </div>
     <div id="mapa-fia"></div>
 </div>
@@ -90,7 +118,7 @@
         <div class="col-lg-5">
             <form method="get" class="search-box">
                 <i class="bi bi-search"></i>
-                <input type="text" name="q" value="@Model.Busqueda" class="form-control" placeholder="Buscar por nombre, chifa, cafetería..." />
+                <input type="text" name="q" value="@Model.Busqueda" class="form-control" placeholder="Buscar por nombre, chifa, café, pasta..." />
                 @if (Model.CategoriaActual.HasValue)
                 {
                     <input type="hidden" name="categoria" value="@Model.CategoriaActual" />
@@ -124,12 +152,14 @@
 }
 else
 {
-    <div class="food-grid">
+    <div class="food-grid" id="food-grid-container">
         @foreach (var r in Model.Restaurantes)
         {
-            <div class="food-card" id="card-rest-@r.Id">
+            var walkingUrl = $"https://www.google.com/maps/dir/?api=1&origin=-12.07203,-76.94205&destination={r.Latitud.ToString(System.Globalization.CultureInfo.InvariantCulture)},{r.Longitud.ToString(System.Globalization.CultureInfo.InvariantCulture)}&travelmode=walking";
+
+            <div class="food-card" id="card-rest-@r.Id" data-lat="@r.Latitud.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-lng="@r.Longitud.ToString(System.Globalization.CultureInfo.InvariantCulture)">
                 <div class="position-relative">
-                    <img src="@r.FotoUrl" class="food-card-img" alt="@r.Nombre" loading="lazy" />
+                    <img src="@r.FotoUrl" class="food-card-img" alt="@r.Nombre" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600';" />
                     <span class="badge bg-dark bg-opacity-75 position-absolute top-0 start-0 m-2" style="backdrop-filter: blur(4px);">
                         @r.Categoria.Nombre()
                     </span>
@@ -141,15 +171,18 @@ else
                     <div class="d-flex justify-content-between align-items-start mb-1">
                         <h3 class="h5 fw-bold mb-0">@r.Nombre</h3>
                     </div>
-                    <div class="d-flex align-items-center gap-1 mb-2">
-                        <span class="stars-gold">
-                            @for (var i = 1; i <= 5; i++)
-                            {
-                                <i class="bi bi-star@(i <= Math.Round(r.CalificacionPromedio) ? "-fill" : "")"></i>
-                            }
-                        </span>
-                        <small class="fw-bold ms-1">@r.CalificacionPromedio.ToString("0.0")</small>
-                        <small class="text-muted">(@r.TotalResenas @(r.TotalResenas == 1 ? "reseña" : "reseñas"))</small>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center gap-1">
+                            <span class="stars-gold">
+                                @for (var i = 1; i <= 5; i++)
+                                {
+                                    <i class="bi bi-star@(i <= Math.Round(r.CalificacionPromedio) ? "-fill" : "")"></i>
+                                }
+                            </span>
+                            <small class="fw-bold ms-1">@r.CalificacionPromedio.ToString("0.0")</small>
+                            <small class="text-muted">(@r.TotalResenas @(r.TotalResenas == 1 ? "reseña" : "reseñas"))</small>
+                        </div>
+                        <span class="badge bg-light text-secondary border">@r.RangoPrecios</span>
                     </div>
 
                     <p class="small text-muted mb-3 text-truncate-2" style="display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:36px; line-height:1.35;">
@@ -158,16 +191,24 @@ else
 
                     <div class="small text-muted mb-3 pt-2 border-top">
                         <div class="mb-1 text-truncate"><i class="bi bi-pin-map text-secondary me-1"></i>@r.Direccion</div>
-                        <div class="text-truncate"><i class="bi bi-geo-alt-fill text-danger me-1"></i>@r.DistanciaTexto · <span class="text-success fw-semibold"><i class="bi bi-clock me-1"></i>@r.HorarioAtencion</span></div>
+                        <div class="text-truncate">
+                            <i class="bi bi-geo-alt-fill text-danger me-1"></i>@r.DistanciaTexto
+                            <span class="text-success fw-semibold ms-1"><i class="bi bi-clock me-1"></i>@r.HorarioAtencion</span>
+                        </div>
                     </div>
 
-                    <div class="mt-auto d-flex gap-2">
-                        <button class="btn btn-sm btn-outline-secondary w-50" type="button" onclick="irARestauranteEnMapa(@r.Latitud, @r.Longitud, '@r.Nombre.Replace("'", "\\'")')">
-                            <i class="bi bi-pin-map me-1"></i>Ver en mapa
-                        </button>
-                        <button class="btn btn-sm btn-guinda w-50" type="button" onclick="abrirModalDetalle(@r.Id)">
-                            <i class="bi bi-chat-heart me-1"></i>Ver reseñas
-                        </button>
+                    <div class="mt-auto pt-2">
+                        <div class="d-flex gap-2 mb-2">
+                            <button class="btn btn-sm btn-outline-secondary w-50" type="button" onclick="irARestauranteEnMapa(@r.Latitud.ToString(System.Globalization.CultureInfo.InvariantCulture), @r.Longitud.ToString(System.Globalization.CultureInfo.InvariantCulture), '@r.Nombre.Replace("'", "\\'")')">
+                                <i class="bi bi-pin-map me-1"></i>Ver en mapa
+                            </button>
+                            <button class="btn btn-sm btn-guinda w-50" type="button" onclick="abrirModalDetalle(@r.Id)">
+                                <i class="bi bi-chat-heart me-1"></i>Reseñas (@r.TotalResenas)
+                            </button>
+                        </div>
+                        <a href="@walkingUrl" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary w-100" title="Ver ruta a pie exacta desde el campus FIA en Google Maps">
+                            <i class="bi bi-person-walking me-1"></i>Cómo llegar a pie
+                        </a>
                     </div>
                 </div>
             </div>
@@ -189,12 +230,21 @@ else
             <div class="modal-body">
                 <div class="row g-3 mb-3">
                     <div class="col-md-5">
-                        <img id="modalImg" src="" class="w-100 rounded object-fit-cover shadow-sm" style="max-height: 220px;" alt="Restaurante" />
-                        <div class="mt-2 text-center" id="modalBtnWaContainer"></div>
+                        <img id="modalImg" src="" class="w-100 rounded object-fit-cover shadow-sm" style="max-height: 220px;" alt="Restaurante" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600';" />
+                        <div class="mt-2 d-flex flex-column gap-1" id="modalLinksContainer">
+                            <a id="modalBtnRuta" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary w-100">
+                                <i class="bi bi-person-walking me-1"></i>Cómo llegar a pie (Google Maps)
+                            </a>
+                            <a id="modalBtnGmaps" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary w-100">
+                                <i class="bi bi-google me-1 text-danger"></i>Ver ficha en Google Maps
+                            </a>
+                            <div id="modalBtnWaContainer"></div>
+                        </div>
                     </div>
                     <div class="col-md-7">
                         <div class="d-flex align-items-center gap-2 mb-2">
                             <span id="modalCategoria" class="tag tag-guinda"></span>
+                            <span id="modalRangoPrecios" class="badge bg-light text-secondary border"></span>
                             <div class="d-flex align-items-center ms-auto">
                                 <span class="stars-gold"><i class="bi bi-star-fill"></i></span>
                                 <span id="modalPromedio" class="fw-bold ms-1"></span>
@@ -211,7 +261,7 @@ else
 
                 <hr class="my-3" />
 
-                <!-- Reseñas -->
+                <!-- Reseñas de Alumnos USMP -->
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3 class="h6 fw-bold mb-0"><i class="bi bi-chat-heart me-1"></i>Opiniones de la Comunidad USMP</h3>
                     <button class="btn btn-sm btn-soft" type="button" data-bs-toggle="collapse" data-bs-target="#formResenaCollapse">
@@ -262,12 +312,25 @@ else
     <script>
         let map;
         let infoWindow;
+        let userMarker = null;
         const fiaCoords = { lat: -12.07203, lng: -76.94205 };
         const marcadores = {};
+
+        // Paleta de colores temáticos por categoría de local
+        const categoriaColores = {
+            "MenuCriollo": "#ea580c",        // Naranja peruano
+            "ComidaRapida": "#f59e0b",       // Ámbar
+            "Chifa": "#dc2626",              // Rojo oriental
+            "CafeteriaHuarique": "#78350f",   // Café tostado
+            "PasteleriaPostres": "#db2777",   // Rosa pastelería
+            "Saludable": "#16a34a"           // Verde fresco
+        };
 
         const restos = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Restaurantes.Select(r => new {
             r.Id,
             r.Nombre,
+            CategoriaKey = r.Categoria.ToString(),
+            CategoriaNombre = r.Categoria.Nombre(),
             r.Latitud,
             r.Longitud,
             r.DistanciaTexto,
@@ -294,11 +357,24 @@ else
                 ]
             });
 
+            // Círculo visual sutil alrededor de la USMP FIA (radio 200m)
+            new google.maps.Circle({
+                strokeColor: "#7a152d",
+                strokeOpacity: 0.35,
+                strokeWeight: 1.5,
+                fillColor: "#7a152d",
+                fillOpacity: 0.05,
+                map: map,
+                center: fiaCoords,
+                radius: 200
+            });
+
             // Marcador especial Campus USMP FIA
             const fiaMarker = new google.maps.Marker({
                 position: fiaCoords,
                 map: map,
                 title: "Facultad de Ingeniería y Arquitectura (FIA) - USMP",
+                zIndex: 999,
                 icon: {
                     path: google.maps.SymbolPath.CIRCLE,
                     scale: 11,
@@ -320,8 +396,10 @@ else
                 infoWindow.open(map, fiaMarker);
             });
 
-            // Marcadores de restaurantes
+            // Marcadores para cada uno de los restaurantes
             restos.forEach(r => {
+                const colorMarker = categoriaColores[r.CategoriaKey] || "#ea580c";
+
                 const marker = new google.maps.Marker({
                     position: { lat: r.Latitud, lng: r.Longitud },
                     map: map,
@@ -329,21 +407,28 @@ else
                     icon: {
                         path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
                         scale: 5,
-                        fillColor: "#ea580c",
+                        fillColor: colorMarker,
                         fillOpacity: 1,
                         strokeColor: "#ffffff",
                         strokeWeight: 1.5
                     }
                 });
 
+                const walkingUrl = `https://www.google.com/maps/dir/?api=1&origin=-12.07203,-76.94205&destination=${r.Latitud},${r.Longitud}&travelmode=walking`;
+
                 marker.addListener("click", () => {
                     infoWindow.setContent(`
-                        <div style="max-width:210px; font-family:Inter,sans-serif; padding:4px;">
-                            <img src="${r.FotoUrl}" style="width:100%; height:85px; object-fit:cover; border-radius:6px; margin-bottom:6px;" alt="${r.Nombre}" />
-                            <b style="font-size:12px; display:block;">${r.Nombre}</b>
+                        <div style="max-width:220px; font-family:Inter,sans-serif; padding:4px;">
+                            <img src="${r.FotoUrl}" onerror="this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600'" style="width:100%; height:90px; object-fit:cover; border-radius:6px; margin-bottom:6px;" alt="${r.Nombre}" />
+                            <b style="font-size:12px; display:block; line-height:1.2;">${r.Nombre}</b>
                             <div style="font-size:11px; color:#f59e0b; margin:2px 0;">★ ${r.CalificacionPromedio.toFixed(1)} (${r.TotalResenas} reseñas)</div>
                             <small style="color:#6b7280; display:block; margin-bottom:6px;">📍 ${r.DistanciaTexto}</small>
-                            <button onclick="abrirModalDetalle(${r.Id})" class="btn btn-sm btn-guinda w-100" style="font-size:11px; padding:3px 8px;">Ver Reseñas</button>
+                            <div style="display:flex; gap:4px;">
+                                <button onclick="abrirModalDetalle(${r.Id})" class="btn btn-sm btn-guinda" style="font-size:11px; padding:3px 8px; flex:1;">Ver Reseñas</button>
+                                <a href="${walkingUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary" style="font-size:11px; padding:3px 8px;" title="Ruta a pie">
+                                    <i class="bi bi-person-walking"></i> Ruta
+                                </a>
+                            </div>
                         </div>
                     `);
                     infoWindow.open(map, marker);
@@ -353,6 +438,7 @@ else
             });
         }
 
+        // Centrar mapa de vuelta en la FIA
         function centrarEnFia() {
             if (map) {
                 map.setZoom(16);
@@ -360,6 +446,71 @@ else
             }
         }
 
+        // Obtener ubicación GPS real del alumno
+        function miUbicacion() {
+            if (!navigator.geolocation) {
+                alert("La geolocalización no está soportada por tu navegador.");
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const userPos = {
+                        lat: pos.coords.latitude,
+                        lng: pos.coords.longitude
+                    };
+
+                    if (userMarker) {
+                        userMarker.setPosition(userPos);
+                    } else {
+                        userMarker = new google.maps.Marker({
+                            position: userPos,
+                            map: map,
+                            title: "Tu ubicación actual",
+                            zIndex: 1000,
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 8,
+                                fillColor: "#0284c7",
+                                fillOpacity: 1,
+                                strokeColor: "#ffffff",
+                                strokeWeight: 3
+                            }
+                        });
+                    }
+
+                    map.panTo(userPos);
+                    map.setZoom(17);
+                },
+                (err) => {
+                    alert("No se pudo obtener tu ubicación. Por favor permite los permisos de ubicación en el navegador.");
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        }
+
+        // Filtro de cercanía en metros desde el campus FIA
+        function filtrarPorDistancia(maxMetros, btn) {
+            document.querySelectorAll('.dist-filter-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            restos.forEach(r => {
+                const marker = marcadores[r.Id];
+                const card = document.getElementById(`card-rest-${r.Id}`);
+
+                // Distancia aproximada en metros a la FIA
+                const dLat = (r.Latitud - fiaCoords.lat) * 111000;
+                const dLng = (r.Longitud - fiaCoords.lng) * 111000 * Math.cos(fiaCoords.lat * Math.PI / 180);
+                const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+
+                const visible = dist <= maxMetros;
+
+                if (marker) marker.setVisible(visible);
+                if (card) card.style.display = visible ? "" : "none";
+            });
+        }
+
+        // Enfocar un restaurante en el mapa al hacer clic en "Ver en mapa"
         function irARestauranteEnMapa(lat, lng, nombre) {
             if (map) {
                 const pos = { lat: lat, lng: lng };
@@ -369,6 +520,7 @@ else
             }
         }
 
+        // Cargar modal con reseñas reales y datos del local
         async function abrirModalDetalle(id) {
             try {
                 const res = await fetch(`/Restaurantes/Detalle/${id}`);
@@ -379,6 +531,7 @@ else
                 document.getElementById('modalDistancia').textContent = `${d.distanciaTexto} · ${d.direccion}`;
                 document.getElementById('modalImg').src = d.fotoUrl;
                 document.getElementById('modalCategoria').textContent = d.categoria;
+                document.getElementById('modalRangoPrecios').textContent = d.rangoPrecios;
                 document.getElementById('modalPromedio').textContent = d.calificacionPromedio.toFixed(1);
                 document.getElementById('modalTotalResenas').textContent = `(${d.totalResenas} reseñas)`;
                 document.getElementById('modalDesc').textContent = d.descripcion;
@@ -386,9 +539,14 @@ else
                 document.getElementById('modalHorario').textContent = d.horarioAtencion;
                 document.getElementById('formRestauranteId').value = d.id;
 
+                // Enlaces de Google Maps
+                document.getElementById('modalBtnRuta').href = `https://www.google.com/maps/dir/?api=1&origin=-12.07203,-76.94205&destination=${d.latitud},${d.longitud}&travelmode=walking`;
+                document.getElementById('modalBtnGmaps').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.nombre + ' ' + d.direccion)}`;
+
+                // WhatsApp si existe
                 if (d.telefonoWhatsApp) {
                     document.getElementById('modalBtnWaContainer').innerHTML = `
-                        <a href="https://wa.me/51${d.telefonoWhatsApp}?text=Hola,%20soy%20estudiante%20de%20la%20USMP%20FIA,%20deseo%20hacer%20una%20consulta." target="_blank" class="btn btn-sm btn-wa w-100">
+                        <a href="https://wa.me/51${d.telefonoWhatsApp}?text=Hola,%20soy%20estudiante%20de%20la%20USMP%20FIA,%20deseo%20hacer%20una%20consulta." target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-wa w-100">
                             <i class="bi bi-whatsapp me-1"></i>Contactar por WhatsApp
                         </a>
                     `;
