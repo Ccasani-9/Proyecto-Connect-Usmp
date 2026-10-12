@@ -57,7 +57,7 @@ A diferencia de los sistemas administrativos tradicionales, USMP Connect consoli
 * **Confirmación de Recepción:** Ciclo cerrado donde el dueño confirma la recepción física en garita para archivar el reporte.
 * **Tablón de Extraviados:** Alertas de búsqueda comunitaria con contacto directo.
 
-### 6. 🍔 Restaurantes & Food Spots FIA
+### 6. 🍔 Restaurantes Cercanos
 * Guía gastronómica perimetral al campus de La Molina.
 * Mapa interactivo delimitado al cuadrante universitario: **Av. La Fontana, Av. Los Frutales, Av. Constructores y Av. Flora Tristán**.
 * Menús diarios, rangos de precios estudiantiles y filtrado por cercanía a las puertas de acceso.
