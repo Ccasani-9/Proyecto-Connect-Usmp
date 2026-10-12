@@ -49,6 +49,8 @@ public class InicioViewModel
     public List<EventoVM> Eventos { get; set; } = [];
     public List<EventoVM> ProximosEventos { get; set; } = [];
     public DateOnly FechaHoy { get; set; }
+
+    public RestauranteItemVM? HuariqueRecomendado { get; set; }
 }
 
 public class AlumnoNotaVM

@@ -24,6 +24,36 @@ public class HomeController(ApplicationDbContext db) : Controller
         var nombre = User.GetNombre();
         var primerNombre = !string.IsNullOrWhiteSpace(nombre) ? (nombre.Split(' ').FirstOrDefault() ?? "") : "Comunidad USMP";
 
+        var huariqueEntidad = await db.Restaurantes
+            .Include(r => r.Platos)
+            .AsNoTracking()
+            .OrderByDescending(r => r.CalificacionPromedio)
+            .FirstOrDefaultAsync();
+
+        RestauranteItemVM? huariqueRecomendado = null;
+        if (huariqueEntidad != null)
+        {
+            huariqueRecomendado = new RestauranteItemVM(
+                huariqueEntidad.Id,
+                huariqueEntidad.Nombre,
+                huariqueEntidad.Descripcion,
+                huariqueEntidad.Categoria.ToString(),
+                huariqueEntidad.Categoria,
+                huariqueEntidad.Rango,
+                huariqueEntidad.Direccion,
+                huariqueEntidad.DistanciaTexto,
+                huariqueEntidad.RangoPrecios,
+                huariqueEntidad.HorarioAtencion,
+                huariqueEntidad.TelefonoWhatsApp,
+                huariqueEntidad.FotoUrl,
+                huariqueEntidad.Latitud,
+                huariqueEntidad.Longitud,
+                huariqueEntidad.CalificacionPromedio,
+                huariqueEntidad.TotalResenas,
+                huariqueEntidad.Platos.Select(p => new PlatoItemVM(p.Id, p.Nombre, p.Precio, p.Descripcion, p.EsPopular)).ToList()
+            );
+        }
+
         var vm = new InicioViewModel
         {
             PrimerNombre = primerNombre,
@@ -34,7 +64,7 @@ public class HomeController(ApplicationDbContext db) : Controller
             Eventos = eventos,
             ProximosEventos = eventos.Where(e => DateOnly.Parse(e.Fecha) >= hoy).Take(4).ToList(),
             FechaHoy = hoy,
-            Notas = await NotasController.NotasAlumnoAsync(db, userId)
+            HuariqueRecomendado = huariqueRecomendado
         };
 
         return View(vm);
