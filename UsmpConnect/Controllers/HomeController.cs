@@ -24,6 +24,47 @@ public class HomeController(ApplicationDbContext db) : Controller
         var nombre = User.GetNombre();
         var primerNombre = !string.IsNullOrWhiteSpace(nombre) ? (nombre.Split(' ').FirstOrDefault() ?? "") : "Comunidad USMP";
 
+        var huariqueEntidad = await db.Restaurantes
+            .Include(r => r.Platos)
+            .AsNoTracking()
+            .OrderByDescending(r => r.CalificacionPromedio)
+            .FirstOrDefaultAsync();
+
+        RestauranteItemVM? huariqueRecomendado = null;
+        if (huariqueEntidad != null)
+        {
+            var catTexto = huariqueEntidad.Categoria switch
+            {
+                CategoriaRestaurante.MenuCriollo => "Menú Criollo",
+                CategoriaRestaurante.ComidaRapida => "Comida Rápida",
+                CategoriaRestaurante.Chifa => "Chifa",
+                CategoriaRestaurante.CafeteriaHuarique => "Cafetería & Huarique",
+                CategoriaRestaurante.PasteleriaPostres => "Pastelería & Postres",
+                CategoriaRestaurante.Saludable => "Saludable & Bowls",
+                _ => "Restaurante"
+            };
+
+            huariqueRecomendado = new RestauranteItemVM(
+                huariqueEntidad.Id,
+                huariqueEntidad.Nombre,
+                huariqueEntidad.Descripcion,
+                catTexto,
+                huariqueEntidad.Categoria,
+                huariqueEntidad.Rango,
+                huariqueEntidad.Direccion,
+                huariqueEntidad.DistanciaTexto,
+                huariqueEntidad.RangoPrecios,
+                huariqueEntidad.HorarioAtencion,
+                huariqueEntidad.TelefonoWhatsApp,
+                huariqueEntidad.FotoUrl,
+                huariqueEntidad.Latitud,
+                huariqueEntidad.Longitud,
+                huariqueEntidad.CalificacionPromedio,
+                huariqueEntidad.TotalResenas,
+                []
+            );
+        }
+
         var vm = new InicioViewModel
         {
             PrimerNombre = primerNombre,
@@ -34,7 +75,7 @@ public class HomeController(ApplicationDbContext db) : Controller
             Eventos = eventos,
             ProximosEventos = eventos.Where(e => DateOnly.Parse(e.Fecha) >= hoy).Take(4).ToList(),
             FechaHoy = hoy,
-            Notas = await NotasController.NotasAlumnoAsync(db, userId)
+            HuariqueRecomendado = huariqueRecomendado
         };
 
         return View(vm);
