@@ -87,24 +87,27 @@
             <small class="text-muted">(Cuadrante: Flora Tristán · Javier Prado · La Fontana · Los Ingenieros)</small>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
-            <!-- Filtro de cercanía en el mapa -->
-            <div class="btn-group btn-group-sm" role="group" aria-label="Filtro de distancia">
-                <button type="button" class="btn btn-outline-secondary dist-filter-btn active" onclick="filtrarPorDistancia(9999, this)">
-                    Todos (@Model.Restaurantes.Count)
+            <!-- Filtro por zona dentro del cuadrante -->
+            <div class="btn-group btn-group-sm" role="group" aria-label="Filtro de zona">
+                <button type="button" class="btn btn-outline-secondary dist-filter-btn active" onclick="filtrarPorZona('todos', this)">
+                    <i class="bi bi-grid-fill me-1"></i>Todo el Cuadrante (@Model.Restaurantes.Count)
                 </button>
-                <button type="button" class="btn btn-outline-secondary dist-filter-btn" onclick="filtrarPorDistancia(200, this)">
-                    &lt; 200m (Al toque)
+                <button type="button" class="btn btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('fontana', this)">
+                    Av. La Fontana
                 </button>
-                <button type="button" class="btn btn-outline-secondary dist-filter-btn" onclick="filtrarPorDistancia(500, this)">
-                    &lt; 500m (Caminando)
+                <button type="button" class="btn btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('flora', this)">
+                    Av. Flora Tristán
                 </button>
             </div>
 
-            <!-- Botones de geolocalización -->
+            <!-- Controles de vista del mapa -->
+            <button class="btn btn-sm btn-soft" type="button" onclick="verCuadranteCompleto()" title="Ver panorama completo del cuadrante recortado">
+                <i class="bi bi-aspect-ratio me-1 text-primary"></i>Ver Panorama
+            </button>
             <button class="btn btn-sm btn-soft" type="button" onclick="miUbicacion()" title="Ver tu ubicación GPS actual">
                 <i class="bi bi-cursor-fill text-primary me-1"></i>Mi Ubicación
             </button>
-            <button class="btn btn-sm btn-soft" type="button" onclick="centrarEnFia()" title="Regresar al campus universitario">
+            <button class="btn btn-sm btn-soft" type="button" onclick="centrarEnFia()" title="Enfocar puerta principal Campus FIA">
                 <i class="bi bi-crosshair me-1 text-danger"></i>Campus FIA
             </button>
         </div>
@@ -341,26 +344,26 @@ else
             r.FotoUrl
         })));
 
-        // Límites estrictos del cuadrante: Flora Tristán - Javier Prado - La Fontana - Los Ingenieros
+        // Límites del cuadrante universitario: Flora Tristán - Javier Prado - La Fontana - Los Ingenieros
         const boundsCampusFIA = {
             north: -12.0645,  // Av. Javier Prado Este
             south: -12.0760,  // Av. La Fontana / Jr. Santiago Antúnez de Mayolo
-            west: -76.9505,   // Av. Los Ingenieros / Huaca Melgarejo
-            east: -76.9380    // Av. Flora Tristán / Óvalo
+            west: -76.9515,   // Av. Los Ingenieros / Huaca Melgarejo
+            east: -76.9375    // Av. Flora Tristán / Óvalo
         };
 
         function initGoogleMap() {
             infoWindow = new google.maps.InfoWindow();
 
-            // Mapa delimitado y recortado estrictamente al área del Campus FIA
+            // Mapa enfocado en el cuadrante del Campus FIA con libertad de zoom out panorámico
             map = new google.maps.Map(document.getElementById("mapa-fia"), {
-                zoom: 16.3,
-                minZoom: 15.2,
+                zoom: 15.6,
+                minZoom: 13.8,
                 maxZoom: 19,
-                center: { lat: -12.0712, lng: -76.9422 },
+                center: { lat: -12.0708, lng: -76.9430 },
                 restriction: {
                     latLngBounds: boundsCampusFIA,
-                    strictBounds: true
+                    strictBounds: false
                 },
                 mapTypeControl: false,
                 streetViewControl: false,
@@ -371,17 +374,26 @@ else
                 ]
             });
 
-            // Círculo visual sutil alrededor de la USMP FIA (radio 200m)
-            new google.maps.Circle({
+            // Enmarcar y delimitar visualmente el área del cuadrante (sin círculos de radio)
+            const cuadrantePoligono = [
+                { lat: -12.0655, lng: -76.9500 }, // Javier Prado con Los Ingenieros
+                { lat: -12.0655, lng: -76.9385 }, // Javier Prado con Flora Tristán
+                { lat: -12.0745, lng: -76.9385 }, // La Fontana con Flora Tristán
+                { lat: -12.0745, lng: -76.9500 }  // La Fontana con Los Ingenieros
+            ];
+
+            new google.maps.Polygon({
+                paths: cuadrantePoligono,
                 strokeColor: "#7a152d",
-                strokeOpacity: 0.35,
-                strokeWeight: 1.5,
+                strokeOpacity: 0.65,
+                strokeWeight: 2,
                 fillColor: "#7a152d",
-                fillOpacity: 0.05,
-                map: map,
-                center: fiaCoords,
-                radius: 200
+                fillOpacity: 0.02,
+                map: map
             });
+
+            // Ajustar automáticamente la vista para mostrar todo el panorama del cuadrante en pantalla
+            map.fitBounds(boundsCampusFIA);
 
             // Marcador especial Campus USMP FIA
             const fiaMarker = new google.maps.Marker({
@@ -452,10 +464,17 @@ else
             });
         }
 
-        // Centrar mapa de vuelta en la FIA
+        // Ajustar la cámara al panorama completo del cuadrante recortado
+        function verCuadranteCompleto() {
+            if (map) {
+                map.fitBounds(boundsCampusFIA);
+            }
+        }
+
+        // Centrar mapa de vuelta en la puerta principal de la FIA
         function centrarEnFia() {
             if (map) {
-                map.setZoom(16);
+                map.setZoom(16.5);
                 map.panTo(fiaCoords);
             }
         }
@@ -503,25 +522,31 @@ else
             );
         }
 
-        // Filtro de cercanía en metros desde el campus FIA
-        function filtrarPorDistancia(maxMetros, btn) {
+        // Filtro por zona dentro del cuadrante recortado (sin radio circular)
+        function filtrarPorZona(zona, btn) {
             document.querySelectorAll('.dist-filter-btn').forEach(b => b.classList.remove('active'));
             if (btn) btn.classList.add('active');
 
             restos.forEach(r => {
                 const marker = marcadores[r.Id];
                 const card = document.getElementById(`card-rest-${r.Id}`);
+                let visible = true;
 
-                // Distancia aproximada en metros a la FIA
-                const dLat = (r.Latitud - fiaCoords.lat) * 111000;
-                const dLng = (r.Longitud - fiaCoords.lng) * 111000 * Math.cos(fiaCoords.lat * Math.PI / 180);
-                const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+                const texto = (r.Direccion + " " + r.DistanciaTexto + " " + r.Nombre).toLowerCase();
 
-                const visible = dist <= maxMetros;
+                if (zona === 'fontana') {
+                    visible = texto.includes('fontana') || texto.includes('campus');
+                } else if (zona === 'flora') {
+                    visible = texto.includes('flora');
+                }
 
                 if (marker) marker.setVisible(visible);
                 if (card) card.style.display = visible ? "" : "none";
             });
+
+            if (zona === 'todos') {
+                verCuadranteCompleto();
+            }
         }
 
         // Enfocar un restaurante en el mapa al hacer clic en "Ver en mapa"
