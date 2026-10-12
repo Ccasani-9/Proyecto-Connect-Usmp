@@ -33,11 +33,22 @@ public class HomeController(ApplicationDbContext db) : Controller
         RestauranteItemVM? huariqueRecomendado = null;
         if (huariqueEntidad != null)
         {
+            var catTexto = huariqueEntidad.Categoria switch
+            {
+                CategoriaRestaurante.MenuCriollo => "Menú Criollo",
+                CategoriaRestaurante.ComidaRapida => "Comida Rápida",
+                CategoriaRestaurante.Chifa => "Chifa",
+                CategoriaRestaurante.CafeteriaHuarique => "Cafetería & Huarique",
+                CategoriaRestaurante.PasteleriaPostres => "Pastelería & Postres",
+                CategoriaRestaurante.Saludable => "Saludable & Bowls",
+                _ => "Restaurante"
+            };
+
             huariqueRecomendado = new RestauranteItemVM(
                 huariqueEntidad.Id,
                 huariqueEntidad.Nombre,
                 huariqueEntidad.Descripcion,
-                huariqueEntidad.Categoria.ToString(),
+                catTexto,
                 huariqueEntidad.Categoria,
                 huariqueEntidad.Rango,
                 huariqueEntidad.Direccion,
@@ -50,7 +61,7 @@ public class HomeController(ApplicationDbContext db) : Controller
                 huariqueEntidad.Longitud,
                 huariqueEntidad.CalificacionPromedio,
                 huariqueEntidad.TotalResenas,
-                huariqueEntidad.Platos.Select(p => new PlatoItemVM(p.Id, p.Nombre, p.Precio, p.Descripcion, p.EsPopular)).ToList()
+                []
             );
         }
 
