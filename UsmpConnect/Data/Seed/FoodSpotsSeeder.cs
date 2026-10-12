@@ -641,7 +641,330 @@ public class FoodSpotsSeeder : IModuleSeeder
                 Longitud = -76.941843,
                 CalificacionPromedio = 4.2,
                 TotalResenas = 1
-            }
+            },
+            new()
+            {
+                Nombre = "Pardos Chicken La Molina",
+                Descripcion = "El auténtico pollo a la brasa peruano de receta tradicional con papas crujientes, ensalada fresca y salsas de la casa en Av. Javier Prado.",
+                Categoria = CategoriaRestaurante.ComidaRapida,
+                Rango = RangoPrecio.Medio,
+                Direccion = "Av. Javier Prado Este 6495 · Esq. Jr. Los Civiles",
+                DistanciaTexto = "A 900m de la FIA (11 min a pie)",
+                RangoPrecios = "Medio",
+                HorarioAtencion = "Lun - Dom: 12:00 PM - 11:00 PM",
+                TelefonoWhatsApp = "981234561",
+                FotoUrl = "/images/restaurantes/pardos-chicken-la-molina.jpg",
+                Latitud = -12.068524,
+                Longitud = -76.9489191,
+                CalificacionPromedio = 4.2,
+                TotalResenas = 5
+            },
+            new()
+            {
+                Nombre = "Roll Star Sushi Bar",
+                Descripcion = "Especialistas en makis fusionados, rolls acevichados, gyozas y cocina nikkei en formato barra para compartir con amigos de la universidad.",
+                Categoria = CategoriaRestaurante.ComidaRapida,
+                Rango = RangoPrecio.Medio,
+                Direccion = "Av. La Fontana esq. Jr. Loreto · Cerca de ISIL",
+                DistanciaTexto = "A 650m de la FIA (8 min a pie)",
+                RangoPrecios = "Medio",
+                HorarioAtencion = "Mar - Dom: 1:00 PM - 10:30 PM",
+                TelefonoWhatsApp = "987112233",
+                FotoUrl = "/images/restaurantes/roll-star-sushi-bar.jpg",
+                Latitud = -12.0727725,
+                Longitud = -76.9480586,
+                CalificacionPromedio = 3.7,
+                TotalResenas = 3
+            },
+            new()
+            {
+                Nombre = "Pastelería Mariate",
+                Descripcion = "Pastelería fina y cafetería artesanal. Famosa por sus tortas de chocolate, pies de limón, alfajores de maicena y café espresso.",
+                Categoria = CategoriaRestaurante.CafeteriaHuarique,
+                Rango = RangoPrecio.Medio,
+                Direccion = "Av. La Fontana 996 · Frente a ISIL La Molina",
+                DistanciaTexto = "A 600m de la FIA (7 min a pie)",
+                RangoPrecios = "Medio",
+                HorarioAtencion = "Lun - Sáb: 8:30 AM - 8:30 PM",
+                TelefonoWhatsApp = "993445566",
+                FotoUrl = "/images/restaurantes/pasteleria-mariate-la-fontana.jpg",
+                Latitud = -12.0727867,
+                Longitud = -76.9476893,
+                CalificacionPromedio = 4.7,
+                TotalResenas = 1
+            },
+            new()
+            {
+                Nombre = "Punto Italiano (La Fontana)",
+                Descripcion = "Pastas artesanales, lasagñas, pizzas al horno de leña y postres tradicionales italianos en un ambiente acogedor sobre la Av. La Fontana.",
+                Categoria = CategoriaRestaurante.ComidaRapida,
+                Rango = RangoPrecio.Medio,
+                Direccion = "Av. La Fontana 848 · Esq. Av. Los Ingenieros",
+                DistanciaTexto = "A 850m de la FIA (10 min a pie)",
+                RangoPrecios = "Medio",
+                HorarioAtencion = "Lun - Dom: 12:30 PM - 10:30 PM",
+                TelefonoWhatsApp = "984556677",
+                FotoUrl = "/images/restaurantes/punto-italiano-la-fontana.jpg",
+                Latitud = -12.0731566,
+                Longitud = -76.9500156,
+                CalificacionPromedio = 4.5,
+                TotalResenas = 4
+            },
+            new()
+            {
+                Nombre = "Chifa Moneda China",
+                Descripcion = "Chifa tradicional cantonés con platos gigantes taipá, wantanes crocantes, arroz chaufa de la casa y combos ideales para grupos estudiantiles.",
+                Categoria = CategoriaRestaurante.Chifa,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Av. La Fontana 824 · Altura Av. Los Ingenieros",
+                DistanciaTexto = "A 900m de la FIA (11 min a pie)",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Dom: 12:00 PM - 10:30 PM",
+                TelefonoWhatsApp = "991223344",
+                FotoUrl = "/images/restaurantes/chifa-moneda-china.jpg",
+                Latitud = -12.0731789,
+                Longitud = -76.9501775,
+                CalificacionPromedio = 4.0,
+                TotalResenas = 3
+            },
+            new()
+            {
+                Nombre = "Starbucks La Fontana",
+                Descripcion = "Cafetería con Wi-Fi veloz, frappuccinos, bebidas frías, sándwiches y ambiente tranquilo ideal para estudiar o hacer proyectos de facultad.",
+                Categoria = CategoriaRestaurante.CafeteriaHuarique,
+                Rango = RangoPrecio.Medio,
+                Direccion = "Av. La Fontana esq. Av. Los Ingenieros",
+                DistanciaTexto = "A 900m de la FIA (11 min a pie)",
+                RangoPrecios = "Medio",
+                HorarioAtencion = "Lun - Dom: 7:00 AM - 10:00 PM",
+                TelefonoWhatsApp = "998877665",
+                FotoUrl = "/images/restaurantes/starbucks-la-fontana.jpg",
+                Latitud = -12.0732198,
+                Longitud = -76.9504108,
+                CalificacionPromedio = 4.4,
+                TotalResenas = 5
+            },
+            new()
+            {
+                Nombre = "Sanguchón Campesino",
+                Descripcion = "Sánguches generosos de lechón al horno, pavo criollo, lomo ahumado y hamburguesas artesanales servidas con cremas peruanas.",
+                Categoria = CategoriaRestaurante.ComidaRapida,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Av. Javier Prado Este 7095 · Cerca a Flora Tristán",
+                DistanciaTexto = "A 800m de la FIA (10 min a pie)",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Dom: 5:00 PM - 2:00 AM",
+                TelefonoWhatsApp = "981992288",
+                FotoUrl = "/images/restaurantes/sanguchon-campesino.jpg",
+                Latitud = -12.0654946,
+                Longitud = -76.9423352,
+                CalificacionPromedio = 3.9,
+                TotalResenas = 3
+            },
+            new()
+            {
+                Nombre = "Full Sanguchón La Fontana",
+                Descripcion = "Huarique nocturno de salchipapas monstruo, hamburguesas caseras, alitas broaster y combos rápidos a buen precio para estudiantes.",
+                Categoria = CategoriaRestaurante.ComidaRapida,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Av. La Fontana 836 · Cerca a Los Ingenieros",
+                DistanciaTexto = "A 880m de la FIA (11 min a pie)",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Sáb: 5:30 PM - 1:00 AM",
+                TelefonoWhatsApp = "982334455",
+                FotoUrl = "/images/restaurantes/full-sanguchon-la-fontana.jpg",
+                Latitud = -12.073168,
+                Longitud = -76.9501224,
+                CalificacionPromedio = 3.7,
+                TotalResenas = 1
+            },
+            new()
+            {
+                Nombre = "Chifa Ruyi",
+                Descripcion = "Chifa clásico de la Av. Flora Tristán, con wantanes rellenos, tallarines taypa, sopas wantán calientes y menú ejecutivo al mediodía.",
+                Categoria = CategoriaRestaurante.Chifa,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Av. Flora Tristán 715 · Urb. Santa Patricia",
+                DistanciaTexto = "A 750m de la FIA (9 min a pie)",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Dom: 12:00 PM - 10:30 PM",
+                TelefonoWhatsApp = "987445511",
+                FotoUrl = "/images/restaurantes/chifa-ruyi.jpg",
+                Latitud = -12.0661127,
+                Longitud = -76.9445243,
+                CalificacionPromedio = 4.1,
+                TotalResenas = 2
+            },
+            new()
+            {
+                Nombre = "Macartur Parrillas & Menú",
+                Descripcion = "Sazón casera criolla, parrilladas personales, menús del día y guisos norteños a pasos de la Facultad de Ingeniería.",
+                Categoria = CategoriaRestaurante.MenuCriollo,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Calle Carhuaquero 103 · Altura Av. La Fontana",
+                DistanciaTexto = "A 120m de la FIA (2 min a pie)",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Sáb: 11:30 AM - 5:00 PM",
+                TelefonoWhatsApp = "993112233",
+                FotoUrl = "/images/restaurantes/macartur-parrillas.jpg",
+                Latitud = -12.072951,
+                Longitud = -76.9419045,
+                CalificacionPromedio = 4.0,
+                TotalResenas = 1
+            },
+            new()
+            {
+                Nombre = "Club Sandwich Flora Tristán",
+                Descripcion = "Sánguches triples, club sándwich con papas fritas, cafés americanos, jugos naturales y hamburguesas al paso.",
+                Categoria = CategoriaRestaurante.ComidaRapida,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Av. Flora Tristán 690 · Santa Patricia",
+                DistanciaTexto = "A 600m de la FIA (7 min a pie)",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Sáb: 8:00 AM - 10:00 PM",
+                TelefonoWhatsApp = "981223344",
+                FotoUrl = "/images/restaurantes/club-sandwich-flora.jpg",
+                Latitud = -12.0671733,
+                Longitud = -76.9435731,
+                CalificacionPromedio = 3.9,
+                TotalResenas = 1
+            },
+            new()
+            {
+                Nombre = "Satori Nikkei",
+                Descripcion = "Alta cocina de fusión peruano-japonesa, makis de autor con flameado, ceviches nikkei y tiraditos de pesca del día.",
+                Categoria = CategoriaRestaurante.ComidaRapida,
+                Rango = RangoPrecio.Premium,
+                Direccion = "Av. Javier Prado Este 6895 · Esq. Flora Tristán",
+                DistanciaTexto = "A 700m de la FIA (9 min a pie)",
+                RangoPrecios = "Premium",
+                HorarioAtencion = "Mar - Dom: 12:30 PM - 11:00 PM",
+                TelefonoWhatsApp = "994556677",
+                FotoUrl = "/images/restaurantes/satori-nikkei.jpg",
+                Latitud = -12.0664806,
+                Longitud = -76.9443094,
+                CalificacionPromedio = 4.8,
+                TotalResenas = 1
+            },
+            new()
+            {
+                Nombre = "Grido Helado Flora Tristán",
+                Descripcion = "Heladería accesible con gran variedad de sabores de crema, paletas, tortas heladas y sundae para refrescarse saliendo de clases.",
+                Categoria = CategoriaRestaurante.CafeteriaHuarique,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Av. Flora Tristán 404 · Cerca Av. La Fontana",
+                DistanciaTexto = "A 200m de la FIA (3 min a pie)",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Dom: 11:00 AM - 10:00 PM",
+                TelefonoWhatsApp = "987665544",
+                FotoUrl = "/images/restaurantes/grido-helado-flora.jpg",
+                Latitud = -12.0714566,
+                Longitud = -76.9411793,
+                CalificacionPromedio = 4.6,
+                TotalResenas = 1
+            },
+            new()
+            {
+                Nombre = "Cremoladas Angélica",
+                Descripcion = "Las cremoladas de pura fruta más famosas de La Molina: fresa, mango, lúcuma, maracuyá y combinados tropicales.",
+                Categoria = CategoriaRestaurante.CafeteriaHuarique,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Av. Flora Tristán 295 · Santa Patricia",
+                DistanciaTexto = "A 400m de la FIA (5 min a pie)",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Dom: 10:00 AM - 7:00 PM",
+                TelefonoWhatsApp = "993223311",
+                FotoUrl = "/images/restaurantes/cremoladas-angelica.jpg",
+                Latitud = -12.0686117,
+                Longitud = -76.942785,
+                CalificacionPromedio = 4.2,
+                TotalResenas = 1
+            },
+            new()
+            {
+                Nombre = "Cevichería Punta del Este",
+                Descripcion = "Huarique marino escondido en Santa Patricia: ceviche carretillero con chicharrón de calamar, arroz con mariscos y leche de tigre.",
+                Categoria = CategoriaRestaurante.MenuCriollo,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Calle Arequipa 140 · Urb. Santa Patricia",
+                DistanciaTexto = "A 550m de la FIA (7 min a pie)",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Mar - Dom: 10:30 AM - 5:00 PM",
+                TelefonoWhatsApp = "981445566",
+                FotoUrl = "/images/restaurantes/cevicher-a-punta-del-este.jpg",
+                Latitud = -12.0687511,
+                Longitud = -76.9470315,
+                CalificacionPromedio = 4.3,
+                TotalResenas = 1
+            },
+            new()
+            {
+                Nombre = "Chifa Lun Ma",
+                Descripcion = "Sabor oriental clásico con wantanes crocantes, pollo Chi Jau Kay, Tipakay y porciones generosas para compartir.",
+                Categoria = CategoriaRestaurante.Chifa,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Av. Flora Tristán 729 · Santa Patricia",
+                DistanciaTexto = "A 780m de la FIA (10 min a pie)",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Dom: 12:00 PM - 10:30 PM",
+                TelefonoWhatsApp = "992112244",
+                FotoUrl = "/images/restaurantes/chifa-lun-ma.jpg",
+                Latitud = -12.0659037,
+                Longitud = -76.9446104,
+                CalificacionPromedio = 4.1,
+                TotalResenas = 1
+            },
+            new()
+            {
+                Nombre = "Chifa Yin Dou",
+                Descripcion = "Chifa de barrio acogedor en calle Arequipa, famoso por su Kam Lu Wantán, tallarín saltado y menú al paso bien servido.",
+                Categoria = CategoriaRestaurante.Chifa,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Jr. Arequipa 188 · Urb. Santa Patricia",
+                DistanciaTexto = "A 500m de la FIA (6 min a pie)",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Dom: 12:00 PM - 10:00 PM",
+                TelefonoWhatsApp = "987556611",
+                FotoUrl = "/images/restaurantes/chifa-yin-dou.jpg",
+                Latitud = -12.069347,
+                Longitud = -76.946812,
+                CalificacionPromedio = 4.0,
+                TotalResenas = 1
+            },
+            new()
+            {
+                Nombre = "Dacsabor Restaurant & Menú",
+                Descripcion = "Menú criollo diario con entrada y segundo, platos ejecutivos y refresco incluido sobre la Av. Javier Prado.",
+                Categoria = CategoriaRestaurante.MenuCriollo,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Av. Javier Prado Este 6377 · Cerca Los Ingenieros",
+                DistanciaTexto = "A 880m de la FIA (11 min a pie)",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Sáb: 11:30 AM - 4:30 PM",
+                TelefonoWhatsApp = "993334411",
+                FotoUrl = "/images/restaurantes/dacsabor-restaurant.jpg",
+                Latitud = -12.0687304,
+                Longitud = -76.9494634,
+                CalificacionPromedio = 3.5,
+                TotalResenas = 1
+            },
+            new()
+            {
+                Nombre = "Don Lucho (Salchipapas & Broaster)",
+                Descripcion = "Clásico huarique nocturno de salchipapas campesinas, alitas broaster crocantes, hamburguesas y cremas variadas.",
+                Categoria = CategoriaRestaurante.ComidaRapida,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Calle Madre de Dios 270 · Urb. Santa Patricia",
+                DistanciaTexto = "A 550m de la FIA (7 min a pie)",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Dom: 5:00 PM - 1:00 AM",
+                TelefonoWhatsApp = "981223399",
+                FotoUrl = "/images/restaurantes/don-lucho-salchipapas.jpg",
+                Latitud = -12.0690156,
+                Longitud = -76.9457379,
+                CalificacionPromedio = 4.4,
+                TotalResenas = 1
+            },
         };
 
         db.Restaurantes.AddRange(restaurantes);
@@ -688,7 +1011,17 @@ public class FoodSpotsSeeder : IModuleSeeder
                 new() { RestauranteId = restaurantes[14].Id, UsuarioId = maria.Id, Puntuacion = 5, Comentario = "Ramen excelente y bien caliente. El caldo tonkotsu es buenazo en época de frío.", FechaUtc = DateTime.UtcNow.AddDays(-6) },
 
                 // Secretos Árabes
-                new() { RestauranteId = restaurantes[15].Id, UsuarioId = juan.Id, Puntuacion = 5, Comentario = "Los shawarmas son contundentes y salen al toque. Ideal si tienes solo 30 minutos de break.", FechaUtc = DateTime.UtcNow.AddDays(-1) }
+                new() { RestauranteId = restaurantes[15].Id, UsuarioId = juan.Id, Puntuacion = 5, Comentario = "Los shawarmas son contundentes y salen al toque. Ideal si tienes solo 30 minutos de break.", FechaUtc = DateTime.UtcNow.AddDays(-1) },
+
+                // Pardos Chicken
+                new() { RestauranteId = restaurantes[36].Id, UsuarioId = carlos.Id, Puntuacion = 5, Comentario = "El clásico de Javier Prado con Los Civiles. El pellejito crocante y el ají Pardos no fallan nunca.", FechaUtc = DateTime.UtcNow.AddDays(-2) },
+                new() { RestauranteId = restaurantes[36].Id, UsuarioId = maria.Id, Puntuacion = 4, Comentario = "Buen ambiente y rápido el servicio para almorzar entre patas después de un examen.", FechaUtc = DateTime.UtcNow.AddDays(-5) },
+
+                // Roll Star Sushi Bar
+                new() { RestauranteId = restaurantes[37].Id, UsuarioId = ana.Id, Puntuacion = 4, Comentario = "Los makis acevichados y el roll furai están buenazos, cerca a ISIL y cruzando de la FIA.", FechaUtc = DateTime.UtcNow.AddDays(-3) },
+
+                // Punto Italiano (La Fontana)
+                new() { RestauranteId = restaurantes[39].Id, UsuarioId = juan.Id, Puntuacion = 5, Comentario = "La lasaña bolognesa y los fetuccinis al pesto son de primera. De los mejores sitios de pastas de La Fontana.", FechaUtc = DateTime.UtcNow.AddDays(-4) }
             };
 
             db.ResenasRestaurantes.AddRange(resenas);

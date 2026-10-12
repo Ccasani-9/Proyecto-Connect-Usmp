@@ -90,13 +90,19 @@
             <!-- Filtro por zona dentro del cuadrante -->
             <div class="btn-group btn-group-sm" role="group" aria-label="Filtro de zona">
                 <button type="button" class="btn btn-outline-secondary dist-filter-btn active" onclick="filtrarPorZona('todos', this)">
-                    <i class="bi bi-grid-fill me-1"></i>Todo el Cuadrante (@Model.Restaurantes.Count)
+                    <i class="bi bi-grid-fill me-1"></i>Todo (@Model.Restaurantes.Count)
                 </button>
                 <button type="button" class="btn btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('fontana', this)">
-                    Av. La Fontana
+                    La Fontana
                 </button>
                 <button type="button" class="btn btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('flora', this)">
-                    Av. Flora Tristán
+                    Flora Tristán
+                </button>
+                <button type="button" class="btn btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('prado', this)">
+                    Javier Prado
+                </button>
+                <button type="button" class="btn btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('ingenieros', this)">
+                    Los Ingenieros
                 </button>
             </div>
 
@@ -342,11 +348,12 @@ else
 </div>
 
 @section Scripts {
-    <!-- Google Maps JavaScript API oficial -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=@Model.GoogleMapsApiKey&callback=initGoogleMap" async defer></script>
+    <!-- Google Maps JavaScript API oficial con biblioteca Places -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=@Model.GoogleMapsApiKey&libraries=places&callback=initGoogleMap" async defer></script>
     <script>
         let map;
         let infoWindow;
+        let placesService = null;
         let userMarker = null;
         const fiaCoords = { lat: -12.07203, lng: -76.94205 };
         const marcadores = {};
@@ -379,9 +386,9 @@ else
 
         // Límites exactos del cuadrante universitario: Flora Tristán - Javier Prado - La Fontana - Los Ingenieros
         const boundsCuadranteFIA = {
-            north: -12.0655,  // Av. Javier Prado Este
-            south: -12.0745,  // Av. La Fontana
-            west: -76.9500,   // Av. Los Ingenieros
+            north: -12.0648,  // Av. Javier Prado Este (ambas veredas)
+            south: -12.0746,  // Av. La Fontana (ambas veredas e ISIL)
+            west: -76.9509,   // Av. Los Ingenieros (incluye esquina con Pardos Chicken, Punto Italiano, Chifa Moneda China y Starbucks)
             east: -76.9385    // Av. Flora Tristán
         };
 
@@ -413,26 +420,75 @@ else
                 ]
             });
 
-            // Cerrar tarjeta flotante al hacer clic en cualquier parte vacía del mapa
-            map.addListener("click", () => {
-                cerrarFloatingCard();
+            if (google.maps.places) {
+                placesService = new google.maps.places.PlacesService(map);
+            }
+
+            // Interceptar clics en el mapa o en cualquier POI de comida de Google Maps
+            map.addListener("click", (e) => {
+                if (e.placeId) {
+                    e.stop(); // Previene el globo recortado nativo de Google
+
+                    // 1. Buscar si ya es uno de nuestros 55+ locales registrados en la BD
+                    const yaRegistrado = restos.find(r => 
+                        (Math.abs(r.Latitud - e.latLng.lat()) < 0.00035 && Math.abs(r.Longitud - e.latLng.lng()) < 0.00035)
+                    );
+                    if (yaRegistrado) {
+                        mostrarCardFlotante(yaRegistrado, marcadores[yaRegistrado.Id]);
+                        return;
+                    }
+
+                    // 2. Si es un local de Google Maps, consultar sus datos en vivo
+                    if (placesService) {
+                        placesService.getDetails({
+                            placeId: e.placeId,
+                            fields: ["name", "formatted_address", "geometry", "rating", "user_ratings_total", "photos", "types", "price_level"]
+                        }, (place, status) => {
+                            if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+                                const tipos = place.types || [];
+                                const esComida = tipos.some(t => ["restaurant", "food", "cafe", "bakery", "meal_takeaway", "bar", "meal_delivery"].includes(t));
+                                if (esComida) {
+                                    const foto = (place.photos && place.photos.length > 0)
+                                        ? place.photos[0].getUrl({ maxWidth: 450 })
+                                        : "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600";
+
+                                    mostrarCardFlotante({
+                                        Id: 0,
+                                        Nombre: place.name,
+                                        CategoriaNombre: "Restaurante Reconocido",
+                                        CalificacionPromedio: place.rating || 4.5,
+                                        TotalResenas: place.user_ratings_total || 1,
+                                        RangoPrecios: place.price_level ? "$".repeat(place.price_level) : "Económico",
+                                        DistanciaTexto: "Detectado en Google Maps",
+                                        Direccion: place.formatted_address || "Cuadrante FIA",
+                                        FotoUrl: foto,
+                                        Latitud: place.geometry.location.lat(),
+                                        Longitud: place.geometry.location.lng()
+                                    });
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    cerrarFloatingCard();
+                }
             });
 
-            // Enmarcar y delimitar visualmente el área del cuadrante universitario
+            // Enmarcar y delimitar visualmente el área del cuadrante universitario (Líneas Rojas Oficiales)
             const cuadrantePoligono = [
-                { lat: -12.0655, lng: -76.9500 }, // Javier Prado con Los Ingenieros
-                { lat: -12.0655, lng: -76.9385 }, // Javier Prado con Flora Tristán
-                { lat: -12.0745, lng: -76.9385 }, // La Fontana con Flora Tristán
-                { lat: -12.0745, lng: -76.9500 }  // La Fontana con Los Ingenieros
+                { lat: -12.0648, lng: -76.9509 }, // Javier Prado con Los Ingenieros (esquina noroeste)
+                { lat: -12.0648, lng: -76.9385 }, // Javier Prado con Flora Tristán (esquina noreste)
+                { lat: -12.0746, lng: -76.9385 }, // La Fontana con Flora Tristán (esquina sureste)
+                { lat: -12.0746, lng: -76.9509 }  // La Fontana con Los Ingenieros (esquina suroeste)
             ];
 
             new google.maps.Polygon({
                 paths: cuadrantePoligono,
                 strokeColor: "#7a152d",
-                strokeOpacity: 0.65,
-                strokeWeight: 2,
+                strokeOpacity: 0.85,
+                strokeWeight: 2.5,
                 fillColor: "#7a152d",
-                fillOpacity: 0.02,
+                fillOpacity: 0.03,
                 map: map
             });
 
@@ -614,6 +670,10 @@ else
                     visible = texto.includes('fontana') || texto.includes('campus');
                 } else if (zona === 'flora') {
                     visible = texto.includes('flora');
+                } else if (zona === 'prado') {
+                    visible = texto.includes('prado');
+                } else if (zona === 'ingenieros') {
+                    visible = texto.includes('ingenieros') || texto.includes('civiles') || texto.includes('arequipa') || texto.includes('loreto') || texto.includes('madre de dios') || texto.includes('isil');
                 }
 
                 if (marker) marker.setVisible(visible);
