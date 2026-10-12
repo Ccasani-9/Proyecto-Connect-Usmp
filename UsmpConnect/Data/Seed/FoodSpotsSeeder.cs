@@ -503,23 +503,7 @@ public class FoodSpotsSeeder : IModuleSeeder
                 CalificacionPromedio = 4.3,
                 TotalResenas = 1
             },
-            new()
-            {
-                Nombre = "La Trattoria Di Lorenzzi",
-                Descripcion = "Alta cocina italiana, pastas rellenas caseras, risottos y cortes de carne para almuerzos o celebraciones académicas.",
-                Categoria = CategoriaRestaurante.ComidaRapida,
-                Rango = RangoPrecio.Premium,
-                Direccion = "El Grifo 150A, Urb. Santa Patricia, La Molina",
-                DistanciaTexto = "A 632m en Urb. Santa Patricia",
-                RangoPrecios = "Premium",
-                HorarioAtencion = "Lun - Dom: 1:00 PM - 11:00 PM",
-                TelefonoWhatsApp = "991663952",
-                FotoUrl = "/images/restaurantes/la-trattoria-di-lorenzzi.jpg",
-                Latitud = -12.0739687,
-                Longitud = -76.9365789,
-                CalificacionPromedio = 4.6,
-                TotalResenas = 1
-            },
+
             new()
             {
                 Nombre = "Las Tinajas Chicken & Grill",
