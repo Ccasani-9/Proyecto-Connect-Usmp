@@ -202,7 +202,7 @@ else
 
                     <div class="mt-auto pt-2">
                         <div class="d-flex gap-2 mb-2">
-                            <button class="btn btn-sm btn-outline-secondary w-50" type="button" onclick="irARestauranteEnMapa(@r.Latitud.ToString(System.Globalization.CultureInfo.InvariantCulture), @r.Longitud.ToString(System.Globalization.CultureInfo.InvariantCulture), '@r.Nombre.Replace("'", "\\'")')">
+                            <button class="btn btn-sm btn-outline-secondary w-50" type="button" onclick="irARestauranteEnMapa(@r.Id)">
                                 <i class="bi bi-pin-map me-1"></i>Ver en mapa
                             </button>
                             <button class="btn btn-sm btn-guinda w-50" type="button" onclick="abrirModalDetalle(@r.Id)">
@@ -344,25 +344,33 @@ else
             r.FotoUrl
         })));
 
-        // Límites del cuadrante universitario: Flora Tristán - Javier Prado - La Fontana - Los Ingenieros
-        const boundsCampusFIA = {
-            north: -12.0645,  // Av. Javier Prado Este
-            south: -12.0760,  // Av. La Fontana / Jr. Santiago Antúnez de Mayolo
-            west: -76.9515,   // Av. Los Ingenieros / Huaca Melgarejo
-            east: -76.9375    // Av. Flora Tristán / Óvalo
+        // Límites exactos del cuadrante universitario: Flora Tristán - Javier Prado - La Fontana - Los Ingenieros
+        const boundsCuadranteFIA = {
+            north: -12.0655,  // Av. Javier Prado Este
+            south: -12.0745,  // Av. La Fontana
+            west: -76.9500,   // Av. Los Ingenieros
+            east: -76.9385    // Av. Flora Tristán
+        };
+
+        // Límites de navegación con margen holgado para que el auto-pan nunca tope con una pared rígida
+        const boundsNavegacion = {
+            north: -12.0590,  // Margen norte holgado para que la ventanita entre completa
+            south: -12.0790,
+            west: -76.9550,
+            east: -76.9330
         };
 
         function initGoogleMap() {
             infoWindow = new google.maps.InfoWindow();
 
-            // Mapa enfocado en el cuadrante del Campus FIA con libertad de zoom out panorámico
+            // Mapa enfocado en el cuadrante del Campus FIA
             map = new google.maps.Map(document.getElementById("mapa-fia"), {
                 zoom: 15.6,
                 minZoom: 13.8,
                 maxZoom: 19,
                 center: { lat: -12.0708, lng: -76.9430 },
                 restriction: {
-                    latLngBounds: boundsCampusFIA,
+                    latLngBounds: boundsNavegacion,
                     strictBounds: false
                 },
                 mapTypeControl: false,
@@ -374,7 +382,7 @@ else
                 ]
             });
 
-            // Enmarcar y delimitar visualmente el área del cuadrante (sin círculos de radio)
+            // Enmarcar y delimitar visualmente el área del cuadrante universitario
             const cuadrantePoligono = [
                 { lat: -12.0655, lng: -76.9500 }, // Javier Prado con Los Ingenieros
                 { lat: -12.0655, lng: -76.9385 }, // Javier Prado con Flora Tristán
@@ -393,7 +401,7 @@ else
             });
 
             // Ajustar automáticamente la vista para mostrar todo el panorama del cuadrante en pantalla
-            map.fitBounds(boundsCampusFIA);
+            map.fitBounds(boundsCuadranteFIA);
 
             // Marcador especial Campus USMP FIA
             const fiaMarker = new google.maps.Marker({
@@ -440,34 +448,55 @@ else
                     }
                 });
 
-                const walkingUrl = `https://www.google.com/maps/dir/?api=1&origin=-12.07203,-76.94205&destination=${r.Latitud},${r.Longitud}&travelmode=walking`;
-
                 marker.addListener("click", () => {
-                    infoWindow.setContent(`
-                        <div style="max-width:220px; font-family:Inter,sans-serif; padding:4px;">
-                            <img src="${r.FotoUrl}" onerror="this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600'" style="width:100%; height:90px; object-fit:cover; border-radius:6px; margin-bottom:6px;" alt="${r.Nombre}" />
-                            <b style="font-size:12px; display:block; line-height:1.2;">${r.Nombre}</b>
-                            <div style="font-size:11px; color:#f59e0b; margin:2px 0;">★ ${r.CalificacionPromedio.toFixed(1)} (${r.TotalResenas} reseñas)</div>
-                            <small style="color:#6b7280; display:block; margin-bottom:6px;">📍 ${r.DistanciaTexto}</small>
-                            <div style="display:flex; gap:4px;">
-                                <button onclick="abrirModalDetalle(${r.Id})" class="btn btn-sm btn-guinda" style="font-size:11px; padding:3px 8px; flex:1;">Ver Reseñas</button>
-                                <a href="${walkingUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary" style="font-size:11px; padding:3px 8px;" title="Ruta a pie">
-                                    <i class="bi bi-person-walking"></i> Ruta
-                                </a>
-                            </div>
-                        </div>
-                    `);
-                    infoWindow.open(map, marker);
+                    abrirInfoWindowRestaurante(r, marker);
                 });
 
                 marcadores[r.Id] = marker;
             });
         }
 
+        // Abre la ventanita del restaurante asegurando que se dibuje 100% ADENTRO del mapa sin recortarse
+        function abrirInfoWindowRestaurante(r, marker) {
+            if (!map || !r || !marker) return;
+
+            // Si el restaurante está en el norte (Av. Javier Prado), desplazamos la cámara hacia arriba
+            // para que el marcador baje y la ventanita flote adentro con holgura total
+            let offsetLat = 0.0016;
+            if (r.Latitud > -12.0690) {
+                offsetLat = 0.0028; // Zona Javier Prado
+            } else if (r.Latitud < -12.0725) {
+                offsetLat = 0.0012; // Zona La Fontana
+            }
+
+            map.panTo({ lat: r.Latitud + offsetLat, lng: r.Longitud });
+
+            const walkingUrl = `https://www.google.com/maps/dir/?api=1&origin=-12.07203,-76.94205&destination=${r.Latitud},${r.Longitud}&travelmode=walking`;
+
+            infoWindow.setContent(`
+                <div style="max-width:220px; font-family:Inter,sans-serif; padding:4px;">
+                    <img src="${r.FotoUrl}" onerror="this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600'" style="width:100%; height:85px; object-fit:cover; border-radius:6px; margin-bottom:6px;" alt="${r.Nombre}" />
+                    <b style="font-size:12px; display:block; line-height:1.2;">${r.Nombre}</b>
+                    <div style="font-size:11px; color:#f59e0b; margin:2px 0;">★ ${r.CalificacionPromedio.toFixed(1)} (${r.TotalResenas} reseñas)</div>
+                    <small style="color:#6b7280; display:block; margin-bottom:6px;">📍 ${r.DistanciaTexto}</small>
+                    <div style="display:flex; gap:4px;">
+                        <button onclick="abrirModalDetalle(${r.Id})" class="btn btn-sm btn-guinda" style="font-size:11px; padding:3px 8px; flex:1;">Ver Reseñas</button>
+                        <a href="${walkingUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary" style="font-size:11px; padding:3px 8px;" title="Ruta a pie">
+                            <i class="bi bi-person-walking"></i> Ruta
+                        </a>
+                    </div>
+                </div>
+            `);
+
+            setTimeout(() => {
+                infoWindow.open(map, marker);
+            }, 100);
+        }
+
         // Ajustar la cámara al panorama completo del cuadrante recortado
         function verCuadranteCompleto() {
             if (map) {
-                map.fitBounds(boundsCampusFIA);
+                map.fitBounds(boundsCuadranteFIA);
             }
         }
 
@@ -550,12 +579,12 @@ else
         }
 
         // Enfocar un restaurante en el mapa al hacer clic en "Ver en mapa"
-        function irARestauranteEnMapa(lat, lng, nombre) {
-            if (map) {
-                const pos = { lat: lat, lng: lng };
-                map.setZoom(18);
-                map.panTo(pos);
+        function irARestauranteEnMapa(id) {
+            const r = restos.find(x => x.Id === id);
+            const marker = marcadores[id];
+            if (map && r && marker) {
                 document.getElementById('mapa-fia').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                abrirInfoWindowRestaurante(r, marker);
             }
         }
 
