@@ -112,7 +112,39 @@
             </button>
         </div>
     </div>
-    <div id="mapa-fia"></div>
+    <div class="position-relative overflow-hidden" style="border-radius: 1rem; border: 1px solid var(--border, #e5e7eb); box-shadow: 0 4px 12px rgba(0,0,0,.04);">
+        <div id="mapa-fia" style="height: 440px; width: 100%; border: none;"></div>
+
+        <!-- Tarjeta Flotante Inteligente In-Map con botón de cerrar [X] o clic al costado -->
+        <div id="floating-map-card" class="d-none" style="position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 500; width: calc(100% - 32px); max-width: 440px; background: rgba(255, 255, 255, 0.96); border-radius: 14px; box-shadow: 0 16px 36px -6px rgba(0,0,0,0.28); border: 1px solid rgba(0,0,0,0.1); padding: 12px; backdrop-filter: blur(10px); transition: all 0.25s ease;">
+            <div class="d-flex align-items-center gap-3">
+                <img id="fmc-img" src="" style="width: 82px; height: 82px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: #eee;" alt="Restaurante" onerror="this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600'" />
+                <div class="flex-grow-1 overflow-hidden" style="min-width: 0;">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <span id="fmc-cat" class="tag tag-guinda" style="font-size: 10px; padding: 2px 7px;"></span>
+                        <button type="button" class="btn-close" style="font-size: 10px;" onclick="cerrarFloatingCard(event)" title="Cerrar (o haz clic en el mapa)"></button>
+                    </div>
+                    <h5 id="fmc-nombre" class="h6 fw-bold mb-1 text-truncate" style="font-size: 0.95rem;"></h5>
+                    <div class="d-flex align-items-center gap-2 mb-1" style="font-size: 0.78rem;">
+                        <span class="text-warning fw-bold"><i class="bi bi-star-fill me-1"></i><span id="fmc-rating"></span></span>
+                        <span class="text-muted" id="fmc-reviews"></span>
+                        <span class="badge bg-light text-secondary border py-0 px-1" id="fmc-rango"></span>
+                    </div>
+                    <div class="text-muted text-truncate" style="font-size: 0.78rem;">
+                        <i class="bi bi-geo-alt-fill text-danger me-1"></i><span id="fmc-distancia"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-2 mt-2 pt-2 border-top">
+                <button id="fmc-btn-resenas" class="btn btn-sm btn-guinda w-50 py-1" style="font-size: 0.82rem;">
+                    <i class="bi bi-chat-heart me-1"></i>Ver Reseñas
+                </button>
+                <a id="fmc-btn-ruta" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary w-50 py-1" style="font-size: 0.82rem;">
+                    <i class="bi bi-person-walking me-1"></i>Ruta a pie
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Filtros y Búsqueda -->
@@ -334,6 +366,7 @@ else
             r.Nombre,
             CategoriaKey = r.Categoria.ToString(),
             CategoriaNombre = r.Categoria.Nombre(),
+            r.RangoPrecios,
             r.Latitud,
             r.Longitud,
             r.DistanciaTexto,
@@ -352,17 +385,15 @@ else
             east: -76.9385    // Av. Flora Tristán
         };
 
-        // Límites de navegación con margen holgado para que el auto-pan nunca tope con una pared rígida
+        // Límites de navegación con margen holgado
         const boundsNavegacion = {
-            north: -12.0590,  // Margen norte holgado para que la ventanita entre completa
+            north: -12.0590,
             south: -12.0790,
             west: -76.9550,
             east: -76.9330
         };
 
         function initGoogleMap() {
-            infoWindow = new google.maps.InfoWindow();
-
             // Mapa enfocado en el cuadrante del Campus FIA
             map = new google.maps.Map(document.getElementById("mapa-fia"), {
                 zoom: 15.6,
@@ -380,6 +411,11 @@ else
                     { featureType: "poi.school", elementType: "labels", stylers: [{ visibility: "on" }] },
                     { featureType: "poi.business", elementType: "labels", stylers: [{ visibility: "on" }] }
                 ]
+            });
+
+            // Cerrar tarjeta flotante al hacer clic en cualquier parte vacía del mapa
+            map.addListener("click", () => {
+                cerrarFloatingCard();
             });
 
             // Enmarcar y delimitar visualmente el área del cuadrante universitario
@@ -420,14 +456,19 @@ else
             });
 
             fiaMarker.addListener("click", () => {
-                infoWindow.setContent(`
-                    <div style="padding:6px; font-family:Inter,sans-serif;">
-                        <span style="background:#7a152d; color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px;">CAMPUS FIA</span>
-                        <h4 style="font-size:13px; font-weight:700; margin:4px 0 2px 0;">Facultad de Ingeniería y Arquitectura</h4>
-                        <p style="font-size:11px; color:#6b7280; margin:0;">Av. La Fontana 1250, Santa Patricia - La Molina</p>
-                    </div>
-                `);
-                infoWindow.open(map, fiaMarker);
+                mostrarCardFlotante({
+                    Id: 0,
+                    Nombre: "Facultad de Ingeniería y Arquitectura (Campus)",
+                    CategoriaNombre: "Campus FIA USMP",
+                    CalificacionPromedio: 5.0,
+                    TotalResenas: "USMP",
+                    RangoPrecios: "Campus",
+                    DistanciaTexto: "Pabellones A, B, C y Laboratorios",
+                    Direccion: "Av. La Fontana 1250, Santa Patricia - La Molina",
+                    FotoUrl: "/images/restaurantes/cafeteria-central-fia.jpg",
+                    Latitud: fiaCoords.lat,
+                    Longitud: fiaCoords.lng
+                }, fiaMarker);
             });
 
             // Marcadores para cada uno de los restaurantes
@@ -449,48 +490,54 @@ else
                 });
 
                 marker.addListener("click", () => {
-                    abrirInfoWindowRestaurante(r, marker);
+                    mostrarCardFlotante(r, marker);
                 });
 
                 marcadores[r.Id] = marker;
             });
         }
 
-        // Abre la ventanita del restaurante asegurando que se dibuje 100% ADENTRO del mapa sin recortarse
-        function abrirInfoWindowRestaurante(r, marker) {
-            if (!map || !r || !marker) return;
+        // Abre la tarjeta flotante interactiva adentro del mapa (100% visible, sin globos recortados)
+        function mostrarCardFlotante(r, marker) {
+            if (!r) return;
 
-            // Si el restaurante está en el norte (Av. Javier Prado), desplazamos la cámara hacia arriba
-            // para que el marcador baje y la ventanita flote adentro con holgura total
-            let offsetLat = 0.0016;
-            if (r.Latitud > -12.0690) {
-                offsetLat = 0.0028; // Zona Javier Prado
-            } else if (r.Latitud < -12.0725) {
-                offsetLat = 0.0012; // Zona La Fontana
+            // Centrar suavemente en el marcador
+            if (map) {
+                map.panTo({ lat: r.Latitud, lng: r.Longitud });
             }
 
-            map.panTo({ lat: r.Latitud + offsetLat, lng: r.Longitud });
+            const card = document.getElementById("floating-map-card");
+            if (!card) return;
 
-            const walkingUrl = `https://www.google.com/maps/dir/?api=1&origin=-12.07203,-76.94205&destination=${r.Latitud},${r.Longitud}&travelmode=walking`;
+            document.getElementById("fmc-img").src = r.FotoUrl;
+            document.getElementById("fmc-cat").textContent = r.CategoriaNombre;
+            document.getElementById("fmc-nombre").textContent = r.Nombre;
+            document.getElementById("fmc-rating").textContent = (typeof r.CalificacionPromedio === 'number') ? r.CalificacionPromedio.toFixed(1) : "5.0";
+            document.getElementById("fmc-reviews").textContent = (typeof r.TotalResenas === 'number') ? `(${r.TotalResenas} reseñas)` : "(Campus)";
+            document.getElementById("fmc-rango").textContent = r.RangoPrecios || "Económico";
+            document.getElementById("fmc-distancia").textContent = `${r.DistanciaTexto} · ${r.Direccion}`;
 
-            infoWindow.setContent(`
-                <div style="max-width:220px; font-family:Inter,sans-serif; padding:4px;">
-                    <img src="${r.FotoUrl}" onerror="this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600'" style="width:100%; height:85px; object-fit:cover; border-radius:6px; margin-bottom:6px;" alt="${r.Nombre}" />
-                    <b style="font-size:12px; display:block; line-height:1.2;">${r.Nombre}</b>
-                    <div style="font-size:11px; color:#f59e0b; margin:2px 0;">★ ${r.CalificacionPromedio.toFixed(1)} (${r.TotalResenas} reseñas)</div>
-                    <small style="color:#6b7280; display:block; margin-bottom:6px;">📍 ${r.DistanciaTexto}</small>
-                    <div style="display:flex; gap:4px;">
-                        <button onclick="abrirModalDetalle(${r.Id})" class="btn btn-sm btn-guinda" style="font-size:11px; padding:3px 8px; flex:1;">Ver Reseñas</button>
-                        <a href="${walkingUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary" style="font-size:11px; padding:3px 8px;" title="Ruta a pie">
-                            <i class="bi bi-person-walking"></i> Ruta
-                        </a>
-                    </div>
-                </div>
-            `);
+            const btnResenas = document.getElementById("fmc-btn-resenas");
+            if (r.Id > 0) {
+                btnResenas.style.display = "";
+                btnResenas.onclick = () => abrirModalDetalle(r.Id);
+            } else {
+                btnResenas.style.display = "none";
+            }
 
-            setTimeout(() => {
-                infoWindow.open(map, marker);
-            }, 100);
+            document.getElementById("fmc-btn-ruta").href = `https://www.google.com/maps/dir/?api=1&origin=-12.07203,-76.94205&destination=${r.Latitud},${r.Longitud}&travelmode=walking`;
+
+            // Mostrar con animación
+            card.classList.remove("d-none");
+        }
+
+        // Cerrar tarjeta flotante (al hacer clic en [X] o en cualquier parte del mapa)
+        function cerrarFloatingCard(e) {
+            if (e) e.stopPropagation();
+            const card = document.getElementById("floating-map-card");
+            if (card) {
+                card.classList.add("d-none");
+            }
         }
 
         // Ajustar la cámara al panorama completo del cuadrante recortado
@@ -584,7 +631,7 @@ else
             const marker = marcadores[id];
             if (map && r && marker) {
                 document.getElementById('mapa-fia').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                abrirInfoWindowRestaurante(r, marker);
+                mostrarCardFlotante(r, marker);
             }
         }
 

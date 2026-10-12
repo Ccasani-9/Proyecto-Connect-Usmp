@@ -520,6 +520,127 @@ public class FoodSpotsSeeder : IModuleSeeder
                 Longitud = -76.9422381,
                 CalificacionPromedio = 4.2,
                 TotalResenas = 1
+            },
+
+            // --- 4. HUARIQUES Y MENÚS CASEROS DETECTADOS EN ZOOM ALTO (FLORA TRISTÁN Y LA FONTANA) ---
+            new()
+            {
+                Nombre = "Pim Pam",
+                Descripcion = "El clásico huarique de menú casero preferido por los estudiantes. Sopa de entrada, platos de fondo criollos bien servidos, refresco natural y atención rápida.",
+                Categoria = CategoriaRestaurante.MenuCriollo,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Jr. Bogotá 297 (Esq. Flora Tristán), La Molina",
+                DistanciaTexto = "A 230m en Av. Flora Tristán",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Sáb: 11:30 AM - 4:30 PM",
+                TelefonoWhatsApp = null,
+                FotoUrl = "/images/restaurantes/pim-pam.jpg",
+                Latitud = -12.069951,
+                Longitud = -76.9419579,
+                CalificacionPromedio = 4.4,
+                TotalResenas = 1
+            },
+            new()
+            {
+                Nombre = "Oasis Café-Restaurante",
+                Descripcion = "Menús ejecutivos y estudiantiles diarios, café pasado, lomo saltado, pollo al jugo y milanesas con ensalada fresca a precio muy cómodo.",
+                Categoria = CategoriaRestaurante.MenuCriollo,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Av. Flora Tristán 478, La Molina",
+                DistanciaTexto = "A 180m en Av. Flora Tristán",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Dom: 8:00 AM - 8:00 PM",
+                TelefonoWhatsApp = null,
+                FotoUrl = "/images/restaurantes/oasis-cafe-restaurante.jpg",
+                Latitud = -12.070375,
+                Longitud = -76.9418491,
+                CalificacionPromedio = 4.3,
+                TotalResenas = 1
+            },
+            new()
+            {
+                Nombre = "Pastelería Las Delicias",
+                Descripcion = "Empanadas de carne y pollo recién horneadas, sándwiches, alfajores artesanales, café caliente y jugos para el desayuno o break de media tarde.",
+                Categoria = CategoriaRestaurante.PasteleriaPostres,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Av. Flora Tristán 509, La Molina",
+                DistanciaTexto = "A 210m en Av. Flora Tristán",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Dom: 7:00 AM - 9:30 PM",
+                TelefonoWhatsApp = null,
+                FotoUrl = "/images/restaurantes/pasteler-a-las-delicias.jpg",
+                Latitud = -12.070232,
+                Longitud = -76.9422749,
+                CalificacionPromedio = 4.5,
+                TotalResenas = 1
+            },
+            new()
+            {
+                Nombre = "Menú Rakus",
+                Descripcion = "Huarique de menú universitario al toque de la esquina. Porciones contundentes, sazón casera y precios al alcance del bolsillo de los alumnos.",
+                Categoria = CategoriaRestaurante.MenuCriollo,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Av. Flora Tristán 394, La Molina",
+                DistanciaTexto = "A 135m en Av. Flora Tristán",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Sáb: 11:30 AM - 4:00 PM",
+                TelefonoWhatsApp = null,
+                FotoUrl = "/images/restaurantes/men-rakus.jpg",
+                Latitud = -12.0716738,
+                Longitud = -76.9410831,
+                CalificacionPromedio = 4.5,
+                TotalResenas = 1
+            },
+            new()
+            {
+                Nombre = "Cevichería Miramar La Molina",
+                Descripcion = "Cebichería y menú marino tradicional. Tríos marinos, arroz con mariscos, chilcano caliente y combinados con chicharrón de pescado a precio accesible.",
+                Categoria = CategoriaRestaurante.MenuCriollo,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Av. Flora Tristán 444, La Molina",
+                DistanciaTexto = "A 140m en Av. Flora Tristán",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Dom: 9:30 AM - 5:00 PM",
+                TelefonoWhatsApp = null,
+                FotoUrl = "/images/restaurantes/cevicher-a-miramar-la-molina.jpg",
+                Latitud = -12.070923,
+                Longitud = -76.9414678,
+                CalificacionPromedio = 4.2,
+                TotalResenas = 1
+            },
+            new()
+            {
+                Nombre = "Mr. Chino",
+                Descripcion = "Chifa express frente a la puerta del campus universitario. Chaufas al wok, tallarín saltado y menús orientales contundentes servidos al instante.",
+                Categoria = CategoriaRestaurante.Chifa,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Av. La Fontana 1253, La Molina",
+                DistanciaTexto = "A 95m cruzando Puerta 1 FIA",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Dom: 11:30 AM - 10:00 PM",
+                TelefonoWhatsApp = null,
+                FotoUrl = "/images/restaurantes/mr-chino.jpg",
+                Latitud = -12.0729084,
+                Longitud = -76.9425046,
+                CalificacionPromedio = 4.1,
+                TotalResenas = 1
+            },
+            new()
+            {
+                Nombre = "Chifa El Dorado",
+                Descripcion = "Combos de aeropuerto, sopa wantán familiar y menús chifa económicos para almorzar rápido entre turnos de clases.",
+                Categoria = CategoriaRestaurante.Chifa,
+                Rango = RangoPrecio.Economico,
+                Direccion = "Av. Flora Tristán 431, La Molina",
+                DistanciaTexto = "A 130m en Av. Flora Tristán",
+                RangoPrecios = "Económico",
+                HorarioAtencion = "Lun - Dom: 12:00 PM - 10:30 PM",
+                TelefonoWhatsApp = null,
+                FotoUrl = "/images/restaurantes/chifa-el-dorado.jpg",
+                Latitud = -12.0710295,
+                Longitud = -76.941843,
+                CalificacionPromedio = 4.2,
+                TotalResenas = 1
             }
         };
 
