@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UsmpConnect.Data;
@@ -14,6 +15,7 @@ public class FoodSpotsController(
     IBuscadorAlgolia algolia,
     IPieHostService pieHost) : Controller
 {
+    [AllowAnonymous]
     public async Task<IActionResult> Index(CategoriaRestaurante? categoria, string? q)
     {
         var cacheKey = $"foodspots:list:{categoria?.ToString() ?? "todos"}:{q?.Trim().ToLowerInvariant() ?? "all"}";

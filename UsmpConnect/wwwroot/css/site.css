@@ -419,11 +419,20 @@ a:hover { color: var(--guinda-700); }
 .auth-features li { display: flex; gap: 12px; align-items: flex-start; }
 .auth-features i { background: rgba(255, 255, 255, .14); width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; flex-shrink: 0; }
 .auth-form { display: flex; align-items: center; justify-content: center; padding: 40px 24px; background: #fff; }
-.auth-form .inner { width: 100%; max-width: 420px; }
+.auth-form .inner { width: 100%; max-width: 440px; }
 .auth-form h2 { font-weight: 800; font-size: 1.6rem; }
-.demo-box { background: #f9fafb; border: 1px dashed #d4d6dc; border-radius: 12px; padding: 12px 14px; margin-top: 22px; font-size: .82rem; }
-.demo-box button { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: .78rem; font-weight: 600; }
-.demo-box button:hover { border-color: var(--guinda); color: var(--guinda); }
+.auth-form .input-group:focus-within .input-group-text,
+.auth-form .input-group:focus-within .form-control,
+.auth-form .input-group:focus-within .btn {
+  border-color: var(--guinda);
+  box-shadow: none;
+}
+.demo-box button:hover {
+  border-color: var(--guinda) !important;
+  background: #fdf2f4 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(139, 29, 44, 0.12);
+}
 .tipo-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .tipo-toggle label { border: 1.5px solid var(--border); border-radius: 10px; padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 600; }
 .tipo-toggle input { display: none; }

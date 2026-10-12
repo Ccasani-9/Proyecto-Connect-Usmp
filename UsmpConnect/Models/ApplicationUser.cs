@@ -18,6 +18,8 @@ public class ApplicationUser : IdentityUser
 
     public string Escuela { get; set; } = "";
 
+    public string? FotoUrl { get; set; }
+
     public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 
     public string NombreCompleto => $"{Nombres} {Apellidos}".Trim();

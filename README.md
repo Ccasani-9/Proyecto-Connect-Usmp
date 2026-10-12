@@ -33,10 +33,9 @@ A diferencia de los sistemas administrativos tradicionales, USMP Connect consoli
 
 ## ✨ Características y Módulos Principales
 
-### 1. 📊 Panel Académico & Simulador de Notas (Calculadora FIA)
-* Proyección de notas y cálculo automático de promedios según la fórmula ponderada oficial de la facultad (Evaluaciones Continuas, Parciales, Finales y Trabajos).
-* Resumen en tiempo real del promedio semestral y alertas de rendimiento académico.
-* Horario del día interactivo con asignación de aulas y estado de asistencia.
+### 1. 📅 Horario del Día & Enlace a Calculadora FIA
+* Horario del día interactivo con asignación de aulas, asignaturas y estado de asistencia.
+* Acceso directo integrado a **Calculadora FIA** (`calculadorafiausmp.com`) para proyección de promedios ponderados según el sílabo oficial.
 
 ### 2. 👨‍🏫 Cátedra & Tips
 * Directorio exhaustivo de cursos y docentes de la facultad (Ciclos I al V).
@@ -58,7 +57,7 @@ A diferencia de los sistemas administrativos tradicionales, USMP Connect consoli
 * **Confirmación de Recepción:** Ciclo cerrado donde el dueño confirma la recepción física en garita para archivar el reporte.
 * **Tablón de Extraviados:** Alertas de búsqueda comunitaria con contacto directo.
 
-### 6. 🍔 Restaurantes & Food Spots FIA
+### 6. 🍔 Restaurantes Cercanos
 * Guía gastronómica perimetral al campus de La Molina.
 * Mapa interactivo delimitado al cuadrante universitario: **Av. La Fontana, Av. Los Frutales, Av. Constructores y Av. Flora Tristán**.
 * Menús diarios, rangos de precios estudiantiles y filtrado por cercanía a las puertas de acceso.
