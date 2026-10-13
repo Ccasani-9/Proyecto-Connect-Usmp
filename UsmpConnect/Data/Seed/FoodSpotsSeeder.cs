@@ -32,7 +32,7 @@ public class FoodSpotsSeeder : IModuleSeeder
                 Direccion = "Campus FIA USMP · Al costado del Pabellón B",
                 DistanciaTexto = "Dentro del Campus FIA (0 min)",
                 RangoPrecios = "Económico",
-                HorarioAtencion = "Lun - Sáb: 7:30 AM - 8:30 PM",
+                HorarioAtencion = "Lun: 8:30 AM - 7:00 PM | Mar-Vie: 8:30 AM - 9:00 PM | Sáb: 9:00 AM - 3:00 PM",
                 TelefonoWhatsApp = "987654321",
                 FotoUrl = "/images/restaurantes/cafeteria-central-fia.jpg",
                 Latitud = -12.07203,
