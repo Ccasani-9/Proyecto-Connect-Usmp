@@ -9,7 +9,7 @@
     <style>
         .food-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
             gap: 1.25rem;
         }
         .food-card {
@@ -49,10 +49,57 @@
             box-shadow: 0 4px 12px rgba(0,0,0,.04);
             z-index: 10;
         }
+        .dist-filter-btn {
+            border-radius: 999px !important;
+            font-size: 0.82rem;
+            padding: 0.3rem 0.85rem;
+            transition: all 0.2s ease;
+        }
         .dist-filter-btn.active {
             background-color: #7a152d !important;
             color: #fff !important;
             border-color: #7a152d !important;
+        }
+        .dist-filter-btn:hover:not(.active) {
+            background-color: #f1f5f9;
+            color: #334155;
+        }
+
+        /* Responsive Breakpoints */
+        @@media (max-width: 768px) {
+            #mapa-fia {
+                height: 350px !important;
+            }
+        }
+        @@media (max-width: 576px) {
+            .food-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            #mapa-fia {
+                height: 320px !important;
+            }
+            .modal-hero-cover {
+                height: 190px !important;
+            }
+            .modal-hero-overlay {
+                padding: 1rem !important;
+            }
+            .modal-restaurante-content .modal-body {
+                padding: 1.25rem 1rem !important;
+            }
+            #floating-map-card {
+                bottom: 10px !important;
+                width: calc(100% - 18px) !important;
+                padding: 10px !important;
+            }
+            #floating-map-card #fmc-img {
+                width: 70px !important;
+                height: 70px !important;
+            }
+            #floating-map-card #fmc-nombre {
+                font-size: 0.88rem !important;
+            }
         }
 
         /* Modal Detalle Rediseñado */
@@ -183,20 +230,20 @@
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
             <!-- Filtro por zona dentro del cuadrante -->
-            <div class="btn-group btn-group-sm" role="group" aria-label="Filtro de zona">
-                <button type="button" class="btn btn-outline-secondary dist-filter-btn active" onclick="filtrarPorZona('todos', this)">
+            <div class="d-flex align-items-center gap-1 flex-wrap" role="group" aria-label="Filtro de zona">
+                <button type="button" class="btn btn-sm btn-outline-secondary dist-filter-btn active" onclick="filtrarPorZona('todos', this)">
                     <i class="bi bi-grid-fill me-1"></i>Todo (@Model.Restaurantes.Count)
                 </button>
-                <button type="button" class="btn btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('fontana', this)">
+                <button type="button" class="btn btn-sm btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('fontana', this)">
                     La Fontana
                 </button>
-                <button type="button" class="btn btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('flora', this)">
+                <button type="button" class="btn btn-sm btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('flora', this)">
                     Flora Tristán
                 </button>
-                <button type="button" class="btn btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('prado', this)">
+                <button type="button" class="btn btn-sm btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('prado', this)">
                     Javier Prado
                 </button>
-                <button type="button" class="btn btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('ingenieros', this)">
+                <button type="button" class="btn btn-sm btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('ingenieros', this)">
                     Los Ingenieros
                 </button>
             </div>
@@ -572,6 +619,7 @@ else
                     latLngBounds: boundsNavegacion,
                     strictBounds: false
                 },
+                gestureHandling: "cooperative",
                 mapTypeControl: false,
                 streetViewControl: false,
                 fullscreenControl: true,
