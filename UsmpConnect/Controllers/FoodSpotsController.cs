@@ -130,6 +130,9 @@ public class FoodSpotsController(
             r.Longitud,
             r.CalificacionPromedio,
             r.TotalResenas,
+            EsCampus = (r.Direccion?.Contains("Campus FIA", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                       (r.DistanciaTexto?.Contains("Dentro del Campus", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                       (r.Nombre?.Contains("Cafetería Central FIA", StringComparison.OrdinalIgnoreCase) ?? false),
             Platos = platos,
             Resenas = resenas
         });

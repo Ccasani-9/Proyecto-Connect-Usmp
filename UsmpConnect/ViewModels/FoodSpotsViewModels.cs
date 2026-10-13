@@ -21,7 +21,12 @@ public record RestauranteItemVM(
     double CalificacionPromedio,
     int TotalResenas,
     List<PlatoItemVM> PlatosPopulares
-);
+)
+{
+    public bool EsCampus => (Direccion?.Contains("Campus FIA", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (DistanciaTexto?.Contains("Dentro del Campus", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (Nombre?.Contains("Cafetería Central FIA", StringComparison.OrdinalIgnoreCase) ?? false);
+}
 
 public record PlatoItemVM(
     int Id,

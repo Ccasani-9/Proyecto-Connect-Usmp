@@ -334,17 +334,35 @@ else
                     </div>
 
                     <div class="mt-auto pt-2">
-                        <div class="d-flex gap-2 mb-2">
-                            <button class="btn btn-sm btn-outline-secondary w-50" type="button" onclick="irARestauranteEnMapa(@r.Id)">
-                                <i class="bi bi-pin-map me-1"></i>Ver en mapa
-                            </button>
-                            <button class="btn btn-sm btn-guinda w-50" type="button" onclick="abrirModalDetalle(@r.Id)" title="Ver información completa y opiniones">
-                                <i class="bi bi-info-circle me-1"></i>Más información
-                            </button>
-                        </div>
-                        <a href="@walkingUrl" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary w-100" title="Ver ruta a pie exacta desde el campus FIA en Google Maps">
-                            <i class="bi bi-person-walking me-1"></i>Cómo llegar a pie
-                        </a>
+                        @if (r.EsCampus)
+                        {
+                            <div class="d-flex align-items-center justify-content-center gap-1 py-1 mb-2 rounded bg-light border text-muted" style="font-size: 0.78rem;">
+                                <i class="bi bi-building-check text-guinda"></i>
+                                <span>Dentro del Campus FIA (Pabellón B)</span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-secondary w-50" type="button" onclick="irARestauranteEnMapa(@r.Id)">
+                                    <i class="bi bi-pin-map me-1"></i>Ver en mapa
+                                </button>
+                                <button class="btn btn-sm btn-guinda w-50" type="button" onclick="abrirModalDetalle(@r.Id)" title="Ver información completa y opiniones">
+                                    <i class="bi bi-info-circle me-1"></i>Más información
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="d-flex gap-2 mb-2">
+                                <button class="btn btn-sm btn-outline-secondary w-50" type="button" onclick="irARestauranteEnMapa(@r.Id)">
+                                    <i class="bi bi-pin-map me-1"></i>Ver en mapa
+                                </button>
+                                <button class="btn btn-sm btn-guinda w-50" type="button" onclick="abrirModalDetalle(@r.Id)" title="Ver información completa y opiniones">
+                                    <i class="bi bi-info-circle me-1"></i>Más información
+                                </button>
+                            </div>
+                            <a href="@walkingUrl" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary w-100" title="Ver ruta a pie exacta desde el campus FIA en Google Maps">
+                                <i class="bi bi-person-walking me-1"></i>Cómo llegar a pie
+                            </a>
+                        }
                     </div>
                 </div>
             </div>
@@ -415,6 +433,10 @@ else
 
                 <!-- Botones de Acción Rápida (Fila Unificada) -->
                 <div class="d-flex flex-wrap gap-2 mb-4">
+                    <div id="modalCampusNotice" class="d-none w-100 alert alert-light border d-flex align-items-center gap-2 py-2 px-3 mb-0 text-muted" style="font-size: 0.85rem;">
+                        <i class="bi bi-building-check text-guinda fs-5"></i>
+                        <span>Local ubicado <strong>dentro del campus universitario FIA</strong> (Pabellón B). Acceso directo entre clases.</span>
+                    </div>
                     <a id="modalBtnRuta" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-guinda flex-grow-1 d-flex align-items-center justify-content-center gap-2 py-2" title="Ver ruta a pie exacta desde la facultad FIA">
                         <i class="bi bi-person-walking"></i>
                         <span>Cómo llegar a pie</span>
@@ -519,7 +541,8 @@ else
             r.Direccion,
             r.CalificacionPromedio,
             r.TotalResenas,
-            r.FotoUrl
+            r.FotoUrl,
+            r.EsCampus
         })));
 
         // Límites exactos del cuadrante universitario: Flora Tristán - Javier Prado - La Fontana - Los Ingenieros
@@ -661,7 +684,8 @@ else
                     Direccion: "Av. La Fontana 1250, Santa Patricia - La Molina",
                     FotoUrl: "/images/restaurantes/cafeteria-central-fia.jpg",
                     Latitud: fiaCoords.lat,
-                    Longitud: fiaCoords.lng
+                    Longitud: fiaCoords.lng,
+                    EsCampus: true
                 }, fiaMarker);
             });
 
@@ -712,6 +736,7 @@ else
             document.getElementById("fmc-distancia").textContent = `${r.DistanciaTexto} · ${r.Direccion}`;
 
             const btnResenas = document.getElementById("fmc-btn-resenas");
+            const btnRuta = document.getElementById("fmc-btn-ruta");
             if (r.Id > 0) {
                 btnResenas.style.display = "";
                 btnResenas.onclick = () => abrirModalDetalle(r.Id);
@@ -719,7 +744,17 @@ else
                 btnResenas.style.display = "none";
             }
 
-            document.getElementById("fmc-btn-ruta").href = `https://www.google.com/maps/dir/?api=1&origin=-12.07203,-76.94205&destination=${r.Latitud},${r.Longitud}&travelmode=walking`;
+            const esCampus = r.EsCampus || (r.Nombre && r.Nombre.toLowerCase().includes("cafetería")) || (r.DistanciaTexto && r.DistanciaTexto.toLowerCase().includes("dentro del campus"));
+            if (esCampus) {
+                if (btnRuta) btnRuta.style.display = "none";
+                if (btnResenas) btnResenas.className = "btn btn-sm btn-guinda w-100 py-1";
+            } else {
+                if (btnRuta) {
+                    btnRuta.style.display = "";
+                    btnRuta.href = `https://www.google.com/maps/dir/?api=1&origin=-12.07203,-76.94205&destination=${r.Latitud},${r.Longitud}&travelmode=walking`;
+                }
+                if (btnResenas) btnResenas.className = "btn btn-sm btn-guinda w-50 py-1";
+            }
 
             // Mostrar con animación
             card.classList.remove("d-none");
@@ -852,9 +887,27 @@ else
                 document.getElementById('modalHorario').textContent = d.horarioAtencion;
                 document.getElementById('formRestauranteId').value = d.id;
 
-                // Enlaces de Google Maps
-                document.getElementById('modalBtnRuta').href = `https://www.google.com/maps/dir/?api=1&origin=-12.07203,-76.94205&destination=${d.latitud},${d.longitud}&travelmode=walking`;
-                document.getElementById('modalBtnGmaps').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.nombre + ' ' + d.direccion)}`;
+                // Enlaces de Google Maps / Campus FIA
+                const esCampus = d.esCampus || (d.nombre && d.nombre.toLowerCase().includes("cafetería")) || (d.distanciaTexto && d.distanciaTexto.toLowerCase().includes("dentro del campus"));
+                const btnRuta = document.getElementById('modalBtnRuta');
+                const btnGmaps = document.getElementById('modalBtnGmaps');
+                const campusNotice = document.getElementById('modalCampusNotice');
+
+                if (esCampus) {
+                    if (campusNotice) campusNotice.classList.remove('d-none');
+                    if (btnRuta) btnRuta.classList.add('d-none');
+                    if (btnGmaps) btnGmaps.classList.add('d-none');
+                } else {
+                    if (campusNotice) campusNotice.classList.add('d-none');
+                    if (btnRuta) {
+                        btnRuta.classList.remove('d-none');
+                        btnRuta.href = `https://www.google.com/maps/dir/?api=1&origin=-12.07203,-76.94205&destination=${d.latitud},${d.longitud}&travelmode=walking`;
+                    }
+                    if (btnGmaps) {
+                        btnGmaps.classList.remove('d-none');
+                        btnGmaps.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.nombre + ' ' + d.direccion)}`;
+                    }
+                }
 
                 // WhatsApp si existe
                 if (d.telefonoWhatsApp) {
