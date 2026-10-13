@@ -54,6 +54,101 @@
             color: #fff !important;
             border-color: #7a152d !important;
         }
+
+        /* Modal Detalle Rediseñado */
+        .modal-restaurante-dialog {
+            max-width: 680px;
+        }
+        .modal-restaurante-content {
+            border: none;
+            border-radius: 1.25rem;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+        }
+        .modal-hero-cover {
+            height: 250px;
+            position: relative;
+            background: #111;
+            overflow: hidden;
+        }
+        .modal-hero-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+        .modal-hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.92) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+        }
+        .modal-close-btn {
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .modal-close-btn:hover {
+            background: rgba(220, 38, 38, 0.85);
+            color: #fff;
+            transform: scale(1.05);
+        }
+        .bento-info-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 14px;
+            transition: all 0.2s ease;
+        }
+        .bento-info-box:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+        .review-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            transition: transform 0.15s ease;
+        }
+        .review-card:hover {
+            background: #fff;
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+        .btn-wa-custom {
+            background: #25D366;
+            color: #fff;
+            border: none;
+            font-weight: 600;
+        }
+        .btn-wa-custom:hover {
+            background: #1eb956;
+            color: #fff;
+        }
+        .btn-outline-guinda {
+            border: 1px solid #7a152d;
+            color: #7a152d;
+            background: transparent;
+            font-weight: 600;
+        }
+        .btn-outline-guinda:hover {
+            background: #7a152d;
+            color: #fff;
+        }
     </style>
 }
 
@@ -143,7 +238,7 @@
             </div>
             <div class="d-flex gap-2 mt-2 pt-2 border-top">
                 <button id="fmc-btn-resenas" class="btn btn-sm btn-guinda w-50 py-1" style="font-size: 0.82rem;">
-                    <i class="bi bi-chat-heart me-1"></i>Ver Reseñas
+                    <i class="bi bi-info-circle me-1"></i>Más información
                 </button>
                 <a id="fmc-btn-ruta" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary w-50 py-1" style="font-size: 0.82rem;">
                     <i class="bi bi-person-walking me-1"></i>Ruta a pie
@@ -243,8 +338,8 @@ else
                             <button class="btn btn-sm btn-outline-secondary w-50" type="button" onclick="irARestauranteEnMapa(@r.Id)">
                                 <i class="bi bi-pin-map me-1"></i>Ver en mapa
                             </button>
-                            <button class="btn btn-sm btn-guinda w-50" type="button" onclick="abrirModalDetalle(@r.Id)">
-                                <i class="bi bi-chat-heart me-1"></i>Reseñas (@r.TotalResenas)
+                            <button class="btn btn-sm btn-guinda w-50" type="button" onclick="abrirModalDetalle(@r.Id)" title="Ver información completa y opiniones">
+                                <i class="bi bi-info-circle me-1"></i>Más información
                             </button>
                         </div>
                         <a href="@walkingUrl" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary w-100" title="Ver ruta a pie exacta desde el campus FIA en Google Maps">
@@ -257,68 +352,110 @@ else
     </div>
 }
 
-<!-- Modal Detalle del Restaurante / Reseñas de Alumnos -->
+<!-- Modal Detalle del Restaurante Rediseñado -->
 <div class="modal fade" id="modalRestaurante" tabindex="-1" aria-labelledby="modalRestauranteLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div>
-                    <h2 class="modal-title h5 fw-bold mb-0" id="modalRestauranteLabel">Detalle del Restaurante</h2>
-                    <span id="modalDistancia" class="small text-muted"></span>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row g-3 mb-3">
-                    <div class="col-md-5">
-                        <img id="modalImg" src="" class="w-100 rounded object-fit-cover shadow-sm" style="max-height: 220px;" alt="Restaurante" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600';" />
-                        <div class="mt-2 d-flex flex-column gap-1" id="modalLinksContainer">
-                            <a id="modalBtnRuta" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary w-100">
-                                <i class="bi bi-person-walking me-1"></i>Cómo llegar a pie (Google Maps)
-                            </a>
-                            <a id="modalBtnGmaps" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary w-100">
-                                <i class="bi bi-google me-1 text-danger"></i>Ver ficha en Google Maps
-                            </a>
-                            <div id="modalBtnWaContainer"></div>
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-restaurante-dialog">
+        <div class="modal-content modal-restaurante-content">
+            <!-- Hero Cover con Foto, Badges y Título integrado -->
+            <div class="modal-hero-cover">
+                <img id="modalImg" src="" class="modal-hero-img" alt="Restaurante" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600';" />
+                <div class="modal-hero-overlay">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <span id="modalCategoria" class="badge bg-white text-dark shadow-sm px-3 py-1 rounded-pill fw-bold" style="font-size: 0.8rem;"></span>
+                            <span id="modalRangoPrecios" class="badge bg-dark bg-opacity-75 text-white border border-light border-opacity-25 px-3 py-1 rounded-pill" style="backdrop-filter: blur(4px); font-size: 0.8rem;"></span>
                         </div>
+                        <button type="button" class="modal-close-btn" data-bs-dismiss="modal" aria-label="Cerrar" title="Cerrar ventana">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
                     </div>
-                    <div class="col-md-7">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <span id="modalCategoria" class="tag tag-guinda"></span>
-                            <span id="modalRangoPrecios" class="badge bg-light text-secondary border"></span>
-                            <div class="d-flex align-items-center ms-auto">
-                                <span class="stars-gold"><i class="bi bi-star-fill"></i></span>
-                                <span id="modalPromedio" class="fw-bold ms-1"></span>
-                                <span id="modalTotalResenas" class="text-muted small ms-1"></span>
+                    <div>
+                        <div class="d-flex justify-content-between align-items-end flex-wrap gap-2">
+                            <div>
+                                <h2 class="modal-title fw-bold text-white mb-1" id="modalRestauranteLabel" style="font-size: 1.65rem; text-shadow: 0 2px 8px rgba(0,0,0,0.6);"></h2>
+                                <div class="d-flex align-items-center gap-2 text-white-50 small flex-wrap">
+                                    <span class="badge bg-danger bg-opacity-75 text-white" style="backdrop-filter: blur(4px);">
+                                        <i class="bi bi-geo-alt-fill me-1"></i><span id="modalDistancia"></span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="badge bg-white text-dark shadow px-3 py-2 rounded-pill d-flex align-items-center gap-1" style="font-size: 0.9rem;">
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <span id="modalPromedio" class="fw-bold"></span>
+                                <small id="modalTotalResenas" class="text-muted"></small>
                             </div>
                         </div>
-                        <p id="modalDesc" class="text-muted small mb-2"></p>
-                        <div class="small bg-light p-2 rounded mb-2">
-                            <div class="mb-1"><i class="bi bi-pin-map text-secondary me-1"></i><span id="modalDireccion"></span></div>
-                            <div><i class="bi bi-clock me-1 text-primary"></i><span id="modalHorario"></span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cuerpo del Modal -->
+            <div class="modal-body p-4">
+                <!-- Barra de Datos Rápidos (Bento Grid) -->
+                <div class="row g-2 mb-3">
+                    <div class="col-sm-6">
+                        <div class="bento-info-box d-flex align-items-start gap-2 h-100">
+                            <i class="bi bi-pin-map-fill text-danger fs-5 mt-1"></i>
+                            <div class="overflow-hidden">
+                                <small class="text-muted d-block fw-semibold" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;">Dirección</small>
+                                <span id="modalDireccion" class="small fw-semibold text-dark text-break"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="bento-info-box d-flex align-items-start gap-2 h-100">
+                            <i class="bi bi-clock-fill text-primary fs-5 mt-1"></i>
+                            <div class="overflow-hidden">
+                                <small class="text-muted d-block fw-semibold" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;">Horario de Atención</small>
+                                <span id="modalHorario" class="small fw-semibold text-dark text-break"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <hr class="my-3" />
+                <!-- Botones de Acción Rápida (Fila Unificada) -->
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <a id="modalBtnRuta" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-guinda flex-grow-1 d-flex align-items-center justify-content-center gap-2 py-2" title="Ver ruta a pie exacta desde la facultad FIA">
+                        <i class="bi bi-person-walking"></i>
+                        <span>Cómo llegar a pie</span>
+                    </a>
+                    <div id="modalBtnWaContainer" class="d-inline-flex flex-grow-1"></div>
+                    <a id="modalBtnGmaps" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-1 py-2 px-3" title="Abrir en Google Maps oficial">
+                        <i class="bi bi-google text-danger"></i>
+                        <span>Ver en Maps</span>
+                    </a>
+                </div>
 
-                <!-- Reseñas de Alumnos USMP -->
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3 class="h6 fw-bold mb-0"><i class="bi bi-chat-heart me-1"></i>Opiniones de la Comunidad USMP</h3>
-                    <button class="btn btn-sm btn-soft" type="button" data-bs-toggle="collapse" data-bs-target="#formResenaCollapse">
-                        <i class="bi bi-pencil-fill me-1"></i>Escribir reseña
+                <!-- Descripción / Sobre el local -->
+                <div class="p-3 rounded mb-4" style="background: #fafafa; border: 1px solid #f0f0f0;">
+                    <h5 class="h6 fw-bold mb-2 text-dark d-flex align-items-center gap-2">
+                        <i class="bi bi-shop text-danger"></i>Sobre este local y qué pedir
+                    </h5>
+                    <p id="modalDesc" class="text-secondary mb-0" style="font-size: 0.92rem; line-height: 1.6;"></p>
+                </div>
+
+                <!-- Muro de Reseñas de Alumnos FIA -->
+                <div class="d-flex justify-content-between align-items-center mb-3 pt-2 border-top">
+                    <div>
+                        <h4 class="h6 fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                            <i class="bi bi-chat-heart-fill text-danger"></i>Opiniones de la Comunidad USMP
+                        </h4>
+                        <small class="text-muted">Reseñas y recomendaciones verificadas de alumnos FIA</small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-guinda rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#formResenaCollapse">
+                        <i class="bi bi-pencil-square me-1"></i>Escribir reseña
                     </button>
                 </div>
 
                 <!-- Formulario desplegable para nueva reseña -->
                 <div class="collapse mb-4" id="formResenaCollapse">
-                    <form asp-action="Resenar" method="post" class="card-u p bg-light">
+                    <form asp-action="Resenar" method="post" class="card-u p-3 bg-light border-0 shadow-sm" style="border-radius: 14px;">
                         <input type="hidden" name="RestauranteId" id="formRestauranteId" value="" />
-                        <h4 class="h6 fw-bold mb-2">Tu calificación como alumno FIA</h4>
+                        <h5 class="h6 fw-bold mb-2 text-dark">Tu calificación como alumno FIA</h5>
                         <div class="row g-2 mb-2">
-                            <div class="col-sm-4">
-                                <label class="form-label small fw-semibold">Puntuación:</label>
-                                <select name="Puntuacion" class="form-select form-select-sm">
+                            <div class="col-sm-5">
+                                <label class="form-label small fw-semibold mb-1">Puntuación:</label>
+                                <select name="Puntuacion" class="form-select form-select-sm" style="border-radius: 8px;">
                                     <option value="5">⭐⭐⭐⭐⭐ (5 - Excelente)</option>
                                     <option value="4">⭐⭐⭐⭐ (4 - Muy bueno)</option>
                                     <option value="3">⭐⭐⭐ (3 - Bueno)</option>
@@ -326,22 +463,23 @@ else
                                     <option value="1">⭐ (1 - Malo)</option>
                                 </select>
                             </div>
-                            <div class="col-sm-8">
-                                <label class="form-label small fw-semibold">Comentario:</label>
-                                <input type="text" name="Comentario" class="form-control form-control-sm" placeholder="Ej: Atención rápida, ambiente agradable entre clases..." required minlength="5" maxlength="500" />
+                            <div class="col-sm-7">
+                                <label class="form-label small fw-semibold mb-1">Comentario:</label>
+                                <input type="text" name="Comentario" class="form-control form-control-sm" style="border-radius: 8px;" placeholder="Ej: Porción taipá, buen menú entre clases..." required minlength="5" maxlength="500" />
                             </div>
                         </div>
                         <div class="text-end">
-                            <button type="submit" class="btn btn-sm btn-guinda">Publicar Reseña</button>
+                            <button type="submit" class="btn btn-sm btn-guinda px-3">Publicar Reseña</button>
                         </div>
                     </form>
                 </div>
 
-                <!-- Muro de Reseñas -->
+                <!-- Lista de Reseñas de Estudiantes -->
                 <div id="modalResenasLista"></div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+            <div class="modal-footer bg-light border-0 py-2 px-4 d-flex justify-content-between align-items-center">
+                <small class="text-muted"><i class="bi bi-shield-check text-success me-1"></i>Campus FIA USMP · La Molina</small>
+                <button type="button" class="btn btn-sm btn-secondary px-3" data-bs-dismiss="modal" style="border-radius: 8px;">Cerrar</button>
             </div>
         </div>
     </div>
@@ -721,8 +859,8 @@ else
                 // WhatsApp si existe
                 if (d.telefonoWhatsApp) {
                     document.getElementById('modalBtnWaContainer').innerHTML = `
-                        <a href="https://wa.me/51${d.telefonoWhatsApp}?text=Hola,%20soy%20estudiante%20de%20la%20USMP%20FIA,%20deseo%20hacer%20una%20consulta." target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-wa w-100">
-                            <i class="bi bi-whatsapp me-1"></i>Contactar por WhatsApp
+                        <a href="https://wa.me/51${d.telefonoWhatsApp}?text=Hola,%20soy%20estudiante%20de%20la%20USMP%20FIA,%20deseo%20hacer%20una%20consulta." target="_blank" rel="noopener noreferrer" class="btn btn-wa-custom w-100 d-flex align-items-center justify-content-center gap-2 py-2" title="Contactar por WhatsApp">
+                            <i class="bi bi-whatsapp"></i><span>WhatsApp</span>
                         </a>
                     `;
                 } else {
@@ -733,22 +871,30 @@ else
                 const listaResenas = document.getElementById('modalResenasLista');
                 if (d.resenas && d.resenas.length > 0) {
                     listaResenas.innerHTML = d.resenas.map(r => `
-                        <div class="p-2 border rounded mb-2 bg-light">
+                        <div class="review-card">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="avatar avatar-sm avatar-soft">${r.iniciales}</span>
-                                    <span class="fw-semibold small">${r.autor}</span>
+                                    <span class="avatar avatar-sm avatar-soft" style="width: 32px; height: 32px; border-radius: 50%; font-size: 0.78rem; font-weight: 700; background: var(--guinda-50, #fdf2f4); color: #7a152d; display: inline-flex; align-items: center; justify-content: center;">${r.iniciales}</span>
+                                    <span class="fw-semibold small text-dark">${r.autor}</span>
                                 </div>
-                                <span class="text-muted small">${r.fechaRelativa}</span>
+                                <span class="text-muted small" style="font-size: 0.78rem;">${r.fechaRelativa}</span>
                             </div>
-                            <div class="stars-gold mb-1" style="font-size:12px;">
+                            <div class="stars-gold mb-1" style="font-size: 13px;">
                                 ${'★'.repeat(r.puntuacion)}${'☆'.repeat(5 - r.puntuacion)}
                             </div>
-                            <p class="small mb-0 text-secondary">${r.comentario}</p>
+                            <p class="small mb-0 text-secondary" style="line-height: 1.45;">${r.comentario}</p>
                         </div>
                     `).join('');
                 } else {
-                    listaResenas.innerHTML = '<p class="text-muted small">Aún no hay reseñas. ¡Sé el primer estudiante en calificar este local!</p>';
+                    listaResenas.innerHTML = `
+                        <div class="text-center py-4 px-3 rounded" style="background: #f8fafc; border: 1px dashed #cbd5e1;">
+                            <i class="bi bi-chat-square-text text-muted fs-3 mb-2 d-block"></i>
+                            <p class="small text-muted mb-2">Aún no hay reseñas registradas para este local.</p>
+                            <button class="btn btn-sm btn-outline-guinda rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#formResenaCollapse">
+                                <i class="bi bi-pencil-fill me-1"></i>Sé el primero en calificar
+                            </button>
+                        </div>
+                    `;
                 }
 
                 const modal = new bootstrap.Modal(document.getElementById('modalRestaurante'));
