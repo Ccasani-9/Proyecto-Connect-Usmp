@@ -21,7 +21,12 @@ public record RestauranteItemVM(
     double CalificacionPromedio,
     int TotalResenas,
     List<PlatoItemVM> PlatosPopulares
-);
+)
+{
+    public bool EsCampus => (Direccion?.Contains("Campus FIA", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (DistanciaTexto?.Contains("Dentro del Campus", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (Nombre?.Contains("Cafetería Central FIA", StringComparison.OrdinalIgnoreCase) ?? false);
+}
 
 public record PlatoItemVM(
     int Id,
@@ -47,6 +52,7 @@ public class FoodSpotsIndexVM
     public string? Busqueda { get; set; }
     public int TotalLugares => Restaurantes.Count;
     public string FuenteDatos { get; set; } = "SQLite"; // "Redis Cache (Hit)" o "SQLite"
+    public string GoogleMapsApiKey { get; set; } = string.Empty;
 }
 
 public class CrearResenaVM

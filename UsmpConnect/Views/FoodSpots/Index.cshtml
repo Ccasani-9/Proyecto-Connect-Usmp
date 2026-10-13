@@ -2,19 +2,18 @@
 @using UsmpConnect.Services
 @model UsmpConnect.ViewModels.FoodSpotsIndexVM
 @{
-    ViewData["Title"] = "Food & Spots";
+    ViewData["Title"] = "Restaurantes Cercanos";
 }
 
 @section Styles {
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         .food-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
             gap: 1.25rem;
         }
         .food-card {
-            border: 1px solid var(--borde, #e5e7eb);
+            border: 1px solid var(--border, #e5e7eb);
             border-radius: 1rem;
             overflow: hidden;
             background: #fff;
@@ -27,10 +26,11 @@
             box-shadow: 0 10px 25px -5px rgba(0,0,0,.08);
         }
         .food-card-img {
-            height: 160px;
+            height: 175px;
             width: 100%;
             object-fit: cover;
             position: relative;
+            background-color: #f3f4f6;
         }
         .food-card-body {
             padding: 1.25rem;
@@ -42,68 +42,347 @@
             color: #f59e0b;
         }
         #mapa-fia {
-            height: 380px;
+            height: 430px;
             width: 100%;
             border-radius: 1rem;
-            border: 1px solid var(--borde, #e5e7eb);
+            border: 1px solid var(--border, #e5e7eb);
             box-shadow: 0 4px 12px rgba(0,0,0,.04);
             z-index: 10;
         }
-        .plato-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: .6rem 0;
-            border-bottom: 1px dashed var(--borde, #e5e7eb);
+        .dist-filter-btn {
+            border-radius: 999px !important;
+            font-size: 0.82rem;
+            padding: 0.3rem 0.85rem;
+            transition: all 0.2s ease;
         }
-        .plato-item:last-child { border-bottom: none; }
+        .dist-filter-btn.active {
+            background-color: #7a152d !important;
+            color: #fff !important;
+            border-color: #7a152d !important;
+        }
+        .dist-filter-btn:hover:not(.active) {
+            background-color: #f1f5f9;
+            color: #334155;
+        }
+
+        /* Botones de acción modernos para Food Card */
+        .btn-card-map {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #334155;
+            font-weight: 600;
+            font-size: 0.82rem;
+            border-radius: 10px;
+            padding: 0.46rem 0.5rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .btn-card-map:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            color: #0f172a;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        .btn-card-map i {
+            color: #e11d48;
+            font-size: 0.92rem;
+        }
+
+        .btn-card-info {
+            background: linear-gradient(135deg, #7a152d 0%, #981b39 100%);
+            border: 1px solid transparent;
+            color: #ffffff !important;
+            font-weight: 700;
+            font-size: 0.82rem;
+            border-radius: 10px;
+            padding: 0.46rem 0.5rem;
+            box-shadow: 0 3px 8px -1px rgba(122, 21, 45, 0.35);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            text-decoration: none;
+        }
+        .btn-card-info:hover {
+            background: linear-gradient(135deg, #8a1934 0%, #a82041 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 5px 12px -1px rgba(122, 21, 45, 0.45);
+            color: #ffffff !important;
+        }
+        .btn-card-info i {
+            font-size: 0.92rem;
+        }
+
+        .btn-card-route {
+            background: #f0f7ff;
+            border: 1px solid #bae0fd;
+            color: #0369a1 !important;
+            font-weight: 600;
+            font-size: 0.82rem;
+            border-radius: 10px;
+            padding: 0.46rem 0.75rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+        .btn-card-route:hover {
+            background: #e0f2fe;
+            border-color: #7dd3fc;
+            color: #0284c7 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(3, 105, 161, 0.12);
+        }
+        .btn-card-route i {
+            font-size: 1.05rem;
+            color: #0284c7;
+        }
+
+        /* Responsive Breakpoints */
+        @@media (max-width: 768px) {
+            #mapa-fia {
+                height: 350px !important;
+            }
+        }
+        @@media (max-width: 576px) {
+            .food-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            #mapa-fia {
+                height: 320px !important;
+            }
+            .modal-hero-cover {
+                height: 190px !important;
+            }
+            .modal-hero-overlay {
+                padding: 1rem !important;
+            }
+            .modal-restaurante-content .modal-body {
+                padding: 1.25rem 1rem !important;
+            }
+            #floating-map-card {
+                bottom: 10px !important;
+                width: calc(100% - 18px) !important;
+                padding: 10px !important;
+            }
+            #floating-map-card #fmc-img {
+                width: 70px !important;
+                height: 70px !important;
+            }
+            #floating-map-card #fmc-nombre {
+                font-size: 0.88rem !important;
+            }
+        }
+
+        /* Modal Detalle Rediseñado */
+        .modal-restaurante-dialog {
+            max-width: 680px;
+        }
+        .modal-restaurante-content {
+            border: none;
+            border-radius: 1.25rem;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+        }
+        .modal-hero-cover {
+            height: 250px;
+            position: relative;
+            background: #111;
+            overflow: hidden;
+        }
+        .modal-hero-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+        .modal-hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.92) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+        }
+        .modal-close-btn {
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .modal-close-btn:hover {
+            background: rgba(220, 38, 38, 0.85);
+            color: #fff;
+            transform: scale(1.05);
+        }
+        .bento-info-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 14px;
+            transition: all 0.2s ease;
+        }
+        .bento-info-box:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+        .review-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            transition: transform 0.15s ease;
+        }
+        .review-card:hover {
+            background: #fff;
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+        .btn-wa-custom {
+            background: #25D366;
+            color: #fff;
+            border: none;
+            font-weight: 600;
+        }
+        .btn-wa-custom:hover {
+            background: #1eb956;
+            color: #fff;
+        }
+        .btn-outline-guinda {
+            border: 1px solid #7a152d;
+            color: #7a152d;
+            background: transparent;
+            font-weight: 600;
+        }
+        .btn-outline-guinda:hover {
+            background: #7a152d;
+            color: #fff;
+        }
     </style>
 }
 
 <div class="card-u page-head mb-3">
     <div>
-        <div class="d-flex align-items-center gap-2 mb-1">
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
             <h1 class="h3 fw-bold mb-0">Restaurantes Cercanos a la FIA</h1>
-            <span class="tag tag-guinda"><i class="bi bi-geo-alt-fill me-1"></i>Av. La Fontana 1250</span>
+            <span class="tag tag-guinda"><i class="bi bi-geo-alt-fill me-1"></i>Campus FIA · La Molina</span>
         </div>
-        <p class="text-muted mb-0">Huariques, menús caseros y cafeterías para almorzar entre clases cerca al campus universitario.</p>
+        <p class="text-muted mb-0">Encuentra opciones para almorzar, tomar un café o comer cerca a la facultad.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
         <span class="badge bg-light text-secondary border px-3 py-2" style="font-size: .84rem; font-weight: 600;">
-            <i class="bi bi-compass me-1 text-danger"></i>Guía Estudiantil FIA
+            <i class="bi bi-shop me-1 text-danger"></i>@Model.Restaurantes.Count locales
         </span>
     </div>
 </div>
 
-<!-- Mapa Interactivo Leaflet -->
+<!-- Mapa Interactivo Oficial Google Maps -->
 <div class="card-u p mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2 flex-wrap">
-            <i class="bi bi-map-fill text-danger fs-5"></i>
-            <h2 class="h5 fw-bold mb-0">Mapa de Huariques USMP FIA</h2>
-            <small class="text-muted">(Zona Campus: Av. La Fontana, Av. Flora Tristán, Av. Los Constructores, Av. La Molina)</small>
+            <i class="bi bi-geo-alt-fill text-danger fs-5"></i>
+            <h2 class="h5 fw-bold mb-0">Mapa Interactivo Alrededor de la FIA</h2>
+            <small class="text-muted">(Cuadrante: Flora Tristán · Javier Prado · La Fontana · Los Ingenieros)</small>
         </div>
-        <button class="btn btn-sm btn-soft" type="button" onclick="centrarEnFia()">
-            <i class="bi bi-crosshair me-1"></i>Centrar en la FIA
-        </button>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <!-- Filtro por zona dentro del cuadrante -->
+            <div class="d-flex align-items-center gap-1 flex-wrap" role="group" aria-label="Filtro de zona">
+                <button type="button" class="btn btn-sm btn-outline-secondary dist-filter-btn active" onclick="filtrarPorZona('todos', this)">
+                    <i class="bi bi-grid-fill me-1"></i>Todo (@Model.Restaurantes.Count)
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('fontana', this)">
+                    La Fontana
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('flora', this)">
+                    Flora Tristán
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('prado', this)">
+                    Javier Prado
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary dist-filter-btn" onclick="filtrarPorZona('ingenieros', this)">
+                    Los Ingenieros
+                </button>
+            </div>
+
+            <!-- Controles de vista del mapa -->
+            <button class="btn btn-sm btn-soft" type="button" onclick="verCuadranteCompleto()" title="Ver panorama completo del cuadrante recortado">
+                <i class="bi bi-aspect-ratio me-1 text-primary"></i>Ver Panorama
+            </button>
+            <button class="btn btn-sm btn-soft" type="button" onclick="miUbicacion()" title="Ver tu ubicación GPS actual">
+                <i class="bi bi-cursor-fill text-primary me-1"></i>Mi Ubicación
+            </button>
+            <button class="btn btn-sm btn-soft" type="button" onclick="centrarEnFia()" title="Enfocar puerta principal Campus FIA">
+                <i class="bi bi-crosshair me-1 text-danger"></i>Campus FIA
+            </button>
+        </div>
     </div>
-    <div id="mapa-fia"></div>
+    <div class="position-relative overflow-hidden" style="border-radius: 1rem; border: 1px solid var(--border, #e5e7eb); box-shadow: 0 4px 12px rgba(0,0,0,.04);">
+        <div id="mapa-fia" style="height: 440px; width: 100%; border: none;"></div>
+
+        <!-- Tarjeta Flotante Inteligente In-Map con botón de cerrar [X] o clic al costado -->
+        <div id="floating-map-card" class="d-none" style="position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 500; width: calc(100% - 32px); max-width: 440px; background: rgba(255, 255, 255, 0.96); border-radius: 14px; box-shadow: 0 16px 36px -6px rgba(0,0,0,0.28); border: 1px solid rgba(0,0,0,0.1); padding: 12px; backdrop-filter: blur(10px); transition: all 0.25s ease;">
+            <div class="d-flex align-items-center gap-3">
+                <img id="fmc-img" src="" style="width: 82px; height: 82px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: #eee;" alt="Restaurante" onerror="this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600'" />
+                <div class="flex-grow-1 overflow-hidden" style="min-width: 0;">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <span id="fmc-cat" class="tag tag-guinda" style="font-size: 10px; padding: 2px 7px;"></span>
+                        <button type="button" class="btn-close" style="font-size: 10px;" onclick="cerrarFloatingCard(event)" title="Cerrar (o haz clic en el mapa)"></button>
+                    </div>
+                    <h5 id="fmc-nombre" class="h6 fw-bold mb-1 text-truncate" style="font-size: 0.95rem;"></h5>
+                    <div class="d-flex align-items-center gap-2 mb-1" style="font-size: 0.78rem;">
+                        <span class="text-warning fw-bold"><i class="bi bi-star-fill me-1"></i><span id="fmc-rating"></span></span>
+                        <span class="text-muted" id="fmc-reviews"></span>
+                        <span class="badge bg-light text-secondary border py-0 px-1" id="fmc-rango"></span>
+                    </div>
+                    <div class="text-muted text-truncate" style="font-size: 0.78rem;">
+                        <i class="bi bi-geo-alt-fill text-danger me-1"></i><span id="fmc-distancia"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-2 mt-2 pt-2 border-top">
+                <button id="fmc-btn-resenas" class="btn btn-card-info w-50 py-1" style="font-size: 0.82rem;">
+                    <i class="bi bi-info-circle-fill me-1"></i>Más información
+                </button>
+                <a id="fmc-btn-ruta" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-card-route w-50 py-1" style="font-size: 0.82rem;">
+                    <i class="bi bi-person-walking me-1"></i>Ruta a pie
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Filtros y Búsqueda -->
 <div class="card-u p mb-4">
     <div class="row g-2 align-items-center">
-        <div class="col-lg-6">
+        <div class="col-lg-5">
             <form method="get" class="search-box">
                 <i class="bi bi-search"></i>
-                <input type="text" name="q" value="@Model.Busqueda" class="form-control" placeholder="Buscar por nombre, chifa, menú, sanguchería..." />
+                <input type="text" name="q" value="@Model.Busqueda" class="form-control" placeholder="Buscar por nombre, chifa, café, pasta..." />
                 @if (Model.CategoriaActual.HasValue)
                 {
                     <input type="hidden" name="categoria" value="@Model.CategoriaActual" />
                 }
             </form>
         </div>
-        <div class="col-lg-6">
+        <div class="col-lg-7">
             <div class="chips d-flex flex-wrap gap-1">
                 <a href="@Url.Action("Index", new { q = Model.Busqueda })" class="chip @(Model.CategoriaActual == null ? "active" : "")">Todos (@Model.Restaurantes.Count)</a>
                 @foreach (CategoriaRestaurante cat in Enum.GetValues(typeof(CategoriaRestaurante)))
@@ -122,56 +401,96 @@
 @if (Model.Restaurantes.Count == 0)
 {
     <div class="card-u p text-center py-5">
-        <i class="bi bi-egg-fried fs-1 text-muted mb-2"></i>
-        <h4>No se encontraron restaurantes</h4>
+        <i class="bi bi-shop fs-1 text-muted mb-2"></i>
+        <h4>No se encontraron locales</h4>
         <p class="text-muted">Intenta buscar con otro término o selecciona otra categoría.</p>
-        <a href="/Restaurantes" class="btn btn-sm btn-guinda">Ver todos los huariques</a>
+        <a href="/Restaurantes" class="btn btn-sm btn-guinda">Ver todos los locales</a>
     </div>
 }
 else
 {
-    <div class="food-grid">
+    <div class="food-grid" id="food-grid-container">
         @foreach (var r in Model.Restaurantes)
         {
-            <div class="food-card" id="card-rest-@r.Id">
+            var walkingUrl = $"https://www.google.com/maps/dir/?api=1&origin=-12.07203,-76.94205&destination={r.Latitud.ToString(System.Globalization.CultureInfo.InvariantCulture)},{r.Longitud.ToString(System.Globalization.CultureInfo.InvariantCulture)}&travelmode=walking";
+
+            <div class="food-card" id="card-rest-@r.Id" data-lat="@r.Latitud.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-lng="@r.Longitud.ToString(System.Globalization.CultureInfo.InvariantCulture)">
                 <div class="position-relative">
-                    <img src="@r.FotoUrl" class="food-card-img" alt="@r.Nombre" loading="lazy" />
-                    <span class="badge bg-dark bg-opacity-75 position-absolute top-0 start-0 m-2">
+                    <img src="@r.FotoUrl" class="food-card-img" alt="@r.Nombre" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600';" />
+                    <span class="badge bg-dark bg-opacity-75 position-absolute top-0 start-0 m-2" style="backdrop-filter: blur(4px);">
                         @r.Categoria.Nombre()
                     </span>
-                    <span class="badge bg-white text-dark shadow-sm position-absolute bottom-0 end-0 m-2 fw-semibold">
-                        <i class="bi bi-tag-fill text-success me-1"></i>@r.RangoPrecios
+                    <span class="badge bg-white text-dark shadow-sm position-absolute top-0 end-0 m-2 fw-semibold">
+                        <i class="bi bi-star-fill text-warning me-1"></i>@r.CalificacionPromedio.ToString("0.0")
                     </span>
                 </div>
                 <div class="food-card-body">
                     <div class="d-flex justify-content-between align-items-start mb-1">
                         <h3 class="h5 fw-bold mb-0">@r.Nombre</h3>
                     </div>
-                    <div class="d-flex align-items-center gap-1 mb-2">
-                        <span class="stars-gold">
-                            @for (var i = 1; i <= 5; i++)
-                            {
-                                <i class="bi bi-star@(i <= Math.Round(r.CalificacionPromedio) ? "-fill" : "")"></i>
-                            }
-                        </span>
-                        <small class="fw-bold ms-1">@r.CalificacionPromedio.ToString("0.0")</small>
-                        <small class="text-muted">(@r.TotalResenas @(r.TotalResenas == 1 ? "reseña" : "reseñas"))</small>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center gap-1">
+                            <span class="stars-gold">
+                                @for (var i = 1; i <= 5; i++)
+                                {
+                                    <i class="bi bi-star@(i <= Math.Round(r.CalificacionPromedio) ? "-fill" : "")"></i>
+                                }
+                            </span>
+                            <small class="fw-bold ms-1">@r.CalificacionPromedio.ToString("0.0")</small>
+                            <small class="text-muted">(@r.TotalResenas @(r.TotalResenas == 1 ? "reseña" : "reseñas"))</small>
+                        </div>
+                        <span class="badge bg-light text-secondary border">@r.RangoPrecios</span>
                     </div>
 
-                    <p class="small text-muted mb-2 text-truncate-2">@r.Descripcion</p>
+                    <p class="small text-muted mb-3 text-truncate-2" style="display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:36px; line-height:1.35;">
+                        @r.Descripcion
+                    </p>
 
-                    <div class="small text-muted mb-3">
-                        <i class="bi bi-geo-alt-fill text-danger me-1"></i>@r.Direccion<br />
-                        <i class="bi bi-clock me-1"></i>@r.DistanciaTexto · <span class="text-success">@r.HorarioAtencion</span>
+                    <div class="mb-3 pt-2 border-top">
+                        <div class="d-flex align-items-start gap-2 mb-1" title="@r.Direccion">
+                            <i class="bi bi-pin-map text-secondary flex-shrink-0 mt-1" style="font-size: 0.85rem;"></i>
+                            <span class="small text-muted" style="line-height: 1.35;">@r.Direccion</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mb-1" title="@r.DistanciaTexto">
+                            <i class="bi bi-geo-alt-fill text-danger flex-shrink-0" style="font-size: 0.85rem;"></i>
+                            <span class="small text-muted fw-medium text-truncate">@r.DistanciaTexto</span>
+                        </div>
+                        <div class="d-flex align-items-start gap-2" title="@r.HorarioAtencion">
+                            <i class="bi bi-clock-fill text-success flex-shrink-0 mt-1" style="font-size: 0.85rem;"></i>
+                            <span class="small text-success fw-semibold" style="line-height: 1.35;">@r.HorarioAtencion</span>
+                        </div>
                     </div>
 
-                    <div class="mt-auto d-flex gap-2">
-                        <button class="btn btn-sm btn-outline-secondary w-50" type="button" onclick="irARestauranteEnMapa(@r.Latitud, @r.Longitud, '@r.Nombre.Replace("'", "\\'")')">
-                            <i class="bi bi-pin-map me-1"></i>Ver en mapa
-                        </button>
-                        <button class="btn btn-sm btn-guinda w-50" type="button" onclick="abrirModalDetalle(@r.Id)">
-                            <i class="bi bi-chat-heart me-1"></i>Ver reseñas
-                        </button>
+                    <div class="mt-auto pt-2">
+                        @if (r.EsCampus)
+                        {
+                            <div class="d-flex align-items-center justify-content-center gap-2 py-2 mb-2 rounded border" style="background: #fdf2f4; border-color: #fbcfe8 !important; font-size: 0.8rem; font-weight: 600; color: #7a152d;">
+                                <i class="bi bi-building-check text-danger fs-6"></i>
+                                <span>Dentro del Campus FIA</span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-card-map w-50" type="button" onclick="irARestauranteEnMapa(@r.Id)">
+                                    <i class="bi bi-pin-map-fill"></i><span>Ver en mapa</span>
+                                </button>
+                                <button class="btn btn-card-info w-50" type="button" onclick="abrirModalDetalle(@r.Id)" title="Ver información completa y opiniones">
+                                    <i class="bi bi-info-circle-fill"></i><span>Más información</span>
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="d-flex gap-2 mb-2">
+                                <button class="btn btn-card-map w-50" type="button" onclick="irARestauranteEnMapa(@r.Id)" title="Ver en el mapa interactivo">
+                                    <i class="bi bi-pin-map-fill"></i><span>Ver en mapa</span>
+                                </button>
+                                <button class="btn btn-card-info w-50" type="button" onclick="abrirModalDetalle(@r.Id)" title="Ver información completa, platos y opiniones">
+                                    <i class="bi bi-info-circle-fill"></i><span>Más información</span>
+                                </button>
+                            </div>
+                            <a href="@walkingUrl" target="_blank" rel="noopener noreferrer" class="btn btn-card-route w-100" title="Ver ruta a pie exacta desde el campus FIA en Google Maps">
+                                <i class="bi bi-person-walking"></i><span>Cómo llegar a pie</span>
+                            </a>
+                        }
                     </div>
                 </div>
             </div>
@@ -179,60 +498,114 @@ else
     </div>
 }
 
-<!-- Modal Detalle del Restaurante / Reseñas -->
+<!-- Modal Detalle del Restaurante Rediseñado -->
 <div class="modal fade" id="modalRestaurante" tabindex="-1" aria-labelledby="modalRestauranteLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div>
-                    <h2 class="modal-title h5 fw-bold mb-0" id="modalRestauranteLabel">Detalle del Restaurante</h2>
-                    <span id="modalDistancia" class="small text-muted"></span>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row g-3 mb-3">
-                    <div class="col-md-5">
-                        <img id="modalImg" src="" class="w-100 rounded object-fit-cover shadow-sm" style="max-height: 220px;" alt="Restaurante" />
-                        <div class="mt-2 text-center" id="modalBtnWaContainer"></div>
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-restaurante-dialog">
+        <div class="modal-content modal-restaurante-content">
+            <!-- Hero Cover con Foto, Badges y Título integrado -->
+            <div class="modal-hero-cover">
+                <img id="modalImg" src="" class="modal-hero-img" alt="Restaurante" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600';" />
+                <div class="modal-hero-overlay">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <span id="modalCategoria" class="badge bg-white text-dark shadow-sm px-3 py-1 rounded-pill fw-bold" style="font-size: 0.8rem;"></span>
+                            <span id="modalRangoPrecios" class="badge bg-dark bg-opacity-75 text-white border border-light border-opacity-25 px-3 py-1 rounded-pill" style="backdrop-filter: blur(4px); font-size: 0.8rem;"></span>
+                        </div>
+                        <button type="button" class="modal-close-btn" data-bs-dismiss="modal" aria-label="Cerrar" title="Cerrar ventana">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
                     </div>
-                    <div class="col-md-7">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <span id="modalCategoria" class="tag tag-guinda"></span>
-                            <span id="modalRango" class="tag tag-ok"></span>
-                            <div class="d-flex align-items-center ms-auto">
-                                <span class="stars-gold"><i class="bi bi-star-fill"></i></span>
-                                <span id="modalPromedio" class="fw-bold ms-1"></span>
-                                <span id="modalTotalResenas" class="text-muted small ms-1"></span>
+                    <div>
+                        <div class="d-flex justify-content-between align-items-end flex-wrap gap-2">
+                            <div>
+                                <h2 class="modal-title fw-bold text-white mb-1" id="modalRestauranteLabel" style="font-size: 1.65rem; text-shadow: 0 2px 8px rgba(0,0,0,0.6);"></h2>
+                                <div class="d-flex align-items-center gap-2 text-white-50 small flex-wrap">
+                                    <span class="badge bg-danger bg-opacity-75 text-white" style="backdrop-filter: blur(4px);">
+                                        <i class="bi bi-geo-alt-fill me-1"></i><span id="modalDistancia"></span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="badge bg-white text-dark shadow px-3 py-2 rounded-pill d-flex align-items-center gap-1" style="font-size: 0.9rem;">
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <span id="modalPromedio" class="fw-bold"></span>
+                                <small id="modalTotalResenas" class="text-muted"></small>
                             </div>
                         </div>
-                        <p id="modalDesc" class="text-muted small mb-2"></p>
-                        <div class="small bg-light p-2 rounded mb-2">
-                            <div><i class="bi bi-geo-alt-fill text-danger me-1"></i><span id="modalDireccion"></span></div>
-                            <div><i class="bi bi-clock me-1"></i><span id="modalHorario"></span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cuerpo del Modal -->
+            <div class="modal-body p-4">
+                <!-- Barra de Datos Rápidos (Bento Grid) -->
+                <div class="row g-2 mb-3">
+                    <div class="col-sm-6">
+                        <div class="bento-info-box d-flex align-items-start gap-2 h-100">
+                            <i class="bi bi-pin-map-fill text-danger fs-5 mt-1"></i>
+                            <div class="overflow-hidden">
+                                <small class="text-muted d-block fw-semibold" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;">Dirección</small>
+                                <span id="modalDireccion" class="small fw-semibold text-dark text-break"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="bento-info-box d-flex align-items-start gap-2 h-100">
+                            <i class="bi bi-clock-fill text-primary fs-5 mt-1"></i>
+                            <div class="overflow-hidden">
+                                <small class="text-muted d-block fw-semibold" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;">Horario de Atención</small>
+                                <span id="modalHorario" class="small fw-semibold text-dark text-break"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <hr class="my-3" />
+                <!-- Botones de Acción Rápida (Fila Unificada) -->
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <div id="modalCampusNotice" class="d-none w-100 alert alert-light border d-flex align-items-center gap-2 py-2 px-3 mb-0 text-muted" style="font-size: 0.85rem;">
+                        <i class="bi bi-building-check text-guinda fs-5"></i>
+                        <span>Local ubicado <strong>dentro del campus FIA</strong>. Acceso directo entre clases.</span>
+                    </div>
+                    <a id="modalBtnRuta" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-guinda flex-grow-1 d-flex align-items-center justify-content-center gap-2 py-2" title="Ver ruta a pie exacta desde la facultad FIA">
+                        <i class="bi bi-person-walking"></i>
+                        <span>Cómo llegar a pie</span>
+                    </a>
+                    <div id="modalBtnWaContainer" class="d-inline-flex flex-grow-1"></div>
+                    <a id="modalBtnGmaps" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-1 py-2 px-3" title="Abrir en Google Maps">
+                        <i class="bi bi-geo-alt-fill text-danger"></i>
+                        <span>Ver en Maps</span>
+                    </a>
+                </div>
 
-                <!-- Reseñas -->
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3 class="h6 fw-bold mb-0"><i class="bi bi-chat-heart me-1"></i>Opiniones de la Comunidad USMP</h3>
-                    <button class="btn btn-sm btn-soft" type="button" data-bs-toggle="collapse" data-bs-target="#formResenaCollapse">
-                        <i class="bi bi-pencil-fill me-1"></i>Escribir reseña
+                <!-- Descripción / Sobre el local -->
+                <div class="p-3 rounded mb-4" style="background: #fafafa; border: 1px solid #f0f0f0;">
+                    <h5 class="h6 fw-bold mb-2 text-dark d-flex align-items-center gap-2">
+                        <i class="bi bi-shop text-danger"></i>Sobre este local y qué pedir
+                    </h5>
+                    <p id="modalDesc" class="text-secondary mb-0" style="font-size: 0.92rem; line-height: 1.6;"></p>
+                </div>
+
+                <!-- Muro de Reseñas de Alumnos FIA -->
+                <div class="d-flex justify-content-between align-items-center mb-3 pt-2 border-top">
+                    <div>
+                        <h4 class="h6 fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                            <i class="bi bi-chat-heart-fill text-danger"></i>Opiniones de la Comunidad USMP
+                        </h4>
+                        <small class="text-muted">Opiniones y recomendaciones de la comunidad universitaria</small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-guinda rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#formResenaCollapse">
+                        <i class="bi bi-pencil-square me-1"></i>Escribir reseña
                     </button>
                 </div>
 
                 <!-- Formulario desplegable para nueva reseña -->
                 <div class="collapse mb-4" id="formResenaCollapse">
-                    <form asp-action="Resenar" method="post" class="card-u p bg-light">
+                    <form asp-action="Resenar" method="post" class="card-u p-3 bg-light border-0 shadow-sm" style="border-radius: 14px;">
                         <input type="hidden" name="RestauranteId" id="formRestauranteId" value="" />
-                        <h4 class="h6 fw-bold mb-2">Tu calificación como alumno FIA</h4>
+                        <h5 class="h6 fw-bold mb-2 text-dark">Tu calificación como alumno FIA</h5>
                         <div class="row g-2 mb-2">
-                            <div class="col-sm-4">
-                                <label class="form-label small fw-semibold">Puntuación:</label>
-                                <select name="Puntuacion" class="form-select form-select-sm">
+                            <div class="col-sm-5">
+                                <label class="form-label small fw-semibold mb-1">Puntuación:</label>
+                                <select name="Puntuacion" class="form-select form-select-sm" style="border-radius: 8px;">
                                     <option value="5">⭐⭐⭐⭐⭐ (5 - Excelente)</option>
                                     <option value="4">⭐⭐⭐⭐ (4 - Muy bueno)</option>
                                     <option value="3">⭐⭐⭐ (3 - Bueno)</option>
@@ -240,121 +613,392 @@ else
                                     <option value="1">⭐ (1 - Malo)</option>
                                 </select>
                             </div>
-                            <div class="col-sm-8">
-                                <label class="form-label small fw-semibold">Comentario:</label>
-                                <input type="text" name="Comentario" class="form-control form-control-sm" placeholder="Ej: Menú bien servido, rápido y buen precio..." required minlength="5" maxlength="500" />
+                            <div class="col-sm-7">
+                                <label class="form-label small fw-semibold mb-1">Comentario:</label>
+                                <input type="text" name="Comentario" class="form-control form-control-sm" style="border-radius: 8px;" placeholder="Ej: Porción taipá, buen menú entre clases..." required minlength="5" maxlength="500" />
                             </div>
                         </div>
                         <div class="text-end">
-                            <button type="submit" class="btn btn-sm btn-guinda">Publicar Reseña</button>
+                            <button type="submit" class="btn btn-sm btn-guinda px-3">Publicar Reseña</button>
                         </div>
                     </form>
                 </div>
 
-                <!-- Muro de Reseñas -->
+                <!-- Lista de Reseñas de Estudiantes -->
                 <div id="modalResenasLista"></div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+            <div class="modal-footer bg-light border-0 py-2 px-4 d-flex justify-content-between align-items-center">
+                <small class="text-muted"><i class="bi bi-shield-check text-success me-1"></i>Campus FIA USMP · La Molina</small>
+                <button type="button" class="btn btn-sm btn-secondary px-3" data-bs-dismiss="modal" style="border-radius: 8px;">Cerrar</button>
             </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Google Maps JavaScript API oficial con biblioteca Places -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=@Model.GoogleMapsApiKey&libraries=places&callback=initGoogleMap" async defer></script>
     <script>
         let map;
-        // Coordenadas reales del Campus USMP FIA (Av. La Fontana 1250, Urb. Santa Patricia)
-        const fiaCoords = [-12.07203, -76.94205];
-        // Cuadrante estricto delimitado por: Av. La Fontana (Sur), Av. Flora Tristán (Este), Av. Los Constructores (Norte) y Av. La Molina (Oeste)
-        const fiaBounds = L.latLngBounds(
-            [-12.0770, -76.9575], // Suroeste (Av. La Fontana / Av. La Molina)
-            [-12.0605, -76.9370]  // Noreste (Av. Los Constructores / Av. Flora Tristán)
-        );
+        let infoWindow;
+        let placesService = null;
+        let userMarker = null;
+        const fiaCoords = { lat: -12.07203, lng: -76.94205 };
         const marcadores = {};
 
-        document.addEventListener("DOMContentLoaded", function () {
-            // Inicializar mapa de OpenStreetMap limitado estrictamente al cuadrante del campus
-            map = L.map('mapa-fia', {
-                maxBounds: fiaBounds,
-                maxBoundsViscosity: 1.0,
-                minZoom: 15,
-                maxZoom: 19
-            }).setView(fiaCoords, 16);
+        // Paleta de colores temáticos por categoría de local
+        const categoriaColores = {
+            "MenuCriollo": "#ea580c",        // Naranja peruano
+            "ComidaRapida": "#f59e0b",       // Ámbar
+            "Chifa": "#dc2626",              // Rojo oriental
+            "CafeteriaHuarique": "#78350f",   // Café tostado
+            "PasteleriaPostres": "#db2777",   // Rosa pastelería
+            "Saludable": "#16a34a"           // Verde fresco
+        };
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                minZoom: 15,
+        const restos = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Restaurantes.Select(r => new {
+            r.Id,
+            r.Nombre,
+            CategoriaKey = r.Categoria.ToString(),
+            CategoriaNombre = r.Categoria.Nombre(),
+            r.RangoPrecios,
+            r.Latitud,
+            r.Longitud,
+            r.DistanciaTexto,
+            r.HorarioAtencion,
+            r.Direccion,
+            r.CalificacionPromedio,
+            r.TotalResenas,
+            r.FotoUrl,
+            r.EsCampus
+        })));
+
+        // Límites exactos del cuadrante universitario: Flora Tristán - Javier Prado - La Fontana - Los Ingenieros
+        const boundsCuadranteFIA = {
+            north: -12.0648,  // Av. Javier Prado Este (ambas veredas)
+            south: -12.0746,  // Av. La Fontana (ambas veredas e ISIL)
+            west: -76.9509,   // Av. Los Ingenieros (incluye esquina con Pardos Chicken, Punto Italiano, Chifa Moneda China y Starbucks)
+            east: -76.9385    // Av. Flora Tristán
+        };
+
+        // Límites de navegación con margen holgado
+        const boundsNavegacion = {
+            north: -12.0590,
+            south: -12.0790,
+            west: -76.9550,
+            east: -76.9330
+        };
+
+        function initGoogleMap() {
+            // Mapa enfocado en el cuadrante del Campus FIA
+            map = new google.maps.Map(document.getElementById("mapa-fia"), {
+                zoom: 15.6,
+                minZoom: 13.8,
                 maxZoom: 19,
-                attribution: '&copy; OpenStreetMap · Cuadrante Campus USMP FIA'
-            }).addTo(map);
-
-            // Resaltar perímetro del cuadrante
-            L.rectangle(fiaBounds, {
-                color: "#7a152d",
-                weight: 2,
-                dashArray: "4, 6",
-                fillColor: "#7a152d",
-                fillOpacity: 0.03
-            }).addTo(map);
-
-            // Marcador Campus USMP FIA
-            const fiaIcon = L.divIcon({
-                className: 'custom-fia-pin',
-                html: '<div style="background:#7a152d; color:#fff; padding:6px 12px; border-radius:20px; font-weight:bold; font-size:12px; box-shadow:0 3px 8px rgba(0,0,0,0.35); border:2px solid #fff; white-space:nowrap;"><i class="bi bi-mortarboard-fill me-1"></i>CAMPUS FIA USMP</div>',
-                iconSize: [150, 32],
-                iconAnchor: [75, 16]
+                center: { lat: -12.0708, lng: -76.9430 },
+                restriction: {
+                    latLngBounds: boundsNavegacion,
+                    strictBounds: false
+                },
+                gestureHandling: "cooperative",
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: true,
+                styles: [
+                    { featureType: "poi.school", elementType: "labels", stylers: [{ visibility: "on" }] },
+                    { featureType: "poi.business", elementType: "labels", stylers: [{ visibility: "on" }] }
+                ]
             });
-            L.marker(fiaCoords, { icon: fiaIcon }).addTo(map).bindPopup("<b>Facultad de Ingeniería y Arquitectura (FIA)</b><br>Av. La Fontana 1250, Santa Patricia - La Molina<br><small class='text-muted'>Pabellón Central & Laboratorios</small>").openPopup();
 
-            // Marcadores de restaurantes
-            const restos = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Restaurantes.Select(r => new {
-                r.Id,
-                r.Nombre,
-                r.Latitud,
-                r.Longitud,
-                r.DistanciaTexto,
-                r.RangoPrecios,
-                r.CalificacionPromedio,
-                r.FotoUrl
-            })));
+            if (google.maps.places) {
+                placesService = new google.maps.places.PlacesService(map);
+            }
 
+            // Interceptar clics en el mapa o en cualquier POI de comida de Google Maps
+            map.addListener("click", (e) => {
+                if (e.placeId) {
+                    e.stop(); // Previene el globo recortado nativo de Google
+
+                    // 1. Buscar si ya es uno de nuestros 55+ locales registrados en la BD
+                    const yaRegistrado = restos.find(r => 
+                        (Math.abs(r.Latitud - e.latLng.lat()) < 0.00035 && Math.abs(r.Longitud - e.latLng.lng()) < 0.00035)
+                    );
+                    if (yaRegistrado) {
+                        mostrarCardFlotante(yaRegistrado, marcadores[yaRegistrado.Id]);
+                        return;
+                    }
+
+                    // 2. Si es un local de Google Maps, consultar sus datos en vivo
+                    if (placesService) {
+                        placesService.getDetails({
+                            placeId: e.placeId,
+                            fields: ["name", "formatted_address", "geometry", "rating", "user_ratings_total", "photos", "types", "price_level"]
+                        }, (place, status) => {
+                            if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+                                const tipos = place.types || [];
+                                const esComida = tipos.some(t => ["restaurant", "food", "cafe", "bakery", "meal_takeaway", "bar", "meal_delivery"].includes(t));
+                                if (esComida) {
+                                    const foto = (place.photos && place.photos.length > 0)
+                                        ? place.photos[0].getUrl({ maxWidth: 450 })
+                                        : "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600";
+
+                                    mostrarCardFlotante({
+                                        Id: 0,
+                                        Nombre: place.name,
+                                        CategoriaNombre: "Restaurante",
+                                        CalificacionPromedio: place.rating || 4.5,
+                                        TotalResenas: place.user_ratings_total || 1,
+                                        RangoPrecios: place.price_level ? "$".repeat(place.price_level) : "Económico",
+                                        DistanciaTexto: "Cercano a la facultad",
+                                        Direccion: place.formatted_address || "Zona universitaria",
+                                        FotoUrl: foto,
+                                        Latitud: place.geometry.location.lat(),
+                                        Longitud: place.geometry.location.lng()
+                                    });
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    cerrarFloatingCard();
+                }
+            });
+
+            // Enmarcar y delimitar visualmente el área del cuadrante universitario (Líneas Rojas Oficiales)
+            const cuadrantePoligono = [
+                { lat: -12.0648, lng: -76.9509 }, // Javier Prado con Los Ingenieros (esquina noroeste)
+                { lat: -12.0648, lng: -76.9385 }, // Javier Prado con Flora Tristán (esquina noreste)
+                { lat: -12.0746, lng: -76.9385 }, // La Fontana con Flora Tristán (esquina sureste)
+                { lat: -12.0746, lng: -76.9509 }  // La Fontana con Los Ingenieros (esquina suroeste)
+            ];
+
+            new google.maps.Polygon({
+                paths: cuadrantePoligono,
+                strokeColor: "#7a152d",
+                strokeOpacity: 0.85,
+                strokeWeight: 2.5,
+                fillColor: "#7a152d",
+                fillOpacity: 0.03,
+                map: map
+            });
+
+            // Ajustar automáticamente la vista para mostrar todo el panorama del cuadrante en pantalla
+            map.fitBounds(boundsCuadranteFIA);
+
+            // Marcador especial Campus USMP FIA
+            const fiaMarker = new google.maps.Marker({
+                position: fiaCoords,
+                map: map,
+                title: "Facultad de Ingeniería y Arquitectura (FIA) - USMP",
+                zIndex: 999,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 11,
+                    fillColor: "#7a152d",
+                    fillOpacity: 1,
+                    strokeColor: "#ffffff",
+                    strokeWeight: 3
+                }
+            });
+
+            fiaMarker.addListener("click", () => {
+                mostrarCardFlotante({
+                    Id: 0,
+                    Nombre: "Facultad de Ingeniería y Arquitectura (Campus)",
+                    CategoriaNombre: "Campus FIA USMP",
+                    CalificacionPromedio: 5.0,
+                    TotalResenas: "USMP",
+                    RangoPrecios: "Campus",
+                    DistanciaTexto: "Pabellones A, B, C y Laboratorios",
+                    Direccion: "Av. La Fontana 1250, Santa Patricia - La Molina",
+                    FotoUrl: "/images/restaurantes/cafeteria-central-fia.jpg",
+                    Latitud: fiaCoords.lat,
+                    Longitud: fiaCoords.lng,
+                    EsCampus: true
+                }, fiaMarker);
+            });
+
+            // Marcadores para cada uno de los restaurantes
             restos.forEach(r => {
-                const iconRest = L.divIcon({
-                    className: 'custom-rest-pin',
-                    html: `<div style="background:#0f172a; color:#fff; padding:4px 8px; border-radius:12px; font-size:11px; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.25); border:2px solid #f59e0b; cursor:pointer;"><i class="bi bi-star-fill text-warning me-1"></i>${r.CalificacionPromedio.toFixed(1)} ${r.Nombre}</div>`,
-                    iconSize: [120, 26],
-                    iconAnchor: [60, 13]
+                const colorMarker = categoriaColores[r.CategoriaKey] || "#ea580c";
+
+                const marker = new google.maps.Marker({
+                    position: { lat: r.Latitud, lng: r.Longitud },
+                    map: map,
+                    title: r.Nombre,
+                    icon: {
+                        path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+                        scale: 5,
+                        fillColor: colorMarker,
+                        fillOpacity: 1,
+                        strokeColor: "#ffffff",
+                        strokeWeight: 1.5
+                    }
                 });
 
-                const m = L.marker([r.Latitud, r.Longitud], { icon: iconRest }).addTo(map);
-                m.bindPopup(`
-                    <div style="font-size:13px; max-width:200px;">
-                        <img src="${r.FotoUrl}" style="width:100%; height:90px; object-fit:cover; border-radius:6px; margin-bottom:6px;" />
-                        <b>${r.Nombre}</b><br/>
-                        <span style="color:#16a34a; font-weight:600;">${r.RangoPrecios}</span><br/>
-                        <small style="color:#6b7280;">${r.DistanciaTexto}</small><br/>
-                        <button onclick="abrirModalDetalle(${r.Id})" class="btn btn-sm btn-guinda w-100 mt-2" style="font-size:11px; padding:2px 8px;">Ver Reseñas</button>
-                    </div>
-                `);
-                marcadores[r.Id] = m;
-            });
-        });
+                marker.addListener("click", () => {
+                    mostrarCardFlotante(r, marker);
+                });
 
+                marcadores[r.Id] = marker;
+            });
+        }
+
+        // Abre la tarjeta flotante interactiva adentro del mapa (100% visible, sin globos recortados)
+        function mostrarCardFlotante(r, marker) {
+            if (!r) return;
+
+            // Centrar suavemente en el marcador
+            if (map) {
+                map.panTo({ lat: r.Latitud, lng: r.Longitud });
+            }
+
+            const card = document.getElementById("floating-map-card");
+            if (!card) return;
+
+            document.getElementById("fmc-img").src = r.FotoUrl;
+            document.getElementById("fmc-cat").textContent = r.CategoriaNombre;
+            document.getElementById("fmc-nombre").textContent = r.Nombre;
+            document.getElementById("fmc-rating").textContent = (typeof r.CalificacionPromedio === 'number') ? r.CalificacionPromedio.toFixed(1) : "5.0";
+            document.getElementById("fmc-reviews").textContent = (typeof r.TotalResenas === 'number') ? `(${r.TotalResenas} reseñas)` : "(Campus)";
+            document.getElementById("fmc-rango").textContent = r.RangoPrecios || "Económico";
+            document.getElementById("fmc-distancia").textContent = `${r.DistanciaTexto} · ${r.Direccion}`;
+
+            const btnResenas = document.getElementById("fmc-btn-resenas");
+            const btnRuta = document.getElementById("fmc-btn-ruta");
+            if (r.Id > 0) {
+                btnResenas.style.display = "";
+                btnResenas.onclick = () => abrirModalDetalle(r.Id);
+            } else {
+                btnResenas.style.display = "none";
+            }
+
+            const esCampus = r.EsCampus || (r.Nombre && r.Nombre.toLowerCase().includes("cafetería")) || (r.DistanciaTexto && r.DistanciaTexto.toLowerCase().includes("dentro del campus"));
+            if (esCampus) {
+                if (btnRuta) btnRuta.style.display = "none";
+                if (btnResenas) btnResenas.className = "btn btn-card-info w-100 py-1";
+            } else {
+                if (btnRuta) {
+                    btnRuta.style.display = "";
+                    btnRuta.className = "btn btn-card-route w-50 py-1";
+                    btnRuta.href = `https://www.google.com/maps/dir/?api=1&origin=-12.07203,-76.94205&destination=${r.Latitud},${r.Longitud}&travelmode=walking`;
+                }
+                if (btnResenas) btnResenas.className = "btn btn-card-info w-50 py-1";
+            }
+
+            // Mostrar con animación
+            card.classList.remove("d-none");
+        }
+
+        // Cerrar tarjeta flotante (al hacer clic en [X] o en cualquier parte del mapa)
+        function cerrarFloatingCard(e) {
+            if (e) e.stopPropagation();
+            const card = document.getElementById("floating-map-card");
+            if (card) {
+                card.classList.add("d-none");
+            }
+        }
+
+        // Ajustar la cámara al panorama completo del cuadrante recortado
+        function verCuadranteCompleto() {
+            if (map) {
+                map.fitBounds(boundsCuadranteFIA);
+            }
+        }
+
+        // Centrar mapa de vuelta en la puerta principal de la FIA
         function centrarEnFia() {
             if (map) {
-                map.flyTo(fiaCoords, 16, { duration: 1.0 });
+                map.setZoom(16.5);
+                map.panTo(fiaCoords);
             }
         }
 
-        function irARestauranteEnMapa(lat, lng, nombre) {
-            if (map) {
-                map.flyTo([lat, lng], 17, { duration: 1.0 });
-                // Desplazar suave hacia el mapa
+        // Obtener ubicación GPS real del alumno
+        function miUbicacion() {
+            if (!navigator.geolocation) {
+                alert("La geolocalización no está soportada por tu navegador.");
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const userPos = {
+                        lat: pos.coords.latitude,
+                        lng: pos.coords.longitude
+                    };
+
+                    if (userMarker) {
+                        userMarker.setPosition(userPos);
+                    } else {
+                        userMarker = new google.maps.Marker({
+                            position: userPos,
+                            map: map,
+                            title: "Tu ubicación actual",
+                            zIndex: 1000,
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 8,
+                                fillColor: "#0284c7",
+                                fillOpacity: 1,
+                                strokeColor: "#ffffff",
+                                strokeWeight: 3
+                            }
+                        });
+                    }
+
+                    map.panTo(userPos);
+                    map.setZoom(17);
+                },
+                (err) => {
+                    alert("No se pudo obtener tu ubicación. Por favor permite los permisos de ubicación en el navegador.");
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        }
+
+        // Filtro por zona dentro del cuadrante recortado (sin radio circular)
+        function filtrarPorZona(zona, btn) {
+            document.querySelectorAll('.dist-filter-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            restos.forEach(r => {
+                const marker = marcadores[r.Id];
+                const card = document.getElementById(`card-rest-${r.Id}`);
+                let visible = true;
+
+                const texto = (r.Direccion + " " + r.DistanciaTexto + " " + r.Nombre).toLowerCase();
+
+                if (zona === 'fontana') {
+                    visible = texto.includes('fontana') || texto.includes('campus');
+                } else if (zona === 'flora') {
+                    visible = texto.includes('flora');
+                } else if (zona === 'prado') {
+                    visible = texto.includes('prado');
+                } else if (zona === 'ingenieros') {
+                    visible = texto.includes('ingenieros') || texto.includes('civiles') || texto.includes('arequipa') || texto.includes('loreto') || texto.includes('madre de dios') || texto.includes('isil');
+                }
+
+                if (marker) marker.setVisible(visible);
+                if (card) card.style.display = visible ? "" : "none";
+            });
+
+            if (zona === 'todos') {
+                verCuadranteCompleto();
+            }
+        }
+
+        // Enfocar un restaurante en el mapa al hacer clic en "Ver en mapa"
+        function irARestauranteEnMapa(id) {
+            const r = restos.find(x => x.Id === id);
+            const marker = marcadores[id];
+            if (map && r && marker) {
                 document.getElementById('mapa-fia').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                mostrarCardFlotante(r, marker);
             }
         }
 
+        // Cargar modal con reseñas reales y datos del local
         async function abrirModalDetalle(id) {
             try {
                 const res = await fetch(`/Restaurantes/Detalle/${id}`);
@@ -365,7 +1009,7 @@ else
                 document.getElementById('modalDistancia').textContent = `${d.distanciaTexto} · ${d.direccion}`;
                 document.getElementById('modalImg').src = d.fotoUrl;
                 document.getElementById('modalCategoria').textContent = d.categoria;
-                document.getElementById('modalRango').textContent = d.rangoPrecios;
+                document.getElementById('modalRangoPrecios').textContent = d.rangoPrecios;
                 document.getElementById('modalPromedio').textContent = d.calificacionPromedio.toFixed(1);
                 document.getElementById('modalTotalResenas').textContent = `(${d.totalResenas} reseñas)`;
                 document.getElementById('modalDesc').textContent = d.descripcion;
@@ -373,36 +1017,67 @@ else
                 document.getElementById('modalHorario').textContent = d.horarioAtencion;
                 document.getElementById('formRestauranteId').value = d.id;
 
+                // Enlaces de Google Maps / Campus FIA
+                const esCampus = d.esCampus || (d.nombre && d.nombre.toLowerCase().includes("cafetería")) || (d.distanciaTexto && d.distanciaTexto.toLowerCase().includes("dentro del campus"));
+                const btnRuta = document.getElementById('modalBtnRuta');
+                const btnGmaps = document.getElementById('modalBtnGmaps');
+                const campusNotice = document.getElementById('modalCampusNotice');
+
+                if (esCampus) {
+                    if (campusNotice) campusNotice.classList.remove('d-none');
+                    if (btnRuta) btnRuta.classList.add('d-none');
+                    if (btnGmaps) btnGmaps.classList.add('d-none');
+                } else {
+                    if (campusNotice) campusNotice.classList.add('d-none');
+                    if (btnRuta) {
+                        btnRuta.classList.remove('d-none');
+                        btnRuta.href = `https://www.google.com/maps/dir/?api=1&origin=-12.07203,-76.94205&destination=${d.latitud},${d.longitud}&travelmode=walking`;
+                    }
+                    if (btnGmaps) {
+                        btnGmaps.classList.remove('d-none');
+                        btnGmaps.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.nombre + ' ' + d.direccion)}`;
+                    }
+                }
+
+                // WhatsApp si existe
                 if (d.telefonoWhatsApp) {
                     document.getElementById('modalBtnWaContainer').innerHTML = `
-                        <a href="https://wa.me/51${d.telefonoWhatsApp}?text=Hola,%20soy%20estudiante%20de%20la%20USMP%20FIA,%20deseo%20consultar%20el%20menú%20de%20hoy." target="_blank" class="btn btn-sm btn-wa w-100">
-                            <i class="bi bi-whatsapp me-1"></i>Consultar por WhatsApp
+                        <a href="https://wa.me/51${d.telefonoWhatsApp}?text=Hola,%20soy%20estudiante%20de%20la%20USMP%20FIA,%20deseo%20hacer%20una%20consulta." target="_blank" rel="noopener noreferrer" class="btn btn-wa-custom w-100 d-flex align-items-center justify-content-center gap-2 py-2" title="Contactar por WhatsApp">
+                            <i class="bi bi-whatsapp"></i><span>WhatsApp</span>
                         </a>
                     `;
                 } else {
                     document.getElementById('modalBtnWaContainer').innerHTML = '';
                 }
 
-                // Reseñas
+                // Reseñas de estudiantes
                 const listaResenas = document.getElementById('modalResenasLista');
                 if (d.resenas && d.resenas.length > 0) {
                     listaResenas.innerHTML = d.resenas.map(r => `
-                        <div class="p-2 border rounded mb-2 bg-light">
+                        <div class="review-card">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="avatar avatar-sm avatar-soft">${r.iniciales}</span>
-                                    <span class="fw-semibold small">${r.autor}</span>
+                                    <span class="avatar avatar-sm avatar-soft" style="width: 32px; height: 32px; border-radius: 50%; font-size: 0.78rem; font-weight: 700; background: var(--guinda-50, #fdf2f4); color: #7a152d; display: inline-flex; align-items: center; justify-content: center;">${r.iniciales}</span>
+                                    <span class="fw-semibold small text-dark">${r.autor}</span>
                                 </div>
-                                <span class="text-muted small">${r.fechaRelativa}</span>
+                                <span class="text-muted small" style="font-size: 0.78rem;">${r.fechaRelativa}</span>
                             </div>
-                            <div class="stars-gold mb-1" style="font-size:12px;">
+                            <div class="stars-gold mb-1" style="font-size: 13px;">
                                 ${'★'.repeat(r.puntuacion)}${'☆'.repeat(5 - r.puntuacion)}
                             </div>
-                            <p class="small mb-0 text-secondary">${r.comentario}</p>
+                            <p class="small mb-0 text-secondary" style="line-height: 1.45;">${r.comentario}</p>
                         </div>
                     `).join('');
                 } else {
-                    listaResenas.innerHTML = '<p class="text-muted small">Aún no hay reseñas. ¡Sé el primer estudiante en calificar este huarique!</p>';
+                    listaResenas.innerHTML = `
+                        <div class="text-center py-4 px-3 rounded" style="background: #f8fafc; border: 1px dashed #cbd5e1;">
+                            <i class="bi bi-chat-square-text text-muted fs-3 mb-2 d-block"></i>
+                            <p class="small text-muted mb-2">Aún no hay reseñas registradas para este local.</p>
+                            <button class="btn btn-sm btn-outline-guinda rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#formResenaCollapse">
+                                <i class="bi bi-pencil-fill me-1"></i>Sé el primero en calificar
+                            </button>
+                        </div>
+                    `;
                 }
 
                 const modal = new bootstrap.Modal(document.getElementById('modalRestaurante'));

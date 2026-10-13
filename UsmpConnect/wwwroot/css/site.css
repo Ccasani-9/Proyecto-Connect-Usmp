@@ -147,10 +147,34 @@ a:hover { color: var(--guinda-700); }
   color: #3f3f46; font-weight: 600; font-size: .88rem; white-space: nowrap;
   transition: all .15s ease;
 }
-.sidenav a i { font-size: 1.1rem; color: #52525b; flex-shrink: 0; }
-.sidenav a:hover { background: #f6f6f8; color: var(--text); }
-.sidenav a.active { background: var(--guinda-50); color: var(--guinda); font-weight: 700; }
-.sidenav a.active i { color: var(--guinda); }
+.sidenav a i { 
+  font-size: 1.25rem; 
+  color: #64748b; 
+  flex-shrink: 0; 
+  width: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s ease; 
+}
+.sidenav a:hover { 
+  background: #f8fafc; 
+  color: var(--text); 
+}
+.sidenav a:hover i {
+  color: var(--guinda);
+  transform: scale(1.12);
+}
+.sidenav a.active { 
+  background: var(--guinda-50); 
+  color: var(--guinda); 
+  font-weight: 700; 
+  box-shadow: inset 3px 0 0 var(--guinda);
+}
+.sidenav a.active i { 
+  color: var(--guinda); 
+  transform: scale(1.08);
+}
 
 /* Enlaces móviles dentro del sidebar */
 .sidebar-mobile-links {
@@ -184,11 +208,15 @@ a:hover { color: var(--guinda-700); }
   background: #f6f6f8;
   color: var(--guinda);
 }
+.mobile-portal-link:hover img {
+  transform: scale(1.1);
+}
 .mobile-portal-link img {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
   flex-shrink: 0;
+  transition: transform .15s ease;
 }
 
 .sidebar-footer { margin-top: auto; text-align: center; padding-top: 14px; }

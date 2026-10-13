@@ -48,7 +48,36 @@ public static class DbInitializer
             }
         }
 
-        if (!await db.Database.EnsureCreatedAsync())
+        var creada = await db.Database.EnsureCreatedAsync();
+
+        try
+        {
+            var cafeteria = await db.Restaurantes.FirstOrDefaultAsync(r => r.Nombre.Contains("Cafetería Central FIA"));
+            if (cafeteria != null)
+            {
+                bool modificado = false;
+                if (cafeteria.Direccion != null && cafeteria.Direccion.Contains("Pabellón B"))
+                {
+                    cafeteria.Direccion = "Dentro del Campus FIA";
+                    modificado = true;
+                }
+                if (cafeteria.HorarioAtencion != null && cafeteria.HorarioAtencion.Contains("Mar-Vie"))
+                {
+                    cafeteria.HorarioAtencion = "Lun - Vie: 8:00 AM - 9:00 PM · Sáb: 8:30 AM - 1:00 PM";
+                    modificado = true;
+                }
+                if (modificado)
+                {
+                    await db.SaveChangesAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Error al sincronizar datos de Cafetería Central");
+        }
+
+        if (!creada)
             return;
 
         var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();

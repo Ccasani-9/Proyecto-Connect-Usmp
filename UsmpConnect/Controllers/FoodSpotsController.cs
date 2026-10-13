@@ -13,7 +13,8 @@ public class FoodSpotsController(
     IRedisCacheService cache,
     IColaMensajes cola,
     IBuscadorAlgolia algolia,
-    IPieHostService pieHost) : Controller
+    IPieHostService pieHost,
+    IConfiguration config) : Controller
 {
     [AllowAnonymous]
     public async Task<IActionResult> Index(CategoriaRestaurante? categoria, string? q)
@@ -80,13 +81,15 @@ public class FoodSpotsController(
             Restaurantes = restaurantesVm,
             CategoriaActual = categoria,
             Busqueda = q,
-            FuenteDatos = fuente
+            FuenteDatos = fuente,
+            GoogleMapsApiKey = config["GoogleMaps:ApiKey"] ?? ""
         };
 
         return View(vm);
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> Detalle(int id)
     {
         var r = await db.Restaurantes
@@ -116,7 +119,7 @@ public class FoodSpotsController(
             r.Id,
             r.Nombre,
             r.Descripcion,
-            Categoria = r.Categoria.ToString(),
+            Categoria = r.Categoria.Nombre(),
             r.Direccion,
             r.DistanciaTexto,
             r.RangoPrecios,
@@ -127,6 +130,9 @@ public class FoodSpotsController(
             r.Longitud,
             r.CalificacionPromedio,
             r.TotalResenas,
+            EsCampus = (r.Direccion?.Contains("Campus FIA", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                       (r.DistanciaTexto?.Contains("Dentro del Campus", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                       (r.Nombre?.Contains("Cafetería Central FIA", StringComparison.OrdinalIgnoreCase) ?? false),
             Platos = platos,
             Resenas = resenas
         });
