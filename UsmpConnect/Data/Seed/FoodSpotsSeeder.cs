@@ -40,57 +40,6 @@ public class FoodSpotsSeeder : IModuleSeeder
                 CalificacionPromedio = 4.6,
                 TotalResenas = 2
             },
-            new()
-            {
-                Nombre = "Huarique Doña Rossi",
-                Descripcion = "El clásico huarique preferido por los estudiantes de sistemas e industrial. Platos bien taipá, sazón casera norteña y atención al toque frente al campus.",
-                Categoria = CategoriaRestaurante.MenuCriollo,
-                Rango = RangoPrecio.Economico,
-                Direccion = "Av. La Fontana 1270 · Frente a Puerta 1 FIA",
-                DistanciaTexto = "A 40m cruzando Av. La Fontana",
-                RangoPrecios = "Económico",
-                HorarioAtencion = "Lun - Vie: 11:30 AM - 4:30 PM",
-                TelefonoWhatsApp = "991234567",
-                FotoUrl = "/images/restaurantes/dona-rossi.jpg",
-                Latitud = -12.07270,
-                Longitud = -76.94235,
-                CalificacionPromedio = 4.9,
-                TotalResenas = 2
-            },
-            new()
-            {
-                Nombre = "Chifa Dragón Dorado La Fontana",
-                Descripcion = "Chifa rápido con porciones contundentes para grupos de estudio. Aeropuertos gigantes, sopa wantán especial y chaufas al wok recién salidos.",
-                Categoria = CategoriaRestaurante.Chifa,
-                Rango = RangoPrecio.Economico,
-                Direccion = "Av. La Fontana 1310 · Urb. Santa Patricia",
-                DistanciaTexto = "A 1 cuadra de la FIA (120m)",
-                RangoPrecios = "Económico",
-                HorarioAtencion = "Lun - Dom: 12:00 PM - 10:00 PM",
-                TelefonoWhatsApp = "978112233",
-                FotoUrl = "/images/restaurantes/dragon-dorado.jpg",
-                Latitud = -12.07285,
-                Longitud = -76.94420,
-                CalificacionPromedio = 4.5,
-                TotalResenas = 1
-            },
-            new()
-            {
-                Nombre = "Tambo+ / Snack Fontana",
-                Descripcion = "Bebidas frías, sánguches listos, empanadas, café caliente y snacks rápidos para recargar energías entre entregas de laboratorio.",
-                Categoria = CategoriaRestaurante.ComidaRapida,
-                Rango = RangoPrecio.Economico,
-                Direccion = "Av. La Fontana con Av. Flora Tristán",
-                DistanciaTexto = "A 100m en el cruce con Flora Tristán",
-                RangoPrecios = "Económico",
-                HorarioAtencion = "Lun - Dom: 24 Horas",
-                TelefonoWhatsApp = "998877665",
-                FotoUrl = "/images/restaurantes/tambo-fontana.jpg",
-                Latitud = -12.07310,
-                Longitud = -76.94080,
-                CalificacionPromedio = 4.4,
-                TotalResenas = 1
-            },
 
             // --- 2. RESTAURANTES REALES EXTRAÍDOS CON GOOGLE PLACES API (AV. LA FONTANA) ---
             new()
@@ -973,56 +922,67 @@ public class FoodSpotsSeeder : IModuleSeeder
         // --- RESEÑAS REALES DE ESTUDIANTES FIA USMP ---
         if (maria != null && juan != null && ana != null && carlos != null)
         {
-            var resenas = new List<ResenaRestaurante>
+            var dict = restaurantes.ToDictionary(r => r.Nombre, r => r.Id);
+            var resenas = new List<ResenaRestaurante>();
+
+            void AgregarResena(string nombre, string usuarioId, int puntuacion, string comentario, int diasAtras)
             {
-                // Cafetería Central
-                new() { RestauranteId = restaurantes[0].Id, UsuarioId = maria.Id, Puntuacion = 5, Comentario = "Muy cómodo para no salir de la facultad entre clases, atienden rápido y el café salva vidas en parciales.", FechaUtc = DateTime.UtcNow.AddDays(-3) },
-                new() { RestauranteId = restaurantes[0].Id, UsuarioId = juan.Id, Puntuacion = 4, Comentario = "Buena atención y limpio, solo que a la 1:00 PM se llena bastante de alumnos de civil y sistemas.", FechaUtc = DateTime.UtcNow.AddDays(-5) },
+                if (dict.TryGetValue(nombre, out var restId))
+                {
+                    resenas.Add(new ResenaRestaurante
+                    {
+                        RestauranteId = restId,
+                        UsuarioId = usuarioId,
+                        Puntuacion = puntuacion,
+                        Comentario = comentario,
+                        FechaUtc = DateTime.UtcNow.AddDays(-diasAtras)
+                    });
+                }
+            }
 
-                // Doña Rossi
-                new() { RestauranteId = restaurantes[1].Id, UsuarioId = carlos.Id, Puntuacion = 5, Comentario = "¡Doña Rossi es insuperable! El Lomo Saltado y el Arroz con pollo son los mejores de La Fontana. Recomendadísimo.", FechaUtc = DateTime.UtcNow.AddDays(-2) },
-                new() { RestauranteId = restaurantes[1].Id, UsuarioId = ana.Id, Puntuacion = 5, Comentario = "Muy buena porción y sazón casera, perfecto para el presupuesto de nosotros los estudiantes.", FechaUtc = DateTime.UtcNow.AddDays(-1) },
+            // Cafetería Central FIA (Campus)
+            AgregarResena("Cafetería Central FIA (Campus)", maria.Id, 5, "Muy cómodo para no salir de la facultad entre clases, atienden rápido y el café salva vidas en parciales.", 3);
+            AgregarResena("Cafetería Central FIA (Campus)", juan.Id, 4, "Buena atención y limpio, solo que a la 1:00 PM se llena bastante de alumnos de civil y sistemas.", 5);
 
-                // Dragón Dorado
-                new() { RestauranteId = restaurantes[2].Id, UsuarioId = juan.Id, Puntuacion = 5, Comentario = "El aeropuerto es inmenso, comemos 2 personas con un solo plato. Gran huarique para celebrar fin de ciclo.", FechaUtc = DateTime.UtcNow.AddDays(-7) },
+            // Puerto Central
+            AgregarResena("Puerto Central", carlos.Id, 5, "El trío marino sale al toque y está frente a la puerta 1. Muy fresco y buen tamaño.", 4);
 
-                // Tambo
-                new() { RestauranteId = restaurantes[3].Id, UsuarioId = ana.Id, Puntuacion = 4, Comentario = "Clave para comprar agua, energizantes o café antes de entrar a sustentar en los laboratorios de cómputo.", FechaUtc = DateTime.UtcNow.AddDays(-6) },
+            // Tumbes Mar Pescados Y Mariscos
+            AgregarResena("Tumbes Mar Pescados Y Mariscos", maria.Id, 4, "Buen ceviche clásico norteño con harta canchita y camote, recomendado para los viernes.", 5);
 
-                // Puerto Central
-                new() { RestauranteId = restaurantes[4].Id, UsuarioId = carlos.Id, Puntuacion = 5, Comentario = "El trío marino sale al toque y está frente a la puerta 1. Muy fresco y buen tamaño.", FechaUtc = DateTime.UtcNow.AddDays(-4) },
+            // Pizza Raúl La Fontana
+            AgregarResena("Pizza Raúl La Fontana", juan.Id, 4, "Súper económico para comprar una pizza grande entre 3 amigos cuando nos quedamos avanzando el proyecto.", 8);
 
-                // Tumbes Mar
-                new() { RestauranteId = restaurantes[5].Id, UsuarioId = maria.Id, Puntuacion = 4, Comentario = "Buen ceviche clásico norteño con harta canchita y camote, recomendado para los viernes.", FechaUtc = DateTime.UtcNow.AddDays(-5) },
+            // Mamma Tomato
+            AgregarResena("Mamma Tomato", ana.Id, 4, "La masa es buenísima y diferente a las comerciales, buen ambiente para conversar tranquilos.", 3);
 
-                // Pizza Raúl
-                new() { RestauranteId = restaurantes[6].Id, UsuarioId = juan.Id, Puntuacion = 4, Comentario = "Súper económico para comprar una pizza grande entre 3 amigos cuando nos quedamos avanzando el proyecto.", FechaUtc = DateTime.UtcNow.AddDays(-8) },
+            // Dachi Café
+            AgregarResena("Dachi Café", maria.Id, 5, "El mejor café de especialidad cerca a la facultad. Se puede llevar la laptop y programar sin bulla.", 2);
 
-                // Mamma Tomato
-                new() { RestauranteId = restaurantes[7].Id, UsuarioId = ana.Id, Puntuacion = 4, Comentario = "La masa es buenísima y diferente a las comerciales, buen ambiente para conversar tranquilos.", FechaUtc = DateTime.UtcNow.AddDays(-3) },
+            // Don Tito La Molina
+            AgregarResena("Don Tito La Molina", carlos.Id, 5, "El mejor pollo a la brasa cerca de la universidad. Para venir en grupo después de presentar proyectos.", 4);
 
-                // Dachi Café
-                new() { RestauranteId = restaurantes[8].Id, UsuarioId = maria.Id, Puntuacion = 5, Comentario = "El mejor café de especialidad cerca a la facultad. Se puede llevar la laptop y programar sin bulla.", FechaUtc = DateTime.UtcNow.AddDays(-2) },
+            // Shimaya Ramen
+            AgregarResena("Shimaya Ramen", maria.Id, 5, "Ramen excelente y bien caliente. El caldo tonkotsu es buenazo en época de frío.", 6);
 
-                // Don Tito
-                new() { RestauranteId = restaurantes[11].Id, UsuarioId = carlos.Id, Puntuacion = 5, Comentario = "El mejor pollo a la brasa cerca de la universidad. Para venir en grupo después de presentar proyectos.", FechaUtc = DateTime.UtcNow.AddDays(-4) },
+            // Secretos Árabes
+            AgregarResena("Secretos Árabes", juan.Id, 5, "Los shawarmas son contundentes y salen al toque. Ideal si tienes solo 30 minutos de break.", 1);
 
-                // Shimaya Ramen
-                new() { RestauranteId = restaurantes[14].Id, UsuarioId = maria.Id, Puntuacion = 5, Comentario = "Ramen excelente y bien caliente. El caldo tonkotsu es buenazo en época de frío.", FechaUtc = DateTime.UtcNow.AddDays(-6) },
+            // Pardos Chicken La Molina
+            AgregarResena("Pardos Chicken La Molina", carlos.Id, 5, "El clásico de Javier Prado con Los Civiles. El pellejito crocante y el ají Pardos no fallan nunca.", 2);
+            AgregarResena("Pardos Chicken La Molina", maria.Id, 4, "Buen ambiente y rápido el servicio para almorzar entre patas después de un examen.", 5);
 
-                // Secretos Árabes
-                new() { RestauranteId = restaurantes[15].Id, UsuarioId = juan.Id, Puntuacion = 5, Comentario = "Los shawarmas son contundentes y salen al toque. Ideal si tienes solo 30 minutos de break.", FechaUtc = DateTime.UtcNow.AddDays(-1) },
+            // Roll Star Sushi Bar
+            AgregarResena("Roll Star Sushi Bar", ana.Id, 4, "Los makis acevichados y el roll furai están buenazos, cerca a ISIL y cruzando de la FIA.", 3);
 
-                // Pardos Chicken
-                new() { RestauranteId = restaurantes[36].Id, UsuarioId = carlos.Id, Puntuacion = 5, Comentario = "El clásico de Javier Prado con Los Civiles. El pellejito crocante y el ají Pardos no fallan nunca.", FechaUtc = DateTime.UtcNow.AddDays(-2) },
-                new() { RestauranteId = restaurantes[36].Id, UsuarioId = maria.Id, Puntuacion = 4, Comentario = "Buen ambiente y rápido el servicio para almorzar entre patas después de un examen.", FechaUtc = DateTime.UtcNow.AddDays(-5) },
+            // Punto Italiano (La Fontana)
+            AgregarResena("Punto Italiano (La Fontana)", juan.Id, 5, "La lasaña bolognesa y los fetuccinis al pesto son de primera. De los mejores sitios de pastas de La Fontana.", 4);
 
-                // Roll Star Sushi Bar
-                new() { RestauranteId = restaurantes[37].Id, UsuarioId = ana.Id, Puntuacion = 4, Comentario = "Los makis acevichados y el roll furai están buenazos, cerca a ISIL y cruzando de la FIA.", FechaUtc = DateTime.UtcNow.AddDays(-3) },
+            // Menú Rakus
+            AgregarResena("Menú Rakus", carlos.Id, 5, "El menú estudiantil es bien despachado y la sazón es casera. Clave para los días largos de laboratorio.", 2);
 
-                // Punto Italiano (La Fontana)
-                new() { RestauranteId = restaurantes[39].Id, UsuarioId = juan.Id, Puntuacion = 5, Comentario = "La lasaña bolognesa y los fetuccinis al pesto son de primera. De los mejores sitios de pastas de La Fontana.", FechaUtc = DateTime.UtcNow.AddDays(-4) }
-            };
+            // Don Lucho (Salchipapas & Broaster)
+            AgregarResena("Don Lucho (Salchipapas & Broaster)", ana.Id, 4, "Las mejores salchipapas y cremas para bajar el hambre después de clases en la tarde.", 1);
 
             db.ResenasRestaurantes.AddRange(resenas);
             await db.SaveChangesAsync();
