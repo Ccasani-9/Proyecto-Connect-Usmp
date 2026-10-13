@@ -447,17 +447,17 @@ else
                     </p>
 
                     <div class="mb-3 pt-2 border-top">
-                        <div class="d-flex align-items-center gap-2 mb-1" title="@r.Direccion">
-                            <i class="bi bi-pin-map text-secondary flex-shrink-0" style="font-size: 0.85rem;"></i>
-                            <span class="small text-muted text-truncate">@r.Direccion</span>
+                        <div class="d-flex align-items-start gap-2 mb-1" title="@r.Direccion">
+                            <i class="bi bi-pin-map text-secondary flex-shrink-0 mt-1" style="font-size: 0.85rem;"></i>
+                            <span class="small text-muted" style="line-height: 1.35;">@r.Direccion</span>
                         </div>
                         <div class="d-flex align-items-center gap-2 mb-1" title="@r.DistanciaTexto">
                             <i class="bi bi-geo-alt-fill text-danger flex-shrink-0" style="font-size: 0.85rem;"></i>
                             <span class="small text-muted fw-medium text-truncate">@r.DistanciaTexto</span>
                         </div>
-                        <div class="d-flex align-items-center gap-2" title="@r.HorarioAtencion">
-                            <i class="bi bi-clock-fill text-success flex-shrink-0" style="font-size: 0.85rem;"></i>
-                            <span class="small text-success fw-semibold text-truncate">@r.HorarioAtencion</span>
+                        <div class="d-flex align-items-start gap-2" title="@r.HorarioAtencion">
+                            <i class="bi bi-clock-fill text-success flex-shrink-0 mt-1" style="font-size: 0.85rem;"></i>
+                            <span class="small text-success fw-semibold" style="line-height: 1.35;">@r.HorarioAtencion</span>
                         </div>
                     </div>
 
@@ -466,7 +466,7 @@ else
                         {
                             <div class="d-flex align-items-center justify-content-center gap-2 py-2 mb-2 rounded border" style="background: #fdf2f4; border-color: #fbcfe8 !important; font-size: 0.8rem; font-weight: 600; color: #7a152d;">
                                 <i class="bi bi-building-check text-danger fs-6"></i>
-                                <span>Dentro del Campus FIA · Pabellón B</span>
+                                <span>Dentro del Campus FIA</span>
                             </div>
                             <div class="d-flex gap-2">
                                 <button class="btn btn-card-map w-50" type="button" onclick="irARestauranteEnMapa(@r.Id)">
@@ -563,7 +563,7 @@ else
                 <div class="d-flex flex-wrap gap-2 mb-4">
                     <div id="modalCampusNotice" class="d-none w-100 alert alert-light border d-flex align-items-center gap-2 py-2 px-3 mb-0 text-muted" style="font-size: 0.85rem;">
                         <i class="bi bi-building-check text-guinda fs-5"></i>
-                        <span>Local ubicado <strong>dentro del campus universitario FIA</strong> (Pabellón B). Acceso directo entre clases.</span>
+                        <span>Local ubicado <strong>dentro del campus FIA</strong>. Acceso directo entre clases.</span>
                     </div>
                     <a id="modalBtnRuta" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-guinda flex-grow-1 d-flex align-items-center justify-content-center gap-2 py-2" title="Ver ruta a pie exacta desde la facultad FIA">
                         <i class="bi bi-person-walking"></i>
