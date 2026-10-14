@@ -1,4 +1,5 @@
 @model CatedraIndexViewModel
+@using UsmpConnect.Models
 @{
     ViewData["Title"] = "Cátedra & Tips";
 }
@@ -9,19 +10,38 @@
 
 <partial name="_Barra" model="Model.Barra" />
 
-<div class="d-flex justify-content-between align-items-baseline mb-3">
-    <h2 class="h5 fw-bold m-0">
-        @(Model.Barra.Ciclo is null ? "Todos los cursos" : $"Cursos del {Curso.Romano(Model.Barra.Ciclo.Value)} Ciclo")
-        <span class="text-muted fw-normal fs-6">(@Model.Cursos.Count)</span>
-    </h2>
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h2 class="h5 fw-bold m-0 d-flex align-items-center gap-2 flex-wrap">
+            <span>@(Model.Barra.Ciclo is null ? "Todos los cursos" : $"Cursos del {Curso.Romano(Model.Barra.Ciclo.Value)} Ciclo")</span>
+            <span class="badge bg-light text-secondary border fs-6 fw-semibold">@Model.Cursos.Count</span>
+            @if (!string.IsNullOrWhiteSpace(Model.Barra.Carrera) && Model.Barra.Carrera != CarrerasFia.Todas)
+            {
+                <span class="tag tag-guinda" style="font-size: 0.8rem;">
+                    <i class="bi bi-mortarboard-fill me-1"></i>@CarrerasFia.Nombre(Model.Barra.Carrera)
+                </span>
+            }
+        </h2>
+    </div>
     <small class="text-muted">Elige un curso para ver a sus docentes y los tips de la comunidad</small>
 </div>
 
 @if (Model.Cursos.Count == 0)
 {
-    <div class="card-u vacio">
-        <i class="bi bi-bookmark"></i>
-        No encontramos cursos@(string.IsNullOrWhiteSpace(Model.Barra.Busqueda) ? "" : $" ni docentes para “{Model.Barra.Busqueda}”").
+    <div class="card-u vacio p-4 text-center">
+        <i class="bi bi-journal-bookmark fs-1 text-muted mb-2 d-block"></i>
+        <h4 class="h6 fw-bold">No se encontraron cursos</h4>
+        <p class="text-muted small mb-3">
+            @if (!string.IsNullOrWhiteSpace(Model.Barra.Carrera) && Model.Barra.Carrera != CarrerasFia.Todas)
+            {
+                <span>Los cursos de especialidad de <strong>@CarrerasFia.Nombre(Model.Barra.Carrera)</strong> para este ciclo están en recopilación comunitaria.</span>
+            }
+            else
+            {
+                <span>No encontramos cursos para los filtros seleccionados@(string.IsNullOrWhiteSpace(Model.Barra.Busqueda) ? "" : $" (“{Model.Barra.Busqueda}”)").</span>
+            }
+        </p>
+        <a href="/Catedra" class="btn btn-sm btn-outline-secondary">Ver todos los cursos</a>
     </div>
 }
 
@@ -31,8 +51,14 @@
         <div class="col-xl-4 col-md-6">
             <a class="card-u p curso-card" href="/Catedra/Curso/@c.Id">
                 <div>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="badge bg-light text-secondary border" style="font-size: 0.72rem; font-weight: 600;">
+                            <i class="bi bi-mortarboard me-1 text-danger"></i>@c.EtiquetaCarrera
+                        </span>
+                        <span class="tag tag-guinda text-nowrap" style="font-size: 0.72rem;">@Curso.Romano(c.Ciclo) Ciclo</span>
+                    </div>
                     <div class="fw-bold fs-6">@c.Nombre</div>
-                    <div class="curso-meta">Código: @c.Codigo │ Créditos: @c.Creditos │ @Curso.Romano(c.Ciclo) Ciclo</div>
+                    <div class="curso-meta">Código: @c.Codigo │ Créditos: @c.Creditos</div>
                 </div>
                 <div>
                     <div class="d-flex justify-content-between small mb-1">
@@ -41,8 +67,10 @@
                     </div>
                     <div class="dif-barra"><span style="width: @((c.Dificultad ?? 0) / 5 * 100)%"></span></div>
                 </div>
-                <div class="d-flex justify-content-between align-items-end gap-2 mt-auto">
-                    <div class="curso-meta"><i class="bi bi-person-video3 me-1"></i>@(c.Docentes.Count == 0 ? "Sin docentes este periodo" : string.Join(" · ", c.Docentes))</div>
+                <div class="d-flex justify-content-between align-items-end gap-2 mt-auto pt-2 border-top">
+                    <div class="curso-meta text-truncate" title="@(c.Docentes.Count == 0 ? "Sin docentes este periodo" : string.Join(" · ", c.Docentes))">
+                        <i class="bi bi-person-video3 me-1"></i>@(c.Docentes.Count == 0 ? "Sin docentes este periodo" : string.Join(" · ", c.Docentes))
+                    </div>
                     <span class="tag tag-guinda text-nowrap">@c.NumTips @(c.NumTips == 1 ? "tip" : "tips")</span>
                 </div>
             </a>

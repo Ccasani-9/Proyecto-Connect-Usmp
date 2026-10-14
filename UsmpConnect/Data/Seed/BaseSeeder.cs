@@ -98,7 +98,23 @@ public class BaseSeeder : IModuleSeeder
         var poo = C("CS-302", "Programación Orientada a Objetos", "POO", 4, 4);
         var redes = C("CS-401", "Redes de Computadoras", "Redes", 4, 5);
         var so = C("CS-402", "Sistemas Operativos", "Sist. Operativos", 4, 5);
-        db.Cursos.AddRange(com1, calc, intro, fis1, prog1, calcInt, aed, discreta, bd1, poo, redes, so);
+        var req = C("IS-301", "Ingeniería de Requerimientos", "Ing. Requerimientos", 3, 6);
+        var seg = C("CB-401", "Seguridad en Redes y Hacking Ético", "Hacking Ético", 4, 6);
+        var web = C("CS-403", "Desarrollo de Aplicaciones Web y Móviles", "Desarrollo Web/Móvil", 4, 7);
+        var dat = C("CD-401", "Minería de Datos y Analítica", "Minería Datos", 4, 7);
+        var ia = C("CS-501", "Inteligencia Artificial", "Inteligencia Art.", 4, 8);
+        var rob = C("IA-401", "Robótica y Visión Computacional", "Robótica", 4, 8);
+        var cloud = C("CS-502", "Cloud Computing y Arquitectura", "Cloud y Arq.", 4, 9);
+        var tesis = C("IS-501", "Taller de Proyectos de Fin de Carrera", "Taller Proyectos", 4, 10);
+        var topo = C("CI-201", "Topografía y Geodesia", "Topografía", 4, 3);
+        var resMat = C("CI-301", "Resistencia de Materiales", "Resist. Materiales", 4, 4);
+        var procInd = C("IN-201", "Procesos Industriales I", "Procesos Ind.", 4, 3);
+        var met = C("IN-301", "Ingeniería de Métodos", "Ing. Métodos", 4, 4);
+        var arq1 = C("AR-101", "Taller de Diseño Arquitectónico I", "Diseño Arq. I", 4, 1);
+        var aero = C("AE-101", "Fundamentos de Navegación Aérea", "Navegación Aérea", 3, 1);
+
+        db.Cursos.AddRange(com1, calc, intro, fis1, prog1, calcInt, aed, discreta, bd1, poo, redes, so,
+            req, seg, web, dat, ia, rob, cloud, tesis, topo, resMat, procInd, met, arq1, aero);
 
         // ---------- Secciones y horarios ----------
         Seccion S(Curso curso, string codigo, string docente, params (DayOfWeek dia, int ini, int fin, string aula)[] horas)
@@ -125,6 +141,20 @@ public class BaseSeeder : IModuleSeeder
         S(poo, "04B", DemoUsers.Lopez, (DayOfWeek.Thursday, 14, 16, "Lab. C-302"));
         S(redes, "05A", DemoUsers.Torres, (DayOfWeek.Monday, 18, 21, "Lab. R-101"));
         S(so, "05A", DemoUsers.Sanchez, (DayOfWeek.Wednesday, 18, 21, "Lab. C-303"));
+        S(req, "06A", DemoUsers.Sanchez, (DayOfWeek.Monday, 14, 17, "Aula B-301"));
+        S(seg, "06A", DemoUsers.Torres, (DayOfWeek.Wednesday, 18, 21, "Lab. R-102"));
+        S(web, "07A", DemoUsers.Lopez, (DayOfWeek.Tuesday, 18, 22, "Lab. C-201"));
+        S(dat, "07A", DemoUsers.Ramirez, (DayOfWeek.Thursday, 18, 22, "Lab. C-202"));
+        S(ia, "08A", DemoUsers.Torres, (DayOfWeek.Friday, 18, 22, "Lab. C-303"));
+        S(rob, "08A", DemoUsers.Lopez, (DayOfWeek.Wednesday, 14, 18, "Lab. R-101"));
+        S(cloud, "09A", DemoUsers.Ramirez, (DayOfWeek.Saturday, 8, 12, "Aula Virtual"));
+        S(tesis, "10A", DemoUsers.Sanchez, (DayOfWeek.Monday, 18, 22, "Aula B-401"));
+        S(topo, "03A", DemoUsers.Torres, (DayOfWeek.Saturday, 8, 13, "Patio FIA"));
+        S(resMat, "04A", DemoUsers.Ramirez, (DayOfWeek.Tuesday, 8, 11, "Lab. F-102"));
+        S(procInd, "03A", DemoUsers.Lopez, (DayOfWeek.Wednesday, 8, 11, "Lab. P-101"));
+        S(met, "04A", DemoUsers.Sanchez, (DayOfWeek.Thursday, 8, 11, "Aula A-205"));
+        S(arq1, "01A", DemoUsers.Herrera, (DayOfWeek.Monday, 8, 13, "Taller Arq. 1"));
+        S(aero, "01A", DemoUsers.Torres, (DayOfWeek.Tuesday, 14, 17, "Simulador"));
 
         // ---------- Matrículas y notas ----------
         void Matricular(string alumno, Seccion seccion, decimal? ep = null, decimal? ef = null, decimal? pp = null)
