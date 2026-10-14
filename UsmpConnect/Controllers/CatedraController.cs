@@ -19,6 +19,27 @@ public class CatedraController(ApplicationDbContext db) : Controller
     [AllowAnonymous]
     public async Task<IActionResult> Index(string? q, int? ciclo, string? carrera)
     {
+        // Si no se especifica carrera, por defecto la escuela del alumno logueado o Sistemas
+        if (string.IsNullOrWhiteSpace(carrera))
+        {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var userId = User.GetUserId();
+                var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+                carrera = CarrerasFia.MapearEscuela(user?.Escuela) ?? CarrerasFia.Sistemas;
+            }
+            else
+            {
+                carrera = CarrerasFia.Sistemas;
+            }
+        }
+
+        // Si no se especifica ciclo y no hay búsqueda por texto, por defecto Ciclo 1 (I Ciclo)
+        if (ciclo is null && string.IsNullOrWhiteSpace(q))
+        {
+            ciclo = 1;
+        }
+
         var cursos = await db.Cursos.AsNoTracking()
             .Include(c => c.Secciones.Where(s => s.Periodo == BaseSeeder.Periodo)).ThenInclude(s => s.Docente)
             .OrderBy(c => c.Ciclo).ThenBy(c => c.Nombre)

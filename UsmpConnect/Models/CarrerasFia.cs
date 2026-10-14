@@ -5,12 +5,11 @@ namespace UsmpConnect.Models;
 /// </summary>
 public static class CarrerasFia
 {
-    public const string Todas = "todas";
+    public const string Sistemas = "sistemas";
+    public const string Civil = "civil";
+    public const string Industrial = "industrial";
     public const string Arquitectura = "arquitectura";
     public const string Aeronauticas = "aeronauticas";
-    public const string Civil = "civil";
-    public const string Sistemas = "sistemas";
-    public const string Industrial = "industrial";
     public const string Ciberseguridad = "ciberseguridad";
     public const string Datos = "datos";
     public const string Ia = "ia";
@@ -19,7 +18,6 @@ public static class CarrerasFia
 
     public static readonly List<CarreraItem> Lista =
     [
-        new(Todas, "Todas las Carreras FIA", "Todas", "bi-grid-fill"),
         new(Sistemas, "Ingeniería de Computación y Sistemas", "Ing. Sistemas", "bi-laptop"),
         new(Civil, "Ingeniería Civil", "Ing. Civil", "bi-cone-striped"),
         new(Industrial, "Ingeniería Industrial", "Ing. Industrial", "bi-gear-wide-connected"),
@@ -32,20 +30,35 @@ public static class CarrerasFia
 
     public static string Nombre(string? id)
     {
-        if (string.IsNullOrWhiteSpace(id) || id.Equals(Todas, StringComparison.OrdinalIgnoreCase))
-            return "Todas las Carreras FIA";
+        if (string.IsNullOrWhiteSpace(id))
+            return "Ingeniería de Computación y Sistemas";
 
         return Lista.FirstOrDefault(c => c.Id.Equals(id, StringComparison.OrdinalIgnoreCase))?.Nombre
-            ?? "Todas las Carreras FIA";
+            ?? "Ingeniería de Computación y Sistemas";
     }
 
     public static string NombreCorto(string? id)
     {
-        if (string.IsNullOrWhiteSpace(id) || id.Equals(Todas, StringComparison.OrdinalIgnoreCase))
-            return "Todas";
+        if (string.IsNullOrWhiteSpace(id))
+            return "Ing. Sistemas";
 
         return Lista.FirstOrDefault(c => c.Id.Equals(id, StringComparison.OrdinalIgnoreCase))?.NombreCorto
-            ?? "Todas";
+            ?? "Ing. Sistemas";
+    }
+
+    public static string? MapearEscuela(string? escuela)
+    {
+        if (string.IsNullOrWhiteSpace(escuela)) return null;
+        var lower = escuela.ToLowerInvariant();
+        if (lower.Contains("sistema") || lower.Contains("computación") || lower.Contains("computacion")) return Sistemas;
+        if (lower.Contains("civil")) return Civil;
+        if (lower.Contains("industrial")) return Industrial;
+        if (lower.Contains("arquitectura")) return Arquitectura;
+        if (lower.Contains("aeronáutica") || lower.Contains("aeronautica")) return Aeronauticas;
+        if (lower.Contains("ciberseguridad")) return Ciberseguridad;
+        if (lower.Contains("datos")) return Datos;
+        if (lower.Contains("ia") || lower.Contains("inteligencia artificial") || lower.Contains("robótica") || lower.Contains("robotica")) return Ia;
+        return null;
     }
 
     /// <summary>
@@ -70,18 +83,14 @@ public static class CarrerasFia
     /// </summary>
     public static bool AplicaACarrera(string codigo, string? carreraId)
     {
-        if (string.IsNullOrWhiteSpace(carreraId) || carreraId.Equals(Todas, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        var id = carreraId.ToLowerInvariant();
+        var id = string.IsNullOrWhiteSpace(carreraId) ? Sistemas : carreraId.ToLowerInvariant();
 
         // Cursos de ciencias básicas / tronco común aplican a todas las ingenierías
         var esTroncoComun = codigo is "HU-101" or "MA-101" or "MA-102" or "FI-102";
         if (esTroncoComun)
         {
-            // Arquitectura tiene HU-101 (Comunicación)
             if (id == Arquitectura) return codigo == "HU-101";
-            return true; // Aplica a todas las ingenierías
+            return true;
         }
 
         return id switch
@@ -94,7 +103,7 @@ public static class CarrerasFia
             Ciberseguridad => codigo.StartsWith("CB-") || codigo is "CS-101" or "CS-201" or "CS-401" or "CS-402",
             Datos => codigo.StartsWith("CD-") || codigo is "CS-101" or "CS-201" or "CS-301" or "CS-501",
             Ia => codigo.StartsWith("IA-") || codigo is "CS-101" or "CS-201" or "CS-501",
-            _ => true
+            _ => codigo.StartsWith("CS-") || codigo.StartsWith("IS-")
         };
     }
 }

@@ -3,27 +3,27 @@
 
 <div class="card-u p-3 mb-3">
     <!-- Fila 1: Selector de Carrera, Buscador y Botón Aportar Tip -->
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <!-- Selector de Carrera FIA (8 Carreras Oficiales) -->
-        <div class="d-flex align-items-center gap-2 flex-grow-1" style="max-width: 440px; min-width: 270px;">
-            <span class="d-flex align-items-center justify-content-center rounded-3 bg-danger-subtle text-danger p-2" style="width: 38px; height: 38px; flex-shrink: 0;">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <!-- Selector de Carrera FIA (Las 8 Carreras Oficiales sin 'Todos') -->
+        <div class="d-flex align-items-center gap-2 flex-grow-1" style="max-width: 460px; min-width: 280px;">
+            <div class="d-flex align-items-center justify-content-center rounded-3 bg-danger-subtle text-danger p-2" style="width: 42px; height: 42px; flex-shrink: 0;">
                 <i class="bi bi-mortarboard-fill fs-5"></i>
-            </span>
+            </div>
             <div class="flex-grow-1">
                 <label for="selectCarreraFia" class="form-label text-muted mb-0 fw-bold" style="font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px;">Carrera FIA</label>
-                <select id="selectCarreraFia" class="form-select form-select-sm fw-semibold border shadow-2xs" style="border-radius: 8px; font-size: 0.85rem; height: 34px;" onchange="filtrarCarrera(this.value)">
+                <select id="selectCarreraFia" class="form-select form-select-sm fw-semibold border shadow-2xs" style="border-radius: 9px; font-size: 0.88rem; height: 38px; cursor: pointer;" onchange="filtrarCarrera(this.value)">
                     @foreach (var c in CarrerasFia.Lista)
                     {
                         var activa = string.Equals(Model.Carrera, c.Id, StringComparison.OrdinalIgnoreCase)
-                                     || (string.IsNullOrWhiteSpace(Model.Carrera) && c.Id == CarrerasFia.Todas);
+                                     || (string.IsNullOrWhiteSpace(Model.Carrera) && c.Id == CarrerasFia.Sistemas);
                         <option value="@c.Id" selected="@activa">@c.Nombre</option>
                     }
                 </select>
             </div>
         </div>
 
-        <!-- Buscador de Curso o Docente -->
-        <form method="get" action="/Catedra" class="search-box flex-grow-1" style="max-width: 330px; min-width: 220px;">
+        <!-- Buscador de Curso o Docente dentro de la carrera -->
+        <form method="get" action="/Catedra" class="search-box flex-grow-1" style="max-width: 340px; min-width: 220px;">
             @if (Model.Ciclo is not null)
             {
                 <input type="hidden" name="ciclo" value="@Model.Ciclo" />
@@ -33,33 +33,30 @@
                 <input type="hidden" name="carrera" value="@Model.Carrera" />
             }
             <i class="bi bi-search"></i>
-            <input class="form-control" name="q" value="@Model.Busqueda" placeholder="Buscar curso o docente..." aria-label="Buscar curso o docente" style="height: 38px;" />
+            <input class="form-control" name="q" value="@Model.Busqueda" placeholder="Buscar curso o docente..." aria-label="Buscar curso o docente" style="height: 40px;" />
         </form>
 
-        <!-- Botón Aportar Tip (si está logueado como alumno) -->
+        <!-- Botón Aportar Tip (si es alumno) -->
         @if (Model.PuedeAportar)
         {
-            <button class="btn btn-guinda btn-sm px-3 py-2 fw-semibold rounded-3 shadow-2xs d-inline-flex align-items-center gap-2" type="button" data-bs-toggle="modal" data-bs-target="#modalTip" style="height: 38px;">
+            <button class="btn btn-guinda btn-sm px-3 py-2 fw-semibold rounded-3 shadow-2xs d-inline-flex align-items-center gap-2" type="button" data-bs-toggle="modal" data-bs-target="#modalTip" style="height: 40px;">
                 <i class="bi bi-plus-circle-fill"></i>
                 <span>Aportar un Tip</span>
             </button>
         }
     </div>
 
-    <!-- Fila 2: Chips de Ciclos 1 al 10 -->
+    <!-- Fila 2: Chips de Ciclos 1 al 10 (Sin 'Todos', selección directa) -->
     <div class="d-flex align-items-center gap-2 pt-2 border-top">
-        <span class="text-muted fw-semibold small text-nowrap d-none d-md-inline" style="font-size: 0.78rem;">
-            <i class="bi bi-layers-fill text-secondary me-1"></i>Ciclo:
+        <span class="text-muted fw-bold small text-nowrap d-none d-md-inline" style="font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.5px;">
+            <i class="bi bi-layers-fill text-danger me-1"></i>Ciclo:
         </span>
         <div class="chips d-flex align-items-center gap-1 overflow-x-auto py-1 flex-nowrap" style="scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
-            <a class="chip @(Model.Ciclo is null ? "active" : "")" 
-               href="@Url.Action("Index", "Catedra", new { q = Model.Busqueda, carrera = Model.Carrera })">
-               Todos
-            </a>
             @for (var c = 1; c <= 10; c++)
             {
-                <a class="chip @(Model.Ciclo == c ? "active" : "")" 
-                   href="@Url.Action("Index", "Catedra", new { q = Model.Busqueda, ciclo = c, carrera = Model.Carrera })">
+                var activo = (Model.Ciclo ?? 1) == c;
+                <a class="chip @(activo ? "active" : "")" 
+                   href="@Url.Action("Index", "Catedra", new { q = Model.Busqueda, ciclo = c, carrera = Model.Carrera ?? CarrerasFia.Sistemas })">
                    @Curso.Romano(c) Ciclo
                 </a>
             }
@@ -70,16 +67,18 @@
 <script>
     function filtrarCarrera(carreraId) {
         const url = new URL(window.location.origin + '/Catedra');
-        @if (!string.IsNullOrWhiteSpace(Model.Busqueda))
-        {
-            <text>url.searchParams.set('q', '@Html.Raw(Model.Busqueda)');</text>
-        }
+        url.searchParams.set('carrera', carreraId);
         @if (Model.Ciclo.HasValue)
         {
             <text>url.searchParams.set('ciclo', '@Model.Ciclo.Value');</text>
         }
-        if (carreraId && carreraId !== 'todas') {
-            url.searchParams.set('carrera', carreraId);
+        else
+        {
+            <text>url.searchParams.set('ciclo', '1');</text>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Busqueda))
+        {
+            <text>url.searchParams.set('q', '@Html.Raw(Model.Busqueda)');</text>
         }
         window.location.href = url.toString();
     }
