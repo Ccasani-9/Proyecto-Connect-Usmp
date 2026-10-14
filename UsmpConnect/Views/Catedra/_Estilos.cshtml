@@ -55,6 +55,7 @@
         font-size: 0.8rem;
         transition: transform 0.22s ease;
     }
+    .carrera-select-trigger.show .carrera-chevron,
     .show > .carrera-select-trigger .carrera-chevron {
         transform: rotate(180deg);
         color: #7a152d;
@@ -70,18 +71,8 @@
         border-radius: 14px;
         border: 1px solid rgba(0,0,0,0.08);
         box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.16), 0 0 1px rgba(0,0,0,0.2) !important;
-        animation: fadeInScale 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+        margin-top: 6px !important;
         z-index: 1060;
-    }
-    @@keyframes fadeInScale {
-        from {
-            opacity: 0;
-            transform: translateY(-6px) scale(0.98);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
     }
     .carrera-menu-header {
         border-bottom: 1px solid #f1f5f9;
