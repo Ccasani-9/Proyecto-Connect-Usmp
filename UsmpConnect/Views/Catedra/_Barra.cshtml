@@ -4,22 +4,63 @@
 <div class="card-u p-3 mb-3">
     <!-- Fila 1: Selector de Carrera, Buscador y Botón Aportar Tip -->
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-        <!-- Selector de Carrera FIA (Las 8 Carreras Oficiales sin 'Todos') -->
-        <div class="d-flex align-items-center gap-2 flex-grow-1" style="max-width: 460px; min-width: 280px;">
-            <div class="d-flex align-items-center justify-content-center rounded-3 bg-danger-subtle text-danger p-2" style="width: 42px; height: 42px; flex-shrink: 0;">
-                <i class="bi bi-mortarboard-fill fs-5"></i>
-            </div>
-            <div class="flex-grow-1">
-                <label for="selectCarreraFia" class="form-label text-muted mb-0 fw-bold" style="font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px;">Carrera FIA</label>
-                <select id="selectCarreraFia" class="form-select form-select-sm fw-semibold border shadow-2xs" style="border-radius: 9px; font-size: 0.88rem; height: 38px; cursor: pointer;" onchange="filtrarCarrera(this.value)">
-                    @foreach (var c in CarrerasFia.Lista)
-                    {
-                        var activa = string.Equals(Model.Carrera, c.Id, StringComparison.OrdinalIgnoreCase)
-                                     || (string.IsNullOrWhiteSpace(Model.Carrera) && c.Id == CarrerasFia.Sistemas);
-                        <option value="@c.Id" selected="@activa">@c.Nombre</option>
-                    }
-                </select>
-            </div>
+        <!-- Selector de Carrera FIA (Custom Dropdown moderno con iconos y estados) -->
+        @{
+            var carreraActual = CarrerasFia.Item(Model.Carrera);
+        }
+        <div class="dropdown carrera-dropdown-wrap flex-grow-1" style="max-width: 460px; min-width: 280px;">
+            <button class="carrera-select-trigger btn w-100 text-start d-flex align-items-center justify-content-between"
+                    type="button" 
+                    id="carreraDropdownBtn" 
+                    data-bs-toggle="dropdown" 
+                    aria-expanded="false">
+                <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
+                    <div class="carrera-icon-badge flex-shrink-0 d-flex align-items-center justify-content-center">
+                        <i class="bi @carreraActual.Icono"></i>
+                    </div>
+                    <div class="d-flex flex-column text-truncate">
+                        <span class="carrera-label-kicker">Carrera FIA</span>
+                        <span class="carrera-nombre-texto text-truncate" title="@carreraActual.Nombre">@carreraActual.Nombre</span>
+                    </div>
+                </div>
+                <div class="carrera-chevron flex-shrink-0 text-muted ms-1">
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+            </button>
+
+            <ul class="dropdown-menu carrera-dropdown-menu shadow-lg border-0 p-2" aria-labelledby="carreraDropdownBtn">
+                <li class="carrera-menu-header px-2 py-1 mb-1 d-flex align-items-center justify-content-between">
+                    <span class="text-uppercase fw-bold text-muted" style="font-size: 0.68rem; letter-spacing: 0.5px;">
+                        <i class="bi bi-mortarboard me-1 text-danger"></i>Escuelas Profesionales
+                    </span>
+                    <span class="badge bg-light text-secondary border" style="font-size: 0.65rem;">8 Carreras</span>
+                </li>
+                @foreach (var c in CarrerasFia.Lista)
+                {
+                    var esActiva = string.Equals(carreraActual.Id, c.Id, StringComparison.OrdinalIgnoreCase);
+                    <li>
+                        <button type="button" 
+                                class="dropdown-item carrera-item-btn d-flex align-items-center justify-content-between @(esActiva ? "active-carrera" : "")"
+                                onclick="filtrarCarrera('@c.Id')">
+                            <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
+                                <div class="carrera-item-icon flex-shrink-0 d-flex align-items-center justify-content-center">
+                                    <i class="bi @c.Icono"></i>
+                                </div>
+                                <div class="d-flex flex-column text-truncate">
+                                    <span class="carrera-item-title text-truncate">@c.Nombre</span>
+                                    <span class="carrera-item-subtitle text-muted">@c.NombreCorto · FIA USMP</span>
+                                </div>
+                            </div>
+                            @if (esActiva)
+                            {
+                                <div class="carrera-check-pill flex-shrink-0 ms-2">
+                                    <i class="bi bi-check-lg"></i>
+                                </div>
+                            }
+                        </button>
+                    </li>
+                }
+            </ul>
         </div>
 
         <!-- Buscador de Curso o Docente dentro de la carrera -->
@@ -33,13 +74,13 @@
                 <input type="hidden" name="carrera" value="@Model.Carrera" />
             }
             <i class="bi bi-search"></i>
-            <input class="form-control" name="q" value="@Model.Busqueda" placeholder="Buscar curso o docente..." aria-label="Buscar curso o docente" style="height: 40px;" />
+            <input class="form-control" name="q" value="@Model.Busqueda" placeholder="Buscar curso o docente..." aria-label="Buscar curso o docente" style="height: 44px; border-radius: 11px;" />
         </form>
 
         <!-- Botón Aportar Tip (si es alumno) -->
         @if (Model.PuedeAportar)
         {
-            <button class="btn btn-guinda btn-sm px-3 py-2 fw-semibold rounded-3 shadow-2xs d-inline-flex align-items-center gap-2" type="button" data-bs-toggle="modal" data-bs-target="#modalTip" style="height: 40px;">
+            <button class="btn btn-guinda btn-sm px-3 py-2 fw-semibold shadow-2xs d-inline-flex align-items-center gap-2" type="button" data-bs-toggle="modal" data-bs-target="#modalTip" style="height: 44px; border-radius: 11px;">
                 <i class="bi bi-plus-circle-fill"></i>
                 <span>Aportar un Tip</span>
             </button>

@@ -37,6 +37,14 @@ public static class CarrerasFia
             ?? "Ingeniería de Computación y Sistemas";
     }
 
+    public static CarreraItem Item(string? id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            return Lista[0];
+
+        return Lista.FirstOrDefault(c => c.Id.Equals(id, StringComparison.OrdinalIgnoreCase)) ?? Lista[0];
+    }
+
     public static string NombreCorto(string? id)
     {
         if (string.IsNullOrWhiteSpace(id))
