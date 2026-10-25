@@ -45,6 +45,56 @@ public record ResenaItemVM(
     string FechaRelativa
 );
 
+public record RestauranteDetalleDto(
+    int Id,
+    string Nombre,
+    string Descripcion,
+    string Categoria,
+    string Direccion,
+    string DistanciaTexto,
+    string RangoPrecios,
+    string HorarioAtencion,
+    string? TelefonoWhatsApp,
+    string FotoUrl,
+    double Latitud,
+    double Longitud,
+    double CalificacionPromedio,
+    int TotalResenas,
+    bool EsCampus,
+    List<PlatoItemVM> Platos,
+    List<ResenaItemVM> Resenas
+);
+
+public record ResenaDto(
+    int Id,
+    int RestauranteId,
+    string RestauranteNombre,
+    string UsuarioId,
+    string Autor,
+    int Puntuacion,
+    string Comentario,
+    DateTime FechaUtc,
+    double CalificacionPromedioRestaurante,
+    int TotalResenasRestaurante
+);
+
+public enum EstadoOperacionResena
+{
+    Ok,
+    NoEncontrada,
+    Prohibida
+}
+
+public class GuardarResenaRequest
+{
+    [Range(1, 5, ErrorMessage = "La puntuación debe ser entre 1 y 5 estrellas.")]
+    public int Puntuacion { get; set; } = 5;
+
+    [Required(ErrorMessage = "Por favor escribe un breve comentario de tu experiencia.")]
+    [StringLength(500, MinimumLength = 5, ErrorMessage = "El comentario debe tener entre 5 y 500 caracteres.")]
+    public string Comentario { get; set; } = string.Empty;
+}
+
 public class FoodSpotsIndexVM
 {
     public List<RestauranteItemVM> Restaurantes { get; set; } = new();

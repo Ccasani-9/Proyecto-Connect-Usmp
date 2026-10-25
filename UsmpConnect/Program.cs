@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using UsmpConnect.Data;
 using UsmpConnect.Models;
 using UsmpConnect.Services;
@@ -47,13 +48,44 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Cuenta/AccesoDenegado";
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
     options.SlidingExpiration = true;
+    options.Events.OnRedirectToLogin = ctx =>
+    {
+        if (ctx.Request.Path.StartsWithSegments("/api"))
+        {
+            ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        }
+        ctx.Response.Redirect(ctx.RedirectUri);
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = ctx =>
+    {
+        if (ctx.Request.Path.StartsWithSegments("/api"))
+        {
+            ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        }
+        ctx.Response.Redirect(ctx.RedirectUri);
+        return Task.CompletedTask;
+    };
 });
 
-// ---------- MVC: todo requiere login salvo [AllowAnonymous]; todo POST valida antiforgery ----------
+// ---------- MVC + API: todo requiere login salvo [AllowAnonymous]; todo POST MVC valida antiforgery ----------
 builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add(new AuthorizeFilter(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build()));
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+});
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "USMP Connect API",
+        Version = "v1",
+        Description = "API REST del catálogo de restaurantes cercanos a la FIA y gestión de reseñas estudiantiles. Las operaciones de escritura (POST, PUT, DELETE) requieren sesión autenticada."
+    });
 });
 
 // ---------- Servicios compartidos por todos los módulos ----------
@@ -110,8 +142,14 @@ app.UseForwardedHeaders();
 if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
 
-// Módulos que aún no existen (404) muestran la página "En construcción".
-app.UseStatusCodePagesWithReExecute("/Home/Estado/{0}");
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "USMP Connect API v1"));
+
+// Módulos web que aún no existen (404) muestran la página "En construcción" (sin interceptar /api ni /swagger).
+app.UseWhen(
+    ctx => !ctx.Request.Path.StartsWithSegments("/api") && !ctx.Request.Path.StartsWithSegments("/swagger"),
+    branch => branch.UseStatusCodePagesWithReExecute("/Home/Estado/{0}"));
 
 // Redirección amigable de URLs en inglés a español
 app.Use(async (context, next) =>
@@ -149,6 +187,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+app.MapControllers();
 
 app.MapControllerRoute(
     name: "restaurantes",
