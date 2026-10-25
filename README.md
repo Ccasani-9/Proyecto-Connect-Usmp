@@ -194,3 +194,11 @@ Las pruebas del servicio usan claves `usmp:tests:<identificador>`; la prueba del
 <div align="center">
   <sub>Desarrollado con dedicación para los estudiantes de la Facultad de Ingeniería y Arquitectura · USMP 2026</sub>
 </div>
+
+### Búsqueda global
+
+El buscador común ofrece sugerencias de restaurantes, cursos/docentes, apuntes y artículos disponibles del marketplace. `/Buscar?q=...` ofrece una página de resultados y `/Buscar/Sugerencias?q=...` el autocompletado. Las sugerencias esperan 250 ms y cancelan solicitudes anteriores; Escape cierra el panel, las flechas recorren resultados y el botón de limpiar vuelve al campo.
+
+Algolia se consulta desde el servidor: las claves no se envían al navegador. Si no está configurado o falla la consulta se utiliza SQLite, con búsqueda sin distinguir tildes ni mayúsculas. Las búsquedas sin resultados en Algolia se respetan. Los resultados se contrastan con SQLite para no enlazar apuntes borrados ni artículos vendidos o reservados.
+
+Al arrancar y al publicar, calificar, eliminar o cambiar disponibilidad se solicita la sincronización del catálogo. Se agregan los cuatro tipos y se retiran los registros obsoletos de la aplicación. El índice debe ser propio de este proyecto; se gestionan los prefijos apunte_, market_, rest_ y curso_. La clave de escritura necesita permisos de browse, addObject y deleteObject. Algolia procesa las operaciones de forma asíncrona: la aceptación no significa que ya hayan aparecido todos los cambios. Si falla una sincronización, los datos permanecen en SQLite y se registra el fallo; el arranque siguiente vuelve a reconciliar. La acción manual de sincronización está restringida al rol Profesor.
