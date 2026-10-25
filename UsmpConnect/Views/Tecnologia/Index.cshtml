@@ -9,7 +9,7 @@
             <h1 class="h3 fw-bold mb-0">Arquitectura Tecnológica del Proyecto</h1>
             <span class="tag tag-ok">Programación 1 · FIA USMP</span>
         </div>
-        <p class="text-muted mb-0">Panel de verificación en vivo de los 6 componentes de infraestructura exigidos para la entrega.</p>
+        <p class="text-muted mb-0">Panel de verificación en vivo de los componentes de infraestructura y modelos integrados.</p>
     </div>
     <div class="d-flex gap-2">
         <a href="/Restaurantes" class="btn btn-sm btn-guinda"><i class="bi bi-geo-alt-fill me-1"></i>Probar Restaurantes Cercanos</a>
@@ -45,7 +45,7 @@
     </div>
 </div>
 
-<!-- Tarjetas de las 6 Tecnologías -->
+<!-- Tarjetas de las Tecnologías -->
 <div class="row g-3">
     @foreach (var s in Model.Servicios)
     {
@@ -77,6 +77,46 @@
         </div>
     }
 </div>
+
+@if (Model.MetricasSentimiento is not null)
+{
+    var m = Model.MetricasSentimiento;
+    <div class="card-u p mt-4" data-ml-sentimiento-metricas>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-bar-chart-line-fill text-danger fs-5"></i>
+                <h3 class="h6 fw-bold mb-0">Métricas del Modelo ML.NET · Análisis de Sentimiento</h3>
+            </div>
+            <span class="badge bg-light text-secondary border">Archivo: @Model.RutaModeloSentimiento</span>
+        </div>
+        <div class="row g-3 text-center">
+            <div class="col-6 col-md-3">
+                <div class="p-2 rounded bg-light border">
+                    <small class="text-muted d-block">Accuracy</small>
+                    <span class="fw-bold text-success">@m.Accuracy.ToString("P1")</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-2 rounded bg-light border">
+                    <small class="text-muted d-block">F1 Score</small>
+                    <span class="fw-bold text-primary">@m.F1Score.ToString("P1")</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-2 rounded bg-light border">
+                    <small class="text-muted d-block">LogLoss</small>
+                    <span class="fw-bold text-dark">@(m.LogLoss?.ToString("0.000") ?? "—")</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-2 rounded bg-light border">
+                    <small class="text-muted d-block">Ejemplos (Pos / Neg)</small>
+                    <span class="fw-bold text-secondary">@m.EjemplosTotales (@m.Positivos / @m.Negativos)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 <div class="card-u p mt-4 bg-light">
     <div class="d-flex align-items-center gap-2 mb-2">

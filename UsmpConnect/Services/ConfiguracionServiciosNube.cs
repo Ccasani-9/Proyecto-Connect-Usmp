@@ -8,6 +8,7 @@ public static class ConfiguracionServiciosNube
     {
         services.AddMemoryCache();
         services.AddSingleton<IRedisCacheService, RedisCacheService>();
+        services.AddSingleton<IAnalisisSentimientoService, AnalisisSentimientoService>();
         services.AddScoped<CatalogoRestaurantesService>();
         services.AddSingleton<IColaMensajes, CloudAmqpColaMensajes>();
         services.AddHostedService<ConsumidorNotificacionesService>();
