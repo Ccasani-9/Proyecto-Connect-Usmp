@@ -10,9 +10,9 @@
         }
         <div class="dropdown carrera-dropdown-wrap flex-grow-1" style="max-width: 460px; min-width: 280px;">
             <button class="carrera-select-trigger btn w-100 text-start d-flex align-items-center justify-content-between"
-                    type="button" 
-                    id="carreraDropdownBtn" 
-                    data-bs-toggle="dropdown" 
+                    type="button"
+                    id="carreraDropdownBtn"
+                    data-bs-toggle="dropdown"
                     data-bs-display="static"
                     aria-expanded="false">
                 <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
@@ -40,7 +40,7 @@
                 {
                     var esActiva = string.Equals(carreraActual.Id, c.Id, StringComparison.OrdinalIgnoreCase);
                     <li>
-                        <button type="button" 
+                        <button type="button"
                                 class="dropdown-item carrera-item-btn d-flex align-items-center justify-content-between @(esActiva ? "active-carrera" : "")"
                                 onclick="filtrarCarrera('@c.Id')">
                             <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
@@ -97,7 +97,7 @@
             @for (var c = 1; c <= 10; c++)
             {
                 var activo = (Model.Ciclo ?? 1) == c;
-                <a class="chip @(activo ? "active" : "")" 
+                <a class="chip @(activo ? "active" : "")"
                    href="@Url.Action("Index", "Catedra", new { q = Model.Busqueda, ciclo = c, carrera = Model.Carrera ?? CarrerasFia.Sistemas })">
                    @Curso.Romano(c) Ciclo
                 </a>
@@ -120,7 +120,7 @@
         }
         @if (!string.IsNullOrWhiteSpace(Model.Busqueda))
         {
-            <text>url.searchParams.set('q', '@Html.Raw(Model.Busqueda)');</text>
+            <text>url.searchParams.set('q', @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Busqueda)));</text>
         }
         window.location.href = url.toString();
     }

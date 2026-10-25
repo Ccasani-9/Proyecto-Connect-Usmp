@@ -2,6 +2,9 @@
     .cat-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 18px; margin-bottom: 18px; }
     .cat-barra form { flex: 1 1 220px; max-width: 300px; }
     .cat-barra .btn-guinda { margin-left: auto; }
+    .dif-barra { height: 8px; border-radius: 999px; background: #eef0f3; overflow: hidden; }
+    .dif-barra span { display: block; height: 100%; background: var(--guinda); border-radius: 999px; }
+    .curso-meta { color: var(--muted); font-size: .82rem; }
     .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
     .chips .chip { flex-shrink: 0; }
 
@@ -18,7 +21,7 @@
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         height: 44px;
     }
-    .carrera-select-trigger:hover, 
+    .carrera-select-trigger:hover,
     .carrera-select-trigger:focus,
     .show > .carrera-select-trigger {
         border-color: #cbd5e1;
