@@ -397,6 +397,37 @@
     </div>
 </div>
 
+@if (Model.Recomendados.Count > 0 && Model.CategoriaActual == null && string.IsNullOrWhiteSpace(Model.Busqueda))
+{
+    <div class="card-u p mb-4" data-recomendaciones-restaurantes>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-danger-subtle text-danger fw-bold px-2 py-1" style="font-size:0.72rem; border-radius:6px;">
+                    @(Model.RecomendacionPersonalizada ? "SUGERENCIAS PARA TI" : "OPCIONES POPULARES")
+                </span>
+                <h2 class="h6 fw-bold mb-0">
+                    @(Model.RecomendacionPersonalizada ? "Locales recomendados según tus preferencias" : "Los más valorados por la comunidad FIA")
+                </h2>
+            </div>
+        </div>
+        <div class="row g-2">
+            @foreach (var rec in Model.Recomendados)
+            {
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center gap-2 p-2 rounded border bg-light h-100" style="cursor:pointer;" onclick="abrirModalDetalle(@rec.Id)">
+                        <img src="@rec.FotoUrl" alt="@rec.Nombre" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600';" />
+                        <div class="overflow-hidden flex-grow-1">
+                            <div class="fw-bold text-truncate small">@rec.Nombre</div>
+                            <div class="text-muted text-truncate" style="font-size:0.75rem;">@rec.Categoria.Nombre() · @rec.RangoPrecios</div>
+                            <div class="text-warning fw-bold" style="font-size:0.75rem;"><i class="bi bi-star-fill me-1"></i>@rec.CalificacionPromedio.ToString("0.0") <span class="text-muted fw-normal">(@rec.TotalResenas)</span></div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
 <!-- Grilla de Restaurantes -->
 @if (Model.Restaurantes.Count == 0)
 {

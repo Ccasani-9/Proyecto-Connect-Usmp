@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using UsmpConnect.Data.Seed;
@@ -233,6 +233,12 @@ public static class DbInitializer
     {
         try
         {
+            var recomendador = sp.GetService<IRecomendacionRestaurantesService>();
+            if (recomendador is not null && recomendador.EstaHabilitado)
+            {
+                await recomendador.SincronizarConBaseDatosAsync(db);
+            }
+
             var sentimiento = sp.GetService<IAnalisisSentimientoService>();
             if (sentimiento is null || !sentimiento.EstaHabilitado)
                 return;

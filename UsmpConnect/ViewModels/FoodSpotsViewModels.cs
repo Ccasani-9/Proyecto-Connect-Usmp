@@ -102,6 +102,8 @@ public class GuardarResenaRequest
 public class FoodSpotsIndexVM
 {
     public List<RestauranteItemVM> Restaurantes { get; set; } = new();
+    public List<RestauranteItemVM> Recomendados { get; set; } = new();
+    public bool RecomendacionPersonalizada { get; set; }
     public CategoriaRestaurante? CategoriaActual { get; set; }
     public string? Busqueda { get; set; }
     public int TotalLugares => Restaurantes.Count;

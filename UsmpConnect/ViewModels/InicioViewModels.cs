@@ -51,6 +51,8 @@ public class InicioViewModel
     public DateOnly FechaHoy { get; set; }
 
     public RestauranteItemVM? HuariqueRecomendado { get; set; }
+    public List<RestauranteItemVM> AlternativasRecomendadas { get; set; } = [];
+    public bool RecomendacionPersonalizada { get; set; }
 }
 
 public class AlumnoNotaVM

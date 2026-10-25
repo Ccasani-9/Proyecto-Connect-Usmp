@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using UsmpConnect.Data;
 using UsmpConnect.Models;
 using UsmpConnect.Services;
@@ -9,12 +8,17 @@ using UsmpConnect.ViewModels;
 
 namespace UsmpConnect.Controllers;
 
-public class HomeController(ApplicationDbContext db) : Controller
+public class HomeController(
+    ApplicationDbContext db,
+    CatalogoRestaurantesService catalogoRestaurantes) : Controller
 {
     [AllowAnonymous]
     public async Task<IActionResult> Index()
     {
         var userId = User.GetUserId();
+        var usuarioClave = !string.IsNullOrWhiteSpace(User.Identity?.Name)
+            ? User.Identity!.Name
+            : userId;
         var hoy = HoraPeru.Hoy;
         var hora = HoraPeru.Ahora.Hour;
 
@@ -24,46 +28,7 @@ public class HomeController(ApplicationDbContext db) : Controller
         var nombre = User.GetNombre();
         var primerNombre = !string.IsNullOrWhiteSpace(nombre) ? (nombre.Split(' ').FirstOrDefault() ?? "") : "Comunidad USMP";
 
-        var huariqueEntidad = await db.Restaurantes
-            .Include(r => r.Platos)
-            .AsNoTracking()
-            .OrderByDescending(r => r.CalificacionPromedio)
-            .FirstOrDefaultAsync();
-
-        RestauranteItemVM? huariqueRecomendado = null;
-        if (huariqueEntidad != null)
-        {
-            var catTexto = huariqueEntidad.Categoria switch
-            {
-                CategoriaRestaurante.MenuCriollo => "Menú Criollo",
-                CategoriaRestaurante.ComidaRapida => "Comida Rápida",
-                CategoriaRestaurante.Chifa => "Chifa",
-                CategoriaRestaurante.CafeteriaHuarique => "Cafetería & Huarique",
-                CategoriaRestaurante.PasteleriaPostres => "Pastelería & Postres",
-                CategoriaRestaurante.Saludable => "Saludable & Bowls",
-                _ => "Restaurante"
-            };
-
-            huariqueRecomendado = new RestauranteItemVM(
-                huariqueEntidad.Id,
-                huariqueEntidad.Nombre,
-                huariqueEntidad.Descripcion,
-                catTexto,
-                huariqueEntidad.Categoria,
-                huariqueEntidad.Rango,
-                huariqueEntidad.Direccion,
-                huariqueEntidad.DistanciaTexto,
-                huariqueEntidad.RangoPrecios,
-                huariqueEntidad.HorarioAtencion,
-                huariqueEntidad.TelefonoWhatsApp,
-                huariqueEntidad.FotoUrl,
-                huariqueEntidad.Latitud,
-                huariqueEntidad.Longitud,
-                huariqueEntidad.CalificacionPromedio,
-                huariqueEntidad.TotalResenas,
-                []
-            );
-        }
+        var (recomendados, personalizada) = await catalogoRestaurantes.ObtenerRecomendadosAsync(usuarioClave, topK: 3);
 
         var vm = new InicioViewModel
         {
@@ -75,7 +40,9 @@ public class HomeController(ApplicationDbContext db) : Controller
             Eventos = eventos,
             ProximosEventos = eventos.Where(e => DateOnly.Parse(e.Fecha) >= hoy).Take(4).ToList(),
             FechaHoy = hoy,
-            HuariqueRecomendado = huariqueRecomendado
+            HuariqueRecomendado = recomendados.FirstOrDefault(),
+            AlternativasRecomendadas = recomendados.Skip(1).ToList(),
+            RecomendacionPersonalizada = personalizada
         };
 
         return View(vm);

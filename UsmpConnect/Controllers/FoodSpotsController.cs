@@ -17,10 +17,16 @@ public class FoodSpotsController(
     public async Task<IActionResult> Index(CategoriaRestaurante? categoria, string? q)
     {
         var (restaurantes, fuente) = await catalogo.FiltrarAsync(categoria, q);
+        var usuarioClave = !string.IsNullOrWhiteSpace(User?.Identity?.Name)
+            ? User.Identity!.Name
+            : User?.GetUserId();
+        var (recomendados, personalizada) = await catalogo.ObtenerRecomendadosAsync(usuarioClave, topK: 3);
 
         var vm = new FoodSpotsIndexVM
         {
             Restaurantes = restaurantes,
+            Recomendados = recomendados,
+            RecomendacionPersonalizada = personalizada,
             CategoriaActual = categoria,
             Busqueda = q,
             FuenteDatos = fuente,
