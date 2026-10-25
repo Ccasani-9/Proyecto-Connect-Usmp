@@ -24,6 +24,8 @@ public class DemoFactory : WebApplicationFactory<CuentaController>
             ["Redis:ConnectionString"] = "",
             ["Redis:WarmupOnStartup"] = "false",
             ["CloudAMQP:Url"] = "",
+            ["CloudAMQP:DelayMinSeconds"] = "0",
+            ["CloudAMQP:DelayMaxSeconds"] = "0",
             ["Algolia:ApplicationId"] = "",
             ["PieHost:ApiKey"] = ""
         }));
