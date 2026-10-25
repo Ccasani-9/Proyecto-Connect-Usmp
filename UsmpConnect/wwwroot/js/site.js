@@ -30,6 +30,53 @@ function usmpToast(mensaje, tipo = 'ok') {
     setTimeout(() => div.remove(), 4000);
 }
 
+/** Agrega una notificación en vivo al menú de Noticias de la barra superior. */
+function usmpAgregarNotificacionVivo(mensaje, url = '/Restaurantes', icono = 'star-fill') {
+    const noti = document.getElementById('notificaciones');
+    if (!noti) return;
+
+    const btn = noti.querySelector('button[data-bs-toggle="dropdown"]');
+    if (btn) {
+        let badge = btn.querySelector('[data-noti-count]');
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'badge-count';
+            badge.setAttribute('data-noti-count', '');
+            badge.textContent = '1';
+            btn.appendChild(badge);
+        } else {
+            const actual = parseInt(badge.textContent || '0', 10);
+            badge.textContent = String((Number.isNaN(actual) ? 0 : actual) + 1);
+        }
+    }
+
+    const lista = noti.querySelector('[data-noti-list]') || noti.querySelector('.noti-menu');
+    if (lista) {
+        const vacio = lista.querySelector('[data-noti-empty], .vacio');
+        if (vacio) vacio.remove();
+
+        const item = document.createElement('a');
+        item.className = 'noti-item no-leida';
+        item.href = url || '#';
+
+        const iconEl = document.createElement('i');
+        iconEl.className = `bi bi-${icono}`;
+
+        const bodyEl = document.createElement('div');
+        const textEl = document.createElement('div');
+        textEl.textContent = mensaje;
+        const timeEl = document.createElement('small');
+        timeEl.textContent = 'justo ahora';
+
+        bodyEl.appendChild(textEl);
+        bodyEl.appendChild(timeEl);
+        item.appendChild(iconEl);
+        item.appendChild(bodyEl);
+
+        lista.prepend(item);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Toasts de TempData
     document.querySelectorAll('[data-autohide]').forEach(t => setTimeout(() => t.remove(), 4500));
@@ -40,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         noti.addEventListener('shown.bs.dropdown', () => {
             const badge = noti.querySelector('[data-noti-count]');
             if (badge) { badge.remove(); usmpPost('/Notificaciones/MarcarLeidas'); }
-        }, { once: true });
+        });
     }
 
     // Zonas de subida: <label class="dropzone"><input type="file" hidden data-dropzone> ... <span data-dropzone-text></span></label>
@@ -83,17 +130,30 @@ document.addEventListener('DOMContentLoaded', () => {
     iniciarPieHostWebSockets();
 });
 
-function iniciarPieHostWebSockets() {
+function iniciarPieHostWebSockets(intento = 0) {
     if (!window.pieHostUrl || window.pieHostUrl.trim() === '') return;
     try {
         const ws = new WebSocket(window.pieHostUrl);
+        ws.onopen = () => { intento = 0; };
         ws.onmessage = (event) => {
             try {
                 const msg = JSON.parse(event.data);
-                if (msg.evento === 'nueva_resena') {
-                    usmpToast(`${msg.datos.Usuario} calificó ${msg.datos.RestauranteNombre} (${msg.datos.NuevaCalificacion} ⭐)`);
+                if (msg.evento === 'nueva_resena' && msg.datos) {
+                    const textoToast = `${msg.datos.Usuario || 'Un estudiante'} calificó ${msg.datos.RestauranteNombre} (${msg.datos.NuevaCalificacion} ⭐)`;
+                    usmpToast(textoToast);
+                    usmpAgregarNotificacionVivo(
+                        msg.datos.MensajeNotificacion || textoToast,
+                        '/Restaurantes',
+                        'star-fill'
+                    );
                 }
             } catch (e) {}
+        };
+        ws.onclose = () => {
+            if (intento < 5) {
+                const espera = Math.min(15000, 2000 * Math.pow(2, intento));
+                setTimeout(() => iniciarPieHostWebSockets(intento + 1), espera);
+            }
         };
     } catch (e) {
         // Fallback silencioso

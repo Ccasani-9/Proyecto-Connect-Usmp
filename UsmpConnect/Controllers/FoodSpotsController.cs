@@ -13,7 +13,6 @@ public class FoodSpotsController(
     CatalogoRestaurantesService catalogo,
     IColaMensajes cola,
     IBuscadorAlgolia algolia,
-    IPieHostService pieHost,
     IConfiguration config) : Controller
 {
     [AllowAnonymous]
@@ -128,29 +127,24 @@ public class FoodSpotsController(
         r.CalificacionPromedio = Math.Round(todas.Average(x => x.Puntuacion), 1);
         await db.SaveChangesAsync();
 
-        // 1. Invalidar caché en Redis
+        // 1. Invalidar caché en Redis y actualizar buscador
         await catalogo.InvalidarAsync();
         await algolia.SincronizarTodoAsync(db);
 
         // 2. Encolar evento asíncrono en CloudAMQP (RabbitMQ)
-        await cola.PublicarAsync("usmp_notificaciones_cola", new
-        {
-            Evento = "NuevaResenaRestaurante",
-            Restaurante = r.Nombre,
-            UsuarioId = userId,
-            Puntuacion = vm.Puntuacion,
-            Fecha = DateTime.UtcNow
-        });
-
-        // 3. Emitir actualización en vivo por WebSockets (PieHost)
-        await pieHost.PublicarEventoAsync("1", "nueva_resena", new
-        {
-            RestauranteId = r.Id,
-            RestauranteNombre = r.Nombre,
-            NuevaCalificacion = r.CalificacionPromedio,
-            TotalResenas = r.TotalResenas,
-            Usuario = User.GetNombre()
-        });
+        // El consumidor en segundo plano persiste la notificación y emite el evento WebSocket en PieHost
+        await cola.PublicarAsync(
+            CloudAmqpColaMensajes.ColaPorDefecto,
+            new EventoResenaCola(
+                nuevaResena.Id,
+                r.Id,
+                r.Nombre,
+                userId,
+                User.GetNombre(),
+                vm.Puntuacion,
+                r.CalificacionPromedio,
+                r.TotalResenas,
+                nuevaResena.FechaUtc));
 
         TempData["Toast"] = $"¡Reseña registrada para {r.Nombre}! Gracias por tu aporte a la comunidad.";
         return RedirectToAction(nameof(Index));
