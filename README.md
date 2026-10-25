@@ -135,7 +135,8 @@ Para el despliegue en contenedores Docker o plataformas en la nube (como Render)
 
 ```ini
 ASPNETCORE_ENVIRONMENT=Production
-Database__ResetOnStartup=true
+Database__ResetOnStartup=false
+Firebase__ProjectId=usmp-connect
 Redis__ConnectionString=<tu_conexion_redis_cloud>
 CloudAMQP__Url=<tu_url_amqp_rabbitmq>
 Algolia__ApplicationId=<tu_app_id_algolia>
@@ -147,6 +148,25 @@ PieHost__ApiKey=<tu_api_key_piehost>
 PieHost__ApiSecret=<tu_api_secret_piehost>
 PieHost__WebSocketUrl=<tu_websocket_url_piehost>
 ```
+
+### Datos de demostración y reinicio
+
+La aplicación crea SQLite y siembra las cuentas y contenidos de ejemplo cuando la base de datos no existe. Por defecto conserva los datos entre arranques. `Database__ResetOnStartup=true` activa un reinicio destructivo de la base de datos **y de los archivos subidos**: úsalo únicamente para una demostración desechable y vuelve a desactivarlo después. Conservar datos en Render también requiere almacenamiento persistente; esta opción no convierte el disco efímero del alojamiento en persistente.
+
+### Acceso con Google
+
+El cliente obtiene un ID token de Firebase y el servidor verifica su firma con los certificados públicos de Google, el proyecto, la vigencia, el proveedor Google y el correo verificado. `Firebase__ProjectId` debe coincidir con el proyecto del cliente. Se aplica el dominio configurado en `Registro__DominioCorreo` (por defecto `usmp.pe`). No se necesita una clave privada de servicio para esta verificación; sí acceso HTTPS al endpoint público de certificados. La verificación no consulta revocación de tokens en Firebase.
+
+Los nuevos accesos Google se vinculan por UID con Identity, reciben el rol Alumno y no obtienen una contraseña compartida ni un código universitario inventado. Las cuentas demo conservan su acceso por correo y contraseña. Los roles ya asignados se mantienen.
+
+### Comprobación local
+
+```bash
+dotnet build UsmpConnect
+dotnet test UsmpConnect.Tests
+```
+
+Las pruebas usan bases SQLite temporales independientes y certificados RSA de prueba; no necesitan credenciales ni escriben en la base de datos local de la aplicación. Cubren validación de tokens, acceso y roles, reseñas sin apellido, permisos de recordatorios y conservación de datos sin reset.
 
 ---
 

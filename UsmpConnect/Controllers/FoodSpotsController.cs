@@ -106,7 +106,7 @@ public class FoodSpotsController(
             .Select(x => new ResenaItemVM(
                 x.Id,
                 x.Usuario.Nombres + " " + x.Usuario.Apellidos,
-                x.Usuario.Nombres.Substring(0, 1) + x.Usuario.Apellidos.Substring(0, 1),
+                x.Usuario.Iniciales,
                 x.Puntuacion,
                 x.Comentario,
                 HoraPeru.Hace(x.FechaUtc)

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="UsmpConnect.Tests/UsmpConnect.Tests.csproj" />
+  <Project Path="UsmpConnect/UsmpConnect.csproj" />
+</Solution>
