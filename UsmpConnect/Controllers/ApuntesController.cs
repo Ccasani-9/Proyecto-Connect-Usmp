@@ -10,7 +10,7 @@ using UsmpConnect.ViewModels;
 namespace UsmpConnect.Controllers;
 
 /// <summary>Banco de Apuntes: resúmenes, exámenes resueltos y guías que comparten los alumnos.</summary>
-public class ApuntesController(ApplicationDbContext db, IAlmacenArchivos almacen, INotificacionService notificaciones) : Controller
+public class ApuntesController(ApplicationDbContext db, IAlmacenArchivos almacen, INotificacionService notificaciones, IBuscadorAlgolia buscador) : Controller
 {
     private const long MaxArchivo = 25 * 1024 * 1024;
 
@@ -109,6 +109,7 @@ public class ApuntesController(ApplicationDbContext db, IAlmacenArchivos almacen
             AutorId = User.GetUserId()
         });
         await db.SaveChangesAsync();
+        await buscador.SincronizarTodoAsync(db);
 
         TempData["Toast"] = "¡Gracias por compartir! Tu recurso ya está en el Banco de Apuntes.";
         return RedirectToAction(nameof(Index), new { orden = "recientes" });
@@ -170,6 +171,7 @@ public class ApuntesController(ApplicationDbContext db, IAlmacenArchivos almacen
             calificacion.Fecha = DateTime.UtcNow;
         }
         await db.SaveChangesAsync();
+        await buscador.SincronizarTodoAsync(db);
 
         if (nueva)
         {
@@ -191,6 +193,7 @@ public class ApuntesController(ApplicationDbContext db, IAlmacenArchivos almacen
 
         db.Apuntes.Remove(apunte);
         await db.SaveChangesAsync();
+        await buscador.SincronizarTodoAsync(db);
 
         if (apunte.ArchivoUrl is not null)
         {

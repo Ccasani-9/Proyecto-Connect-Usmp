@@ -137,6 +137,7 @@
     <div class="sidebar-backdrop" onclick="document.body.classList.remove('sidebar-open')"></div>
 
     <main class="main" onclick="document.body.classList.remove('sidebar-open')">
+        <partial name="_BusquedaGlobal" />
         @RenderBody()
     </main>
 
@@ -155,6 +156,7 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>window.pieHostUrl = @Json.Serialize(PieHost.WebSocketClientUrl);</script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/busqueda.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

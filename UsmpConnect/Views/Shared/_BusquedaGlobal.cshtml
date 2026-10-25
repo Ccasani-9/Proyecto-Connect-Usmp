@@ -1,0 +1,15 @@
+<section class="busqueda-global" aria-label="Búsqueda en USMP Connect">
+    <form action="/Buscar" method="get" role="search" autocomplete="off">
+        <label class="visually-hidden" for="busquedaGlobal">Buscar en USMP Connect</label>
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <input id="busquedaGlobal" name="q" type="search" maxlength="100"
+               placeholder="Buscar cursos, apuntes, restaurantes o artículos…"
+               value="@ViewData["BusquedaGlobal"]" aria-controls="busquedaResultados" aria-expanded="false" />
+        <button type="button" id="busquedaLimpiar" aria-label="Limpiar búsqueda" hidden><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+        <button type="submit" class="btn btn-guinda btn-sm">Buscar</button>
+    </form>
+    <div id="busquedaResultados" class="busqueda-resultados" hidden>
+        <p id="busquedaEstado" class="busqueda-estado" role="status" aria-live="polite"></p>
+        <div id="busquedaLista"></div>
+    </div>
+</section>

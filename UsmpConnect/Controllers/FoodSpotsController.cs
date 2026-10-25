@@ -130,6 +130,7 @@ public class FoodSpotsController(
 
         // 1. Invalidar caché en Redis
         await catalogo.InvalidarAsync();
+        await algolia.SincronizarTodoAsync(db);
 
         // 2. Encolar evento asíncrono en CloudAMQP (RabbitMQ)
         await cola.PublicarAsync("usmp_notificaciones_cola", new
@@ -163,10 +164,11 @@ public class FoodSpotsController(
     }
 
     [HttpPost]
+    [Authorize(Roles = Roles.Profesor)]
     public async Task<IActionResult> SincronizarAlgolia()
     {
-        await algolia.SincronizarTodoAsync(db);
-        TempData["Toast"] = "Catálogo sincronizado exitosamente con Algolia Search Engine.";
+        var aceptada = await algolia.SincronizarTodoAsync(db);
+        TempData[aceptada ? "Toast" : "ToastError"] = aceptada ? "Sincronización del catálogo solicitada." : "No se pudo sincronizar el catálogo. Revisa la configuración del servicio.";
         return RedirectToAction(nameof(Index));
     }
 }

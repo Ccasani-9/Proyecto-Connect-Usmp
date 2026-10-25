@@ -10,7 +10,7 @@ public static class ConfiguracionServiciosNube
         services.AddSingleton<IRedisCacheService, RedisCacheService>();
         services.AddScoped<CatalogoRestaurantesService>();
         services.AddSingleton<IColaMensajes, CloudAmqpColaMensajes>();
-        services.AddSingleton<IBuscadorAlgolia, BuscadorAlgolia>();
+        services.AddHttpClient<IBuscadorAlgolia, BuscadorAlgolia>(client => client.Timeout = TimeSpan.FromSeconds(5));
         services.AddSingleton<IPieHostService, PieHostService>();
 
         return services;
