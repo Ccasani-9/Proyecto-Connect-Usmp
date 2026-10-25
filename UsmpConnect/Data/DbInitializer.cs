@@ -31,10 +31,10 @@ public static class DbInitializer
         var config = sp.GetRequiredService<IConfiguration>();
         var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(DbInitializer));
 
-        // Mientras no usemos migraciones, la BD se recrea en cada arranque para que
-        // siempre coincida con los modelos de todas las ramas.
-        if (config.GetValue("Database:ResetOnStartup", true))
+        // Reinicio destructivo solo para una demo desechable, activado explícitamente.
+        if (config.GetValue("Database:ResetOnStartup", false))
         {
+            logger.LogWarning("ResetOnStartup activo: se reiniciarán la base de datos y los archivos de la demo.");
             await db.Database.EnsureDeletedAsync();
 
             // Los archivos subidos pertenecían a la BD anterior. Se vacía la carpeta sin borrarla:

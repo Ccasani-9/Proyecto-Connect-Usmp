@@ -1,5 +1,12 @@
 // USMP Connect — utilidades compartidas por todos los módulos.
 
+/** Codifica texto antes de incluirlo en una plantilla HTML. */
+function usmpEscaparHtml(valor) {
+    return String(valor ?? '').replace(/[&<>"']/g, caracter => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[caracter]));
+}
+
 /** Token antiforgery (lo trae cualquier <form method="post"> del layout). */
 function usmpToken() {
     const input = document.querySelector('input[name="__RequestVerificationToken"]');

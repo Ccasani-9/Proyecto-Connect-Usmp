@@ -393,7 +393,7 @@
                     const pill = document.createElement('div');
                     pill.className = 'cal-pill cal-pill-feriado';
                     pill.title = ev.titulo;
-                    pill.innerHTML = `<i class="bi bi-flag-fill"></i> <span>${ev.titulo.replace('🇵🇪 Feriado: ', '')}</span>`;
+                    pill.innerHTML = `<i class="bi bi-flag-fill"></i> <span>${usmpEscaparHtml(ev.titulo.replace('🇵🇪 Feriado: ', ''))}</span>`;
                     pillsContainer.appendChild(pill);
                     mostrados++;
                 }
@@ -405,7 +405,7 @@
                     const claseTipo = ev.personal ? 'cal-pill-personal' : (ev.tipo === 'Evaluacion' ? 'cal-pill-examen' : (ev.tipo === 'Entrega' ? 'cal-pill-entrega' : 'cal-pill-general'));
                     pill.className = 'cal-pill ' + claseTipo;
                     pill.title = ev.titulo;
-                    pill.innerHTML = `<i class="bi ${ev.personal ? 'bi-pin-fill' : (ev.tipo === 'Evaluacion' ? 'bi-exclamation-triangle' : 'bi-calendar-check')}"></i> <span>${ev.titulo}</span>`;
+                    pill.innerHTML = `<i class="bi ${ev.personal ? 'bi-pin-fill' : (ev.tipo === 'Evaluacion' ? 'bi-exclamation-triangle' : 'bi-calendar-check')}"></i> <span>${usmpEscaparHtml(ev.titulo)}</span>`;
                     pillsContainer.appendChild(pill);
                     mostrados++;
                 }
@@ -418,7 +418,7 @@
                         pill.className = 'cal-pill cal-pill-clase';
                         const hora = cl.inicio ? cl.inicio.substring(0, 5) : '';
                         pill.title = `${hora} - ${cl.curso} (${cl.aula})`;
-                        pill.innerHTML = `<i class="bi bi-clock"></i> <span>${hora} ${cl.curso}</span>`;
+                        pill.innerHTML = `<i class="bi bi-clock"></i> <span>${usmpEscaparHtml(hora)} ${usmpEscaparHtml(cl.curso)}</span>`;
                         pillsContainer.appendChild(pill);
                         mostrados++;
                     }
@@ -468,7 +468,7 @@
                         divFeriado.innerHTML = `
                             <i class="bi bi-flag-fill text-danger fs-5 ms-1"></i>
                             <div>
-                                <strong class="text-danger">${f.titulo}</strong>
+                                <strong class="text-danger">${usmpEscaparHtml(f.titulo)}</strong>
                                 <div class="text-muted" style="font-size:.78rem">Feriado nacional oficial remunerado (Sector Privado y Público — D. Leg. 713).</div>
                             </div>
                         `;
@@ -504,6 +504,7 @@
                         if (ev.personal) {
                             deleteHtml = `
                                 <form action="/Eventos/Eliminar" method="post" class="m-0" onsubmit="return confirm('¿Eliminar este recordatorio?')">
+                                    <input type="hidden" name="__RequestVerificationToken" value="${usmpEscaparHtml(usmpToken())}" />
                                     <input type="hidden" name="id" value="${ev.id}" />
                                     <input type="hidden" name="returnUrl" value="/Calendario" />
                                     <button class="btn btn-sm btn-link text-danger p-0 ms-2" type="submit" title="Eliminar"><i class="bi bi-trash"></i></button>
@@ -513,8 +514,8 @@
 
                         item.innerHTML = `
                             <div>
-                                <div class="fw-semibold ${ev.personal ? 'text-success' : 'text-primary'}">${ev.titulo}</div>
-                                <small class="text-muted">${ev.personal ? 'Recordatorio Personal' : ev.tipo}</small>
+                                <div class="fw-semibold ${ev.personal ? 'text-success' : 'text-primary'}">${usmpEscaparHtml(ev.titulo)}</div>
+                                <small class="text-muted">${ev.personal ? 'Recordatorio Personal' : usmpEscaparHtml(ev.tipo)}</small>
                             </div>
                             ${deleteHtml}
                         `;
@@ -543,10 +544,10 @@
                         item.style.background = '#fdfbfb';
                         item.innerHTML = `
                             <div class="d-flex justify-content-between align-items-start">
-                                <div class="fw-bold" style="color:var(--guinda)">${c.curso}</div>
-                                <span class="badge bg-light text-dark border">${c.rango}</span>
+                                <div class="fw-bold" style="color:var(--guinda)">${usmpEscaparHtml(c.curso)}</div>
+                                <span class="badge bg-light text-dark border">${usmpEscaparHtml(c.rango)}</span>
                             </div>
-                            <div class="small text-muted mt-1"><i class="bi bi-geo-alt me-1"></i>${c.aula} · ${c.detalle}</div>
+                            <div class="small text-muted mt-1"><i class="bi bi-geo-alt me-1"></i>${usmpEscaparHtml(c.aula)} · ${usmpEscaparHtml(c.detalle)}</div>
                         `;
                         secClases.appendChild(item);
                     });

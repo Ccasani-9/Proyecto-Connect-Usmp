@@ -1057,15 +1057,15 @@ else
                         <div class="review-card">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="avatar avatar-sm avatar-soft" style="width: 32px; height: 32px; border-radius: 50%; font-size: 0.78rem; font-weight: 700; background: var(--guinda-50, #fdf2f4); color: #7a152d; display: inline-flex; align-items: center; justify-content: center;">${r.iniciales}</span>
-                                    <span class="fw-semibold small text-dark">${r.autor}</span>
+                                    <span class="avatar avatar-sm avatar-soft" style="width: 32px; height: 32px; border-radius: 50%; font-size: 0.78rem; font-weight: 700; background: var(--guinda-50, #fdf2f4); color: #7a152d; display: inline-flex; align-items: center; justify-content: center;">${usmpEscaparHtml(r.iniciales)}</span>
+                                    <span class="fw-semibold small text-dark">${usmpEscaparHtml(r.autor)}</span>
                                 </div>
-                                <span class="text-muted small" style="font-size: 0.78rem;">${r.fechaRelativa}</span>
+                                <span class="text-muted small" style="font-size: 0.78rem;">${usmpEscaparHtml(r.fechaRelativa)}</span>
                             </div>
                             <div class="stars-gold mb-1" style="font-size: 13px;">
                                 ${'★'.repeat(r.puntuacion)}${'☆'.repeat(5 - r.puntuacion)}
                             </div>
-                            <p class="small mb-0 text-secondary" style="line-height: 1.45;">${r.comentario}</p>
+                            <p class="small mb-0 text-secondary" style="line-height: 1.45;">${usmpEscaparHtml(r.comentario)}</p>
                         </div>
                     `).join('');
                 } else {

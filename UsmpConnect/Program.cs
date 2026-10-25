@@ -60,6 +60,8 @@ builder.Services.AddControllersWithViews(options =>
 builder.Services.AddScoped<INotificacionService, NotificacionService>();
 builder.Services.AddSingleton<IAlmacenArchivos, AlmacenArchivosLocal>();
 builder.Services.AddServiciosNube();
+builder.Services.AddHttpClient<IFirebaseTokenValidator, FirebaseTokenValidator>(client =>
+    client.Timeout = TimeSpan.FromSeconds(10));
 
 
 // Subidas de hasta 25 MB (Banco de Apuntes).

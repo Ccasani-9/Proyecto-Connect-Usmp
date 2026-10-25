@@ -146,15 +146,15 @@
                 const result = await signInWithPopup(auth, provider);
                 const user = result.user;
 
-                // Enviar datos del alumno autenticado al servidor
+                // El servidor valida la firma y obtiene la identidad del token.
+                const idToken = await user.getIdToken();
                 const resp = await fetch('/Cuenta/GoogleLogin', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: user.email,
-                        nombre: user.displayName,
-                        fotoUrl: user.photoURL
-                    })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ idToken })
                 });
 
                 if (resp.ok) {
