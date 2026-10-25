@@ -15,11 +15,11 @@ public class AportarTipFormVM
     public int? CursoSeleccionado { get; set; }
 }
 
-/// <summary>Barra superior (buscador, ciclos y botón) compartida por las vistas de Cátedra.</summary>
-public record CatedraBarraVM(string? Busqueda, int? Ciclo, bool PuedeAportar);
+/// <summary>Barra superior (buscador, ciclos, carrera y botón) compartida por las vistas de Cátedra.</summary>
+public record CatedraBarraVM(string? Busqueda, int? Ciclo, string? Carrera, bool PuedeAportar);
 
 public record CursoCatedraVM(int Id, string Codigo, string Nombre, int Creditos, int Ciclo,
-                             double? Dificultad, int NumTips, List<string> Docentes);
+                             double? Dificultad, int NumTips, List<string> Docentes, string EtiquetaCarrera);
 
 public class CatedraIndexViewModel
 {

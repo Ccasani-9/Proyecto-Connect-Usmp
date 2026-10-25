@@ -17,8 +17,29 @@ namespace UsmpConnect.Controllers;
 public class CatedraController(ApplicationDbContext db) : Controller
 {
     [AllowAnonymous]
-    public async Task<IActionResult> Index(string? q, int? ciclo)
+    public async Task<IActionResult> Index(string? q, int? ciclo, string? carrera)
     {
+        // Si no se especifica carrera, por defecto la escuela del alumno logueado o Sistemas
+        if (string.IsNullOrWhiteSpace(carrera))
+        {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var userId = User.GetUserId();
+                var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+                carrera = CarrerasFia.MapearEscuela(user?.Escuela) ?? CarrerasFia.Sistemas;
+            }
+            else
+            {
+                carrera = CarrerasFia.Sistemas;
+            }
+        }
+
+        // Si no se especifica ciclo y no hay búsqueda por texto, por defecto Ciclo 1 (I Ciclo)
+        if (ciclo is null && string.IsNullOrWhiteSpace(q))
+        {
+            ciclo = 1;
+        }
+
         var cursos = await db.Cursos.AsNoTracking()
             .Include(c => c.Secciones.Where(s => s.Periodo == BaseSeeder.Periodo)).ThenInclude(s => s.Docente)
             .OrderBy(c => c.Ciclo).ThenBy(c => c.Nombre)
@@ -32,11 +53,13 @@ public class CatedraController(ApplicationDbContext db) : Controller
 
         var lista = cursos
             .Where(c => ciclo is null || c.Ciclo == ciclo)
+            .Where(c => CarrerasFia.AplicaACarrera(c.Codigo, carrera))
             .Select(c =>
             {
                 estadisticas.TryGetValue(c.Id, out var e);
                 var docentes = c.Secciones.Select(s => s.Docente.NombreDocente).Distinct().ToList();
-                return new CursoCatedraVM(c.Id, c.Codigo, c.Nombre, c.Creditos, c.Ciclo, e?.Dificultad, e?.Cantidad ?? 0, docentes);
+                var etiqueta = CarrerasFia.EtiquetaCurso(c.Codigo);
+                return new CursoCatedraVM(c.Id, c.Codigo, c.Nombre, c.Creditos, c.Ciclo, e?.Dificultad, e?.Cantidad ?? 0, docentes, etiqueta);
             })
             .Where(c => string.IsNullOrWhiteSpace(q)
                 || Contiene(c.Nombre, q) || Contiene(c.Codigo, q) || c.Docentes.Any(d => Contiene(d, q)))
@@ -45,7 +68,7 @@ public class CatedraController(ApplicationDbContext db) : Controller
         return View(new CatedraIndexViewModel
         {
             Cursos = lista,
-            Barra = new CatedraBarraVM(q, ciclo, PuedeAportar),
+            Barra = new CatedraBarraVM(q, ciclo, carrera, PuedeAportar),
             Formulario = await FormularioAsync(null)
         });
     }
@@ -108,7 +131,7 @@ public class CatedraController(ApplicationDbContext db) : Controller
                 t.Id, t.Autor.NombreCorto, t.Autor.Iniciales, t.Docente?.NombreDocente, t.Texto, t.Fecha,
                 t.Utiles, t.NoUtiles, misVotos.GetValueOrDefault(t.Id), t.AutorId == userId, misReportes.Contains(t.Id))).ToList(),
             Orden = orden == "recientes" ? "recientes" : "utiles",
-            Barra = new CatedraBarraVM(null, null, PuedeAportar),
+            Barra = new CatedraBarraVM(null, null, null, PuedeAportar),
             Formulario = await FormularioAsync(id)
         });
     }
