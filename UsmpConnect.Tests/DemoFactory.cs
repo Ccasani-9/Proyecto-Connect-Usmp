@@ -22,6 +22,7 @@ public class DemoFactory : WebApplicationFactory<CuentaController>
         {
             ["Database:ResetOnStartup"] = "false",
             ["Redis:ConnectionString"] = "",
+            ["Redis:WarmupOnStartup"] = "false",
             ["CloudAMQP:Url"] = "",
             ["Algolia:ApplicationId"] = "",
             ["PieHost:ApiKey"] = ""

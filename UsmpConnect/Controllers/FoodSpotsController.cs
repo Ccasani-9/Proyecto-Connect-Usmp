@@ -10,7 +10,7 @@ namespace UsmpConnect.Controllers;
 
 public class FoodSpotsController(
     ApplicationDbContext db,
-    IRedisCacheService cache,
+    CatalogoRestaurantesService catalogo,
     IColaMensajes cola,
     IBuscadorAlgolia algolia,
     IPieHostService pieHost,
@@ -19,69 +19,24 @@ public class FoodSpotsController(
     [AllowAnonymous]
     public async Task<IActionResult> Index(CategoriaRestaurante? categoria, string? q)
     {
-        var cacheKey = $"foodspots:list:{categoria?.ToString() ?? "todos"}:{q?.Trim().ToLowerInvariant() ?? "all"}";
-        var fuente = "SQLite";
-
-        // 1. Intentar leer desde Redis Cache
-        var restaurantesVm = await cache.GetAsync<List<RestauranteItemVM>>(cacheKey);
-
-        if (restaurantesVm != null)
+        var datos = await catalogo.ObtenerAsync();
+        IEnumerable<RestauranteItemVM> restaurantes = datos.Restaurantes;
+        if (categoria.HasValue)
+            restaurantes = restaurantes.Where(r => r.Categoria == categoria.Value);
+        if (!string.IsNullOrWhiteSpace(q))
         {
-            fuente = "Redis Cache (Hit ⚡)";
-        }
-        else
-        {
-            // 2. Consultar SQLite
-            var query = db.Restaurantes
-                .Include(r => r.Platos)
-                .AsNoTracking();
-
-            if (categoria.HasValue)
-            {
-                query = query.Where(r => r.Categoria == categoria.Value);
-            }
-
-            if (!string.IsNullOrWhiteSpace(q))
-            {
-                var term = q.Trim();
-                query = query.Where(r => EF.Functions.Like(r.Nombre, $"%{term}%") ||
-                                         EF.Functions.Like(r.Direccion, $"%{term}%") ||
-                                         EF.Functions.Like(r.Descripcion, $"%{term}%"));
-            }
-
-            var entidades = await query.ToListAsync();
-
-            restaurantesVm = entidades.Select(r => new RestauranteItemVM(
-                r.Id,
-                r.Nombre,
-                r.Descripcion,
-                r.Categoria.ToString(),
-                r.Categoria,
-                r.Rango,
-                r.Direccion,
-                r.DistanciaTexto,
-                r.RangoPrecios,
-                r.HorarioAtencion,
-                r.TelefonoWhatsApp,
-                r.FotoUrl,
-                r.Latitud,
-                r.Longitud,
-                r.CalificacionPromedio,
-                r.TotalResenas,
-                r.Platos.Select(p => new PlatoItemVM(p.Id, p.Nombre, p.Precio, p.Descripcion, p.EsPopular)).ToList()
-            )).ToList();
-
-            // Guardar en Redis Cache por 5 minutos
-            await cache.SetAsync(cacheKey, restaurantesVm, TimeSpan.FromMinutes(5));
-            fuente = cache.IsConnected ? "SQLite → Guardado en Redis" : "SQLite Local";
+            var term = q.Trim();
+            restaurantes = restaurantes.Where(r => r.Nombre.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || r.Direccion.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || r.Descripcion.Contains(term, StringComparison.OrdinalIgnoreCase));
         }
 
         var vm = new FoodSpotsIndexVM
         {
-            Restaurantes = restaurantesVm,
+            Restaurantes = restaurantes.ToList(),
             CategoriaActual = categoria,
             Busqueda = q,
-            FuenteDatos = fuente,
+            FuenteDatos = datos.Fuente,
             GoogleMapsApiKey = config["GoogleMaps:ApiKey"] ?? ""
         };
 
@@ -174,7 +129,7 @@ public class FoodSpotsController(
         await db.SaveChangesAsync();
 
         // 1. Invalidar caché en Redis
-        await cache.RemoveAsync("foodspots:list:todos:all");
+        await catalogo.InvalidarAsync();
 
         // 2. Encolar evento asíncrono en CloudAMQP (RabbitMQ)
         await cola.PublicarAsync("usmp_notificaciones_cola", new
