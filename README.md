@@ -138,6 +138,7 @@ ASPNETCORE_ENVIRONMENT=Production
 Database__ResetOnStartup=false
 Firebase__ProjectId=usmp-connect
 Redis__ConnectionString=<tu_conexion_redis_cloud>
+Redis__WarmupOnStartup=true
 CloudAMQP__Url=<tu_url_amqp_rabbitmq>
 Algolia__ApplicationId=<tu_app_id_algolia>
 Algolia__SearchApiKey=<tu_search_key_algolia>
@@ -167,6 +168,26 @@ dotnet test UsmpConnect.Tests
 ```
 
 Las pruebas usan bases SQLite temporales independientes y certificados RSA de prueba; no necesitan credenciales ni escriben en la base de datos local de la aplicación. Cubren validación de tokens, acceso y roles, reseñas sin apellido, permisos de recordatorios y conservación de datos sin reset.
+
+### Caché de restaurantes
+
+El catálogo completo y sus platos se guardan durante cinco minutos en `usmp:foodspots:catalogo:v1`. Las categorías y búsquedas filtran esa copia; no se crea una clave por cada texto ingresado. Al publicar una reseña se invalida la copia completa, por lo que todos los filtros reciben la calificación y el contador actualizados en la siguiente consulta.
+
+`Redis__WarmupOnStartup=true` precarga el catálogo después de inicializar SQLite; `false` lo carga en la primera consulta. Si Redis no está configurado o no responde, se utiliza memoria local con el mismo vencimiento. Una eliminación realizada durante una desconexión queda pendiente y se aplica al recuperar la conexión. Mientras Redis responde, una clave ausente o corrupta obliga a recargar el catálogo y no reutiliza una copia local antigua. La coordinación de cargas e invalidación es por proceso; no constituye una transacción distribuida entre varios servidores.
+
+La precarga y las invalidaciones se registran en logs; los aciertos de caché se registran con nivel Debug en `UsmpConnect.Services.CatalogoRestaurantesService`. No se muestran indicadores técnicos adicionales a los alumnos.
+
+Las pruebas normales funcionan sin Redis. Para ejecutar también las pruebas de Redis real, usa una instancia **desechable de pruebas** y configura `USMP_TEST_REDIS`; no uses la instancia del despliegue. Por ejemplo, en PowerShell:
+
+```powershell
+docker run --rm -d --name usmp-redis-tests -p 127.0.0.1:6379:6379 redis:7-alpine
+$env:USMP_TEST_REDIS = '127.0.0.1:6379,abortConnect=false'
+dotnet test UsmpConnect.Tests
+docker stop usmp-redis-tests
+Remove-Item Env:USMP_TEST_REDIS
+```
+
+Las pruebas del servicio usan claves `usmp:tests:<identificador>`; la prueba del catálogo usa y elimina `usmp:foodspots:catalogo:v1`, por eso requieren una instancia desechable. Comprueban invalidación entre instancias, expiración, JSON corrupto y recuperación de una invalidación tras una desconexión. Si `USMP_TEST_REDIS` no está configurado, se marcan explícitamente como omitidas.
 
 ---
 

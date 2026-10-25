@@ -80,6 +80,12 @@ var app = builder.Build();
 
 await DbInitializer.InitializeAsync(app.Services);
 
+if (app.Configuration.GetValue("Redis:WarmupOnStartup", false))
+{
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<CatalogoRestaurantesService>().PrecalentarCacheAsync();
+}
+
 // Sincronización en segundo plano con Algolia si está configurado
 _ = Task.Run(async () =>
 {
