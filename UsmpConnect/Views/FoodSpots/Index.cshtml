@@ -1,4 +1,4 @@
-@using UsmpConnect.Models
+﻿@using UsmpConnect.Models
 @using UsmpConnect.Services
 @model UsmpConnect.ViewModels.FoodSpotsIndexVM
 @{
@@ -1060,7 +1060,7 @@ else
                                     <span class="avatar avatar-sm avatar-soft" style="width: 32px; height: 32px; border-radius: 50%; font-size: 0.78rem; font-weight: 700; background: var(--guinda-50, #fdf2f4); color: #7a152d; display: inline-flex; align-items: center; justify-content: center;">${usmpEscaparHtml(r.iniciales)}</span>
                                     <span class="fw-semibold small text-dark">${usmpEscaparHtml(r.autor)}</span>
                                 </div>
-                                <span class="text-muted small" style="font-size: 0.78rem;">${usmpEscaparHtml(r.fechaRelativa)}</span>
+                                <div class="d-flex align-items-center gap-2">${r.sentimiento ? `<span class="badge rounded-pill border px-2 py-1" style="font-size: 0.7rem; font-weight: 600; ${r.sentimiento === 'Positivo' ? 'background:#f0fdf4;color:#15803d;border-color:#bbf7d0 !important;' : 'background:#fef2f2;color:#b91c1c;border-color:#fecaca !important;'}">${usmpEscaparHtml(r.sentimiento)}</span>` : ''}<span class="text-muted small" style="font-size: 0.78rem;">${usmpEscaparHtml(r.fechaRelativa)}</span></div>
                             </div>
                             <div class="stars-gold mb-1" style="font-size: 13px;">
                                 ${'★'.repeat(r.puntuacion)}${'☆'.repeat(5 - r.puntuacion)}

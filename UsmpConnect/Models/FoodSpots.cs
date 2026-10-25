@@ -107,5 +107,10 @@ public class ResenaRestaurante
     [Required, StringLength(500)]
     public string Comentario { get; set; } = string.Empty;
 
+    [StringLength(20)]
+    public string? Sentimiento { get; set; }
+
+    public double? ProbabilidadSentimiento { get; set; }
+
     public DateTime FechaUtc { get; set; } = DateTime.UtcNow;
 }

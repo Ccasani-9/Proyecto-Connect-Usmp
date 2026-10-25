@@ -13,6 +13,7 @@ public sealed class CatalogoRestaurantesService(
     IRedisCacheService cache,
     IBuscadorAlgolia algolia,
     IColaMensajes cola,
+    IAnalisisSentimientoService sentimiento,
     ILogger<CatalogoRestaurantesService> logger)
 {
     public const string CacheKey = "foodspots:catalogo:v1";
@@ -86,7 +87,9 @@ public sealed class CatalogoRestaurantesService(
                 x.Usuario.Iniciales,
                 x.Puntuacion,
                 x.Comentario,
-                HoraPeru.Hace(x.FechaUtc)
+                HoraPeru.Hace(x.FechaUtc),
+                x.Sentimiento,
+                x.ProbabilidadSentimiento
             )).ToList();
 
         var platos = r.Platos
@@ -129,12 +132,16 @@ public sealed class CatalogoRestaurantesService(
         if (r is null)
             return null;
 
+        var analisis = await sentimiento.AnalizarAsync(comentario, cancellationToken);
+
         var nuevaResena = new ResenaRestaurante
         {
             RestauranteId = restauranteId,
             UsuarioId = usuarioId,
             Puntuacion = puntuacion,
             Comentario = comentario.Trim(),
+            Sentimiento = analisis.Etiqueta,
+            ProbabilidadSentimiento = analisis.Analizado ? analisis.Probabilidad : null,
             FechaUtc = DateTime.UtcNow
         };
 
@@ -167,7 +174,9 @@ public sealed class CatalogoRestaurantesService(
             nuevaResena.Comentario,
             nuevaResena.FechaUtc,
             r.CalificacionPromedio,
-            r.TotalResenas);
+            r.TotalResenas,
+            nuevaResena.Sentimiento,
+            nuevaResena.ProbabilidadSentimiento);
     }
 
     public async Task<(EstadoOperacionResena Estado, ResenaDto? Resena)> EditarResenaPropiaAsync(
@@ -188,8 +197,12 @@ public sealed class CatalogoRestaurantesService(
         if (!string.Equals(resena.UsuarioId, usuarioId, StringComparison.Ordinal))
             return (EstadoOperacionResena.Prohibida, null);
 
+        var analisis = await sentimiento.AnalizarAsync(comentario, cancellationToken);
+
         resena.Puntuacion = puntuacion;
         resena.Comentario = comentario.Trim();
+        resena.Sentimiento = analisis.Etiqueta;
+        resena.ProbabilidadSentimiento = analisis.Analizado ? analisis.Probabilidad : null;
         resena.FechaUtc = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
 
@@ -206,7 +219,9 @@ public sealed class CatalogoRestaurantesService(
             resena.Comentario,
             resena.FechaUtc,
             resena.Restaurante.CalificacionPromedio,
-            resena.Restaurante.TotalResenas);
+            resena.Restaurante.TotalResenas,
+            resena.Sentimiento,
+            resena.ProbabilidadSentimiento);
 
         return (EstadoOperacionResena.Ok, dto);
     }

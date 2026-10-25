@@ -42,7 +42,9 @@ public record ResenaItemVM(
     string Iniciales,
     int Puntuacion,
     string Comentario,
-    string FechaRelativa
+    string FechaRelativa,
+    string? Sentimiento = null,
+    double? ProbabilidadSentimiento = null
 );
 
 public record RestauranteDetalleDto(
@@ -75,7 +77,9 @@ public record ResenaDto(
     string Comentario,
     DateTime FechaUtc,
     double CalificacionPromedioRestaurante,
-    int TotalResenasRestaurante
+    int TotalResenasRestaurante,
+    string? Sentimiento = null,
+    double? ProbabilidadSentimiento = null
 );
 
 public enum EstadoOperacionResena

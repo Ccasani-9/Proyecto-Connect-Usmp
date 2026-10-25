@@ -13,10 +13,14 @@ public class TecnologiaController(
     IRedisCacheService redis,
     IColaMensajes amqp,
     IBuscadorAlgolia algolia,
-    IPieHostService pieHost) : Controller
+    IPieHostService pieHost,
+    IAnalisisSentimientoService sentimiento) : Controller
 {
     public async Task<IActionResult> Index()
     {
+        if (sentimiento.EstaHabilitado && !sentimiento.EstaListo)
+            await sentimiento.InicializarAsync();
+
         var vm = new TecnologiaViewModel
         {
             TotalTablasSQLite = 11,
@@ -24,6 +28,8 @@ public class TecnologiaController(
             TotalRestaurantes = await db.Restaurantes.CountAsync(),
             TotalApuntes = await db.Apuntes.CountAsync(),
             TotalArticulos = await db.Articulos.CountAsync(),
+            MetricasSentimiento = sentimiento.UltimasMetricas,
+            RutaModeloSentimiento = Path.GetFileName(sentimiento.ModelPath),
             Servicios = new List<ServicioStatusVM>
             {
                 new(
@@ -75,6 +81,16 @@ public class TecnologiaController(
                     "broadcast-pin",
                     pieHost.IsConfigured ? "tag-ok" : "tag-info",
                     "Push en tiempo real: emisión de notificaciones en vivo y sincronización de reseñas y votos sin recargar la página."
+                ),
+                new(
+                    "ML.NET · Análisis de Sentimiento",
+                    "Clasificación Binaria NLP Local",
+                    $"Data/ML/comentarios_resenas.csv -> {Path.GetFileName(sentimiento.ModelPath)}",
+                    sentimiento.EstaListo,
+                    sentimiento.Estado,
+                    "cpu-fill",
+                    sentimiento.EstaListo ? "tag-ok" : "tag-warn",
+                    "Entrenamiento e inferencia local con FeaturizeText + SdcaLogisticRegression para clasificar el sentimiento (Positivo/Negativo) de las reseñas estudiantiles."
                 ),
                 new(
                     "Render Cloud PaaS",

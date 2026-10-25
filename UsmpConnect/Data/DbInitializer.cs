@@ -1,7 +1,9 @@
+using System.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using UsmpConnect.Data.Seed;
 using UsmpConnect.Models;
+using UsmpConnect.Services;
 
 namespace UsmpConnect.Data;
 
@@ -50,6 +52,7 @@ public static class DbInitializer
         }
 
         var creada = await db.Database.EnsureCreatedAsync();
+        await AsegurarColumnasSentimientoAsync(db);
 
         if (!creada)
         {
@@ -171,6 +174,8 @@ public static class DbInitializer
             {
                 logger.LogWarning(ex, "Error al sincronizar datos complementarios de Cátedra");
             }
+
+            await ClasificarResenasPendientesAsync(sp, db, logger);
             return;
         }
 
@@ -190,6 +195,74 @@ public static class DbInitializer
             logger.LogInformation("Sembrando datos: {Seeder}", seeder.GetType().Name);
             await seeder.SeedAsync(ctx);
             db.ChangeTracker.Clear();
+        }
+
+        await ClasificarResenasPendientesAsync(sp, db, logger);
+    }
+
+    private static async Task AsegurarColumnasSentimientoAsync(ApplicationDbContext db)
+    {
+        var columnas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var conn = db.Database.GetDbConnection();
+        var estabaAbierta = conn.State == ConnectionState.Open;
+        if (!estabaAbierta)
+            await conn.OpenAsync();
+
+        try
+        {
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = "PRAGMA table_info(ResenasRestaurantes);";
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+                columnas.Add(reader.GetString(1));
+        }
+        finally
+        {
+            if (!estabaAbierta)
+                await conn.CloseAsync();
+        }
+
+        if (columnas.Count > 0 && !columnas.Contains(nameof(ResenaRestaurante.Sentimiento)))
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE ResenasRestaurantes ADD COLUMN Sentimiento TEXT NULL;");
+
+        if (columnas.Count > 0 && !columnas.Contains(nameof(ResenaRestaurante.ProbabilidadSentimiento)))
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE ResenasRestaurantes ADD COLUMN ProbabilidadSentimiento REAL NULL;");
+    }
+
+    private static async Task ClasificarResenasPendientesAsync(IServiceProvider sp, ApplicationDbContext db, ILogger logger)
+    {
+        try
+        {
+            var sentimiento = sp.GetService<IAnalisisSentimientoService>();
+            if (sentimiento is null || !sentimiento.EstaHabilitado)
+                return;
+
+            await sentimiento.InicializarAsync();
+            if (!sentimiento.EstaListo)
+                return;
+
+            var pendientes = await db.ResenasRestaurantes
+                .Where(r => r.Sentimiento == null)
+                .ToListAsync();
+
+            if (pendientes.Count == 0)
+                return;
+
+            foreach (var r in pendientes)
+            {
+                var res = await sentimiento.AnalizarAsync(r.Comentario);
+                if (res.Analizado)
+                {
+                    r.Sentimiento = res.Etiqueta;
+                    r.ProbabilidadSentimiento = res.Probabilidad;
+                }
+            }
+
+            await db.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "No se pudieron clasificar las reseñas existentes en el arranque.");
         }
     }
 }

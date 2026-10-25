@@ -13,8 +13,9 @@ namespace UsmpConnect.Tests;
 
 public class DemoFactory : WebApplicationFactory<CuentaController>
 {
-    // Cada host usa una BD nueva y nunca reinicia archivos del checkout.
+    // Cada host usa una BD y ruta de modelo nuevas y nunca reinicia archivos del checkout.
     public string DatabasePath { get; } = Path.Combine(Path.GetTempPath(), $"usmp-tests-{Guid.NewGuid():N}.db");
+    public string SentimentModelPath { get; } = Path.Combine(Path.GetTempPath(), $"usmp-sentimiento-{Guid.NewGuid():N}.zip");
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -27,7 +28,8 @@ public class DemoFactory : WebApplicationFactory<CuentaController>
             ["CloudAMQP:DelayMinSeconds"] = "0",
             ["CloudAMQP:DelayMaxSeconds"] = "0",
             ["Algolia:ApplicationId"] = "",
-            ["PieHost:ApiKey"] = ""
+            ["PieHost:ApiKey"] = "",
+            ["Sentimiento:ModelPath"] = SentimentModelPath
         }));
         builder.ConfigureServices(services =>
         {
