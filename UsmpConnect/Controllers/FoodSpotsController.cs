@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using UsmpConnect.Data;
 using UsmpConnect.Models;
 using UsmpConnect.Services;
@@ -11,31 +10,20 @@ namespace UsmpConnect.Controllers;
 public class FoodSpotsController(
     ApplicationDbContext db,
     CatalogoRestaurantesService catalogo,
-    IColaMensajes cola,
     IBuscadorAlgolia algolia,
     IConfiguration config) : Controller
 {
     [AllowAnonymous]
     public async Task<IActionResult> Index(CategoriaRestaurante? categoria, string? q)
     {
-        var datos = await catalogo.ObtenerAsync();
-        IEnumerable<RestauranteItemVM> restaurantes = datos.Restaurantes;
-        if (categoria.HasValue)
-            restaurantes = restaurantes.Where(r => r.Categoria == categoria.Value);
-        if (!string.IsNullOrWhiteSpace(q))
-        {
-            var term = q.Trim();
-            restaurantes = restaurantes.Where(r => r.Nombre.Contains(term, StringComparison.OrdinalIgnoreCase)
-                || r.Direccion.Contains(term, StringComparison.OrdinalIgnoreCase)
-                || r.Descripcion.Contains(term, StringComparison.OrdinalIgnoreCase));
-        }
+        var (restaurantes, fuente) = await catalogo.FiltrarAsync(categoria, q);
 
         var vm = new FoodSpotsIndexVM
         {
-            Restaurantes = restaurantes.ToList(),
+            Restaurantes = restaurantes,
             CategoriaActual = categoria,
             Busqueda = q,
-            FuenteDatos = datos.Fuente,
+            FuenteDatos = fuente,
             GoogleMapsApiKey = config["GoogleMaps:ApiKey"] ?? ""
         };
 
@@ -46,50 +34,8 @@ public class FoodSpotsController(
     [AllowAnonymous]
     public async Task<IActionResult> Detalle(int id)
     {
-        var r = await db.Restaurantes
-            .Include(x => x.Platos)
-            .Include(x => x.Resenas)
-                .ThenInclude(res => res.Usuario)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == id);
-
-        if (r == null) return NotFound();
-
-        var resenas = r.Resenas
-            .OrderByDescending(x => x.FechaUtc)
-            .Select(x => new ResenaItemVM(
-                x.Id,
-                x.Usuario.Nombres + " " + x.Usuario.Apellidos,
-                x.Usuario.Iniciales,
-                x.Puntuacion,
-                x.Comentario,
-                HoraPeru.Hace(x.FechaUtc)
-            )).ToList();
-
-        var platos = r.Platos.Select(p => new PlatoItemVM(p.Id, p.Nombre, p.Precio, p.Descripcion, p.EsPopular)).ToList();
-
-        return Json(new
-        {
-            r.Id,
-            r.Nombre,
-            r.Descripcion,
-            Categoria = r.Categoria.Nombre(),
-            r.Direccion,
-            r.DistanciaTexto,
-            r.RangoPrecios,
-            r.HorarioAtencion,
-            r.TelefonoWhatsApp,
-            r.FotoUrl,
-            r.Latitud,
-            r.Longitud,
-            r.CalificacionPromedio,
-            r.TotalResenas,
-            EsCampus = (r.Direccion?.Contains("Campus FIA", StringComparison.OrdinalIgnoreCase) ?? false) ||
-                       (r.DistanciaTexto?.Contains("Dentro del Campus", StringComparison.OrdinalIgnoreCase) ?? false) ||
-                       (r.Nombre?.Contains("Cafetería Central FIA", StringComparison.OrdinalIgnoreCase) ?? false),
-            Platos = platos,
-            Resenas = resenas
-        });
+        var detalle = await catalogo.ObtenerDetalleAsync(id);
+        return detalle is null ? NotFound() : Json(detalle);
     }
 
     [HttpPost]
@@ -101,52 +47,17 @@ public class FoodSpotsController(
             return RedirectToAction(nameof(Index));
         }
 
-        var r = await db.Restaurantes
-            .Include(x => x.Resenas)
-            .FirstOrDefaultAsync(x => x.Id == vm.RestauranteId);
+        var creada = await catalogo.CrearResenaAsync(
+            vm.RestauranteId,
+            User.GetUserId(),
+            User.GetNombre(),
+            vm.Puntuacion,
+            vm.Comentario);
 
-        if (r == null) return NotFound();
+        if (creada is null)
+            return NotFound();
 
-        var userId = User.GetUserId();
-
-        var nuevaResena = new ResenaRestaurante
-        {
-            RestauranteId = vm.RestauranteId,
-            UsuarioId = userId,
-            Puntuacion = vm.Puntuacion,
-            Comentario = vm.Comentario.Trim(),
-            FechaUtc = DateTime.UtcNow
-        };
-
-        db.ResenasRestaurantes.Add(nuevaResena);
-        await db.SaveChangesAsync();
-
-        // Recalcular promedio
-        var todas = await db.ResenasRestaurantes.Where(x => x.RestauranteId == vm.RestauranteId).ToListAsync();
-        r.TotalResenas = todas.Count;
-        r.CalificacionPromedio = Math.Round(todas.Average(x => x.Puntuacion), 1);
-        await db.SaveChangesAsync();
-
-        // 1. Invalidar caché en Redis y actualizar buscador
-        await catalogo.InvalidarAsync();
-        await algolia.SincronizarTodoAsync(db);
-
-        // 2. Encolar evento asíncrono en CloudAMQP (RabbitMQ)
-        // El consumidor en segundo plano persiste la notificación y emite el evento WebSocket en PieHost
-        await cola.PublicarAsync(
-            CloudAmqpColaMensajes.ColaPorDefecto,
-            new EventoResenaCola(
-                nuevaResena.Id,
-                r.Id,
-                r.Nombre,
-                userId,
-                User.GetNombre(),
-                vm.Puntuacion,
-                r.CalificacionPromedio,
-                r.TotalResenas,
-                nuevaResena.FechaUtc));
-
-        TempData["Toast"] = $"¡Reseña registrada para {r.Nombre}! Gracias por tu aporte a la comunidad.";
+        TempData["Toast"] = $"¡Reseña registrada para {creada.RestauranteNombre}! Gracias por tu aporte a la comunidad.";
         return RedirectToAction(nameof(Index));
     }
 
