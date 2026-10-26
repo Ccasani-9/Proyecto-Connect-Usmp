@@ -10,6 +10,8 @@ Ya existían claves de configuración de Algolia, Redis, CloudAMQP y PieHost. Su
 
 ## Publicación de estos ajustes
 
+El PR #24 ya fue fusionado y Render publicó `ba2649c` correctamente. Groq y Qdrant se comprobaron en el sitio público. Después se guardó `/health` como Health Check Path; Render inició y completó otro despliegue automático del mismo commit por ese ajuste. Consultar [Verificación de la publicación](VERIFICACION_PUBLICACION.md) para distinguir los flujos comprobados de los pendientes de demostración.
+
 1. Revisar y fusionar el PR hacia `develop` con Create a merge commit.
 2. Render iniciará el despliegue por la configuración de auto-deploy existente. Esperar a que el nuevo commit figure Live.
 3. Comprobar `/health` (200), iniciar sesión como alumno y abrir `/Tecnologia`.
