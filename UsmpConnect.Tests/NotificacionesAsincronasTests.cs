@@ -34,6 +34,8 @@ public class NotificacionesAsincronasTests
         var procesada = await spyPieHost.EsperarEventoAsync(TimeSpan.FromSeconds(5));
         Assert.True(procesada);
         Assert.Equal("nueva_resena", spyPieHost.UltimoEvento);
+        Assert.DoesNotContain("UsuarioId", spyPieHost.UltimosDatos);
+        Assert.DoesNotContain("MensajeNotificacion", spyPieHost.UltimosDatos);
 
         using (var scope = factory.Services.CreateScope())
         {
@@ -45,6 +47,15 @@ public class NotificacionesAsincronasTests
         var html = await client.GetStringAsync("/");
         Assert.Contains("id=\"notificaciones\"", html);
         Assert.Contains("fue procesada y publicada", html);
+        var resumen = await client.GetStringAsync("/Notificaciones/Resumen");
+        Assert.Contains("fue procesada y publicada", resumen);
+        using var otroClient = factory.CreateSessionClient();
+        await DemoFactory.LoginAsync(otroClient, "maria.gonzales@usmp.pe");
+        var resumenAjeno = await otroClient.GetStringAsync("/Notificaciones/Resumen");
+        Assert.DoesNotContain("fue procesada y publicada", resumenAjeno);
+        using var anonimo = factory.CreateSessionClient();
+        var sinSesion = await anonimo.GetAsync("/Notificaciones/Resumen");
+        Assert.Equal(HttpStatusCode.Redirect, sinSesion.StatusCode);
     }
 
     [Fact]
@@ -98,6 +109,7 @@ public class NotificacionesAsincronasTests
     {
         private readonly TaskCompletionSource<bool> _tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public string? UltimoEvento { get; private set; }
+        public string UltimosDatos { get; private set; } = "";
         public string? WebSocketClientUrl => null;
         public bool IsConfigured => true;
         public string Estado => "Spy";
@@ -105,6 +117,7 @@ public class NotificacionesAsincronasTests
         public Task PublicarEventoAsync(string canal, string evento, object datos)
         {
             UltimoEvento = evento;
+            UltimosDatos = JsonSerializer.Serialize(datos);
             _tcs.TrySetResult(true);
             return Task.CompletedTask;
         }

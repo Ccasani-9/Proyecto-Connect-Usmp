@@ -280,8 +280,8 @@ public sealed class AnalisisSentimientoService : IAnalisisSentimientoService, ID
                 scoreColumnName: ScoreColumn,
                 probabilityColumnName: ProbabilityColumn);
 
-            metricas.EjemplosEntrenamiento = (int)(split.TrainSet.GetRowCount() ?? (metricas.EjemplosTotales - 12));
-            metricas.EjemplosPrueba = (int)(split.TestSet.GetRowCount() ?? 12);
+            metricas.EjemplosEntrenamiento = _mlContext.Data.CreateEnumerable<DatoEntrenamientoSentimiento>(split.TrainSet, reuseRowObject: false).Count();
+            metricas.EjemplosPrueba = _mlContext.Data.CreateEnumerable<DatoEntrenamientoSentimiento>(split.TestSet, reuseRowObject: false).Count();
             metricas.Accuracy = Math.Round(eval.Accuracy, 4);
             metricas.F1Score = Math.Round(eval.F1Score, 4);
             metricas.LogLoss = Math.Round(eval.LogLoss, 4);

@@ -190,7 +190,7 @@ public sealed class CatalogoRestaurantesService(
         await SincronizarCambiosAsync();
 
         await cola.PublicarAsync(
-            CloudAmqpColaMensajes.ColaPorDefecto,
+            string.Empty, // La cola configurada se resuelve en el productor.
             new EventoResenaCola(
                 nuevaResena.Id,
                 r.Id,

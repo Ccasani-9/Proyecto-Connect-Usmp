@@ -77,7 +77,12 @@ public class CloudAmqpColaMensajes : IColaMensajes, IAsyncDisposable, IDisposabl
                 NetworkRecoveryInterval = TimeSpan.FromSeconds(10)
             };
 
-            _connection ??= await factory.CreateConnectionAsync(ct);
+            _publishChannel?.Dispose();
+            if (_connection is not { IsOpen: true })
+            {
+                _connection?.Dispose();
+                _connection = await factory.CreateConnectionAsync(ct);
+            }
             _publishChannel = await _connection.CreateChannelAsync(cancellationToken: ct);
 
             var nombreCola = string.IsNullOrWhiteSpace(cola) ? _colaPorDefecto : cola;
@@ -224,25 +229,52 @@ public class ConsumidorNotificacionesService : BackgroundService
 
         if (_colaMensajes is CloudAmqpColaMensajes cloudCola)
         {
-            if (cloudCola.TieneConfiguracionRemota)
-            {
-                await IniciarConsumidorRabbitAsync(cloudCola, nombreCola, stoppingToken);
-            }
+            await Task.WhenAll(
+                MantenerConsumidorRabbitAsync(cloudCola, nombreCola, stoppingToken),
+                ConsumirLocalAsync(cloudCola, stoppingToken));
+        }
+    }
 
-            await foreach (var envelope in cloudCola.LecturaLocal.ReadAllAsync(stoppingToken))
+    private async Task MantenerConsumidorRabbitAsync(CloudAmqpColaMensajes cloudCola, string nombreCola, CancellationToken ct)
+    {
+        if (!cloudCola.TieneConfiguracionRemota) return;
+        while (!ct.IsCancellationRequested)
+        {
+            try
             {
-                try
+                if (_consumerChannel is not { IsOpen: true })
                 {
-                    await ProcesarSobreAsync(envelope, stoppingToken);
+                    _consumerChannel?.Dispose();
+                    _consumerChannel = null;
+                    await IniciarConsumidorRabbitAsync(cloudCola, nombreCola, ct);
                 }
-                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-                {
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error al procesar mensaje de la cola local ({Tipo}).", envelope.Tipo);
-                }
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { break; }
+            catch (Exception ex)
+            {
+                _consumerChannel?.Dispose();
+                _consumerChannel = null;
+                _logger.LogWarning(ex, "Se reintentará la suscripción a RabbitMQ.");
+            }
+            await Task.Delay(TimeSpan.FromSeconds(10), ct);
+        }
+    }
+
+    private async Task ConsumirLocalAsync(CloudAmqpColaMensajes cloudCola, CancellationToken stoppingToken)
+    {
+        await foreach (var envelope in cloudCola.LecturaLocal.ReadAllAsync(stoppingToken))
+        {
+            try
+            {
+                await ProcesarSobreAsync(envelope, stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al procesar mensaje de la cola local ({Tipo}).", envelope.Tipo);
             }
         }
     }
@@ -253,10 +285,11 @@ public class ConsumidorNotificacionesService : BackgroundService
         if (_consumerChannel is null)
             return;
 
-        var consumer = new AsyncEventingBasicConsumer(_consumerChannel);
+        var channel = _consumerChannel;
+        var consumer = new AsyncEventingBasicConsumer(channel);
         consumer.ReceivedAsync += async (_, ea) =>
         {
-            if (_consumerChannel is not { IsOpen: true })
+            if (channel is not { IsOpen: true })
                 return;
 
             MensajeCola? envelope;
@@ -267,36 +300,36 @@ public class ConsumidorNotificacionesService : BackgroundService
                 if (envelope is null || string.IsNullOrWhiteSpace(envelope.Tipo))
                 {
                     _logger.LogWarning("Mensaje inválido en cola {Cola}. Se descarta sin reencolar.", nombreCola);
-                    await _consumerChannel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, stoppingToken);
+                    await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, stoppingToken);
                     return;
                 }
             }
             catch (JsonException ex)
             {
                 _logger.LogWarning(ex, "JSON corrupto recibido en cola {Cola}. Se descarta sin reencolar.", nombreCola);
-                await _consumerChannel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, stoppingToken);
+                await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, stoppingToken);
                 return;
             }
 
             try
             {
                 await ProcesarSobreAsync(envelope, stoppingToken);
-                await _consumerChannel.BasicAckAsync(ea.DeliveryTag, multiple: false, stoppingToken);
+                await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, stoppingToken);
             }
             catch (JsonException ex)
             {
                 _logger.LogWarning(ex, "Carga útil inválida para el tipo {Tipo}. Se descarta sin reencolar.", envelope.Tipo);
-                await _consumerChannel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, stoppingToken);
+                await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, stoppingToken);
             }
             catch (Exception ex)
             {
                 var reencolar = !ea.Redelivered;
                 _logger.LogError(ex, "Fallo al procesar mensaje {Tipo} en RabbitMQ (requeue={Requeue}).", envelope.Tipo, reencolar);
-                await _consumerChannel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: reencolar, stoppingToken);
+                await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: reencolar, stoppingToken);
             }
         };
 
-        await _consumerChannel.BasicConsumeAsync(
+        await channel.BasicConsumeAsync(
             queue: nombreCola,
             autoAck: false,
             consumer: consumer,
@@ -363,14 +396,13 @@ public class ConsumidorNotificacionesService : BackgroundService
             NuevaCalificacion = evento.NuevaCalificacion,
             TotalResenas = evento.TotalResenas,
             Usuario = evento.UsuarioNombre,
-            Puntuacion = evento.Puntuacion,
-            UsuarioId = evento.UsuarioId,
-            MensajeNotificacion = mensajeNoti
+            Puntuacion = evento.Puntuacion
         });
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
+        await base.StopAsync(cancellationToken);
         try
         {
             if (_consumerChannel is { IsOpen: true })
@@ -379,6 +411,5 @@ public class ConsumidorNotificacionesService : BackgroundService
         catch { }
 
         _consumerChannel?.Dispose();
-        await base.StopAsync(cancellationToken);
     }
 }
