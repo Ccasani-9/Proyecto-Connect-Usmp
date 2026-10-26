@@ -44,7 +44,8 @@ public record ResenaItemVM(
     string Comentario,
     string FechaRelativa,
     string? Sentimiento = null,
-    double? ProbabilidadSentimiento = null
+    double? ProbabilidadSentimiento = null,
+    string? UsuarioId = null
 );
 
 public record RestauranteDetalleDto(
