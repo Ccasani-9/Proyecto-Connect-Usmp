@@ -1,4 +1,5 @@
 @model CatedraIndexViewModel
+@using UsmpConnect.Models
 @{
     ViewData["Title"] = "Cátedra & Tips";
 }
@@ -9,44 +10,104 @@
 
 <partial name="_Barra" model="Model.Barra" />
 
-<div class="d-flex justify-content-between align-items-baseline mb-3">
-    <h2 class="h5 fw-bold m-0">
-        @(Model.Barra.Ciclo is null ? "Todos los cursos" : $"Cursos del {Curso.Romano(Model.Barra.Ciclo.Value)} Ciclo")
-        <span class="text-muted fw-normal fs-6">(@Model.Cursos.Count)</span>
-    </h2>
-    <small class="text-muted">Elige un curso para ver a sus docentes y los tips de la comunidad</small>
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h1 class="h4 fw-bold m-0 d-flex align-items-center gap-2 flex-wrap">
+            <span>Cursos de @(Model.Barra.Ciclo.HasValue ? $"{Curso.Romano(Model.Barra.Ciclo.Value)} Ciclo" : "la Carrera")</span>
+            <span class="badge bg-light text-secondary border fs-6 fw-semibold">@Model.Cursos.Count @(Model.Cursos.Count == 1 ? "curso" : "cursos")</span>
+            <span class="tag tag-guinda" style="font-size: 0.82rem;">
+                <i class="bi bi-mortarboard-fill me-1"></i>@CarrerasFia.Nombre(Model.Barra.Carrera)
+            </span>
+        </h1>
+    </div>
+    <small class="text-muted">Elige un curso para ver consejos de estudio, dificultad y tips de la comunidad</small>
 </div>
 
 @if (Model.Cursos.Count == 0)
 {
-    <div class="card-u vacio">
-        <i class="bi bi-bookmark"></i>
-        No encontramos cursos@(string.IsNullOrWhiteSpace(Model.Barra.Busqueda) ? "" : $" ni docentes para “{Model.Barra.Busqueda}”").
+    <div class="card-u vacio p-4 text-center my-4" style="border-radius: 14px;">
+        <div class="d-flex align-items-center justify-content-center mx-auto mb-3 rounded-circle bg-light border" style="width: 64px; height: 64px;">
+            <i class="bi bi-journal-bookmark fs-2 text-muted"></i>
+        </div>
+        <h4 class="h5 fw-bold text-dark mb-1">Sin cursos para este ciclo</h4>
+        <p class="text-muted small mb-3" style="max-width: 440px; margin: 0 auto;">
+            Los cursos de especialidad de <strong>@CarrerasFia.Nombre(Model.Barra.Carrera)</strong> para el <strong>@(Model.Barra.Ciclo.HasValue ? $"{Curso.Romano(Model.Barra.Ciclo.Value)} Ciclo" : "")</strong> se están recopilando comunitariamente.
+        </p>
+        <div class="d-flex justify-content-center gap-2">
+            <a href="@Url.Action("Index", "Catedra", new { carrera = Model.Barra.Carrera, ciclo = 1 })" class="btn btn-sm btn-guinda">Ver I Ciclo</a>
+            <a href="@Url.Action("Index", "Catedra", new { carrera = CarrerasFia.Sistemas, ciclo = 1 })" class="btn btn-sm btn-outline-secondary">Ver Ing. Sistemas</a>
+        </div>
     </div>
 }
 
-<div class="row g-3">
+<div class="curso-grid-modern">
     @foreach (var c in Model.Cursos)
     {
-        <div class="col-xl-4 col-md-6">
-            <a class="card-u p curso-card" href="/Catedra/Curso/@c.Id">
-                <div>
-                    <div class="fw-bold fs-6">@c.Nombre</div>
-                    <div class="curso-meta">Código: @c.Codigo │ Créditos: @c.Creditos │ @Curso.Romano(c.Ciclo) Ciclo</div>
+        var claseDif = c.Dificultad switch
+        {
+            > 3.5 => "dif-alta",
+            >= 2.5 => "dif-media",
+            > 0 => "dif-baja",
+            _ => "dif-cero"
+        };
+        var claseTextoDif = c.Dificultad switch
+        {
+            > 3.5 => "text-danger fw-bold",
+            >= 2.5 => "text-warning-emphasis fw-bold",
+            > 0 => "text-success fw-bold",
+            _ => "text-muted"
+        };
+
+        <a class="curso-card-modern" href="/Catedra/Curso/@c.Id">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="d-flex align-items-center gap-1">
+                    <span class="badge-curso-codigo">@c.Codigo</span>
+                    <span class="badge-curso-creditos ms-1">@c.Creditos créditos</span>
                 </div>
-                <div>
-                    <div class="d-flex justify-content-between small mb-1">
-                        <span class="text-muted">Dificultad comunitaria</span>
-                        <b style="color: var(--guinda)">@(c.Dificultad is null ? "—" : $"{c.Dificultad:0.0} / 5.0")</b>
-                    </div>
-                    <div class="dif-barra"><span style="width: @((c.Dificultad ?? 0) / 5 * 100)%"></span></div>
+                <span class="badge-curso-ciclo">@Curso.Romano(c.Ciclo) Ciclo</span>
+            </div>
+
+            <h3 class="curso-titulo-modern">@c.Nombre</h3>
+
+            <div class="curso-dif-box">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="curso-dif-label">
+                        <i class="bi bi-speedometer2 me-1"></i>Dificultad Comunitaria
+                    </span>
+                    @if (c.Dificultad.HasValue)
+                    {
+                        <span class="small @claseTextoDif">
+                            @c.Dificultad.Value.ToString("0.0") <span class="text-muted fw-normal" style="font-size: 0.72rem;">/ 5.0</span>
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="small text-muted" style="font-size: 0.75rem;">Sin calificaciones</span>
+                    }
                 </div>
-                <div class="d-flex justify-content-between align-items-end gap-2 mt-auto">
-                    <div class="curso-meta"><i class="bi bi-person-video3 me-1"></i>@(c.Docentes.Count == 0 ? "Sin docentes este periodo" : string.Join(" · ", c.Docentes))</div>
-                    <span class="tag tag-guinda text-nowrap">@c.NumTips @(c.NumTips == 1 ? "tip" : "tips")</span>
+                <div class="dif-barra-modern">
+                    <span style="width: @((c.Dificultad ?? 0) / 5 * 100)%;" class="@claseDif"></span>
                 </div>
-            </a>
-        </div>
+            </div>
+
+            <div class="mt-auto pt-2 border-top">
+                <div class="d-flex align-items-center gap-2 mb-2 text-muted small">
+                    <i class="bi bi-person-video3 text-secondary flex-shrink-0" style="font-size: 0.85rem;"></i>
+                    <span class="text-truncate" style="font-size: 0.8rem;" title="@(c.Docentes.Count == 0 ? "Sin docentes asignados" : string.Join(" · ", c.Docentes))">
+                        @(c.Docentes.Count == 0 ? "Sin docentes asignados" : string.Join(" · ", c.Docentes))
+                    </span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between gap-2">
+                    <span class="pill-tips-tag @(c.NumTips > 0 ? "con-tips" : "")">
+                        <i class="bi bi-chat-heart-fill me-1"></i>@c.NumTips @(c.NumTips == 1 ? "tip" : "tips")
+                    </span>
+                    <span class="btn-ver-tips-link">
+                        <span>Ver cátedra</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </span>
+                </div>
+            </div>
+        </a>
     }
 </div>
 

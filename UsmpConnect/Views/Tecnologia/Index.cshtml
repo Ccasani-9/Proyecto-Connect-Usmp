@@ -9,9 +9,11 @@
             <h1 class="h3 fw-bold mb-0">Arquitectura Tecnológica del Proyecto</h1>
             <span class="tag tag-ok">Programación 1 · FIA USMP</span>
         </div>
-        <p class="text-muted mb-0">Panel de verificación en vivo de los 6 componentes de infraestructura exigidos para la entrega.</p>
+        <p class="text-muted mb-0">Diagnóstico para la sustentación: configuración, modelos cargados y últimas operaciones observadas en este servidor.</p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="/swagger" class="btn btn-sm btn-soft">Swagger · API REST</a>
+        <a href="/Conocimiento/Buscar?consulta=publicar%20apuntes" class="btn btn-sm btn-soft">Probar fuentes del asistente</a>
         <a href="/Restaurantes" class="btn btn-sm btn-guinda"><i class="bi bi-geo-alt-fill me-1"></i>Probar Restaurantes Cercanos</a>
         <a href="/" class="btn btn-sm btn-soft"><i class="bi bi-house me-1"></i>Volver al Inicio</a>
     </div>
@@ -21,7 +23,7 @@
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="card-u p text-center">
-            <small class="text-muted text-uppercase fw-semibold d-block mb-1">Usuarios</small>
+            <small class="text-muted text-uppercase fw-semibold d-block mb-1">Alumnos</small>
             <span class="h4 fw-bold text-primary mb-0">@Model.TotalUsuarios</span>
         </div>
     </div>
@@ -45,13 +47,13 @@
     </div>
 </div>
 
-<!-- Tarjetas de las 6 Tecnologías -->
+<!-- Tarjetas de las Tecnologías -->
 <div class="row g-3">
     @foreach (var s in Model.Servicios)
     {
         <div class="col-lg-6">
             <div class="card-u p h-100 d-flex flex-column" style="border-left: 4px solid @(s.Conectado ? "#16a34a" : "#ca8a04");">
-                <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
                     <div class="d-flex align-items-center gap-2">
                         <div class="p-2 rounded bg-light text-primary fs-4">
                             <i class="bi bi-@s.Icono"></i>
@@ -61,7 +63,7 @@
                             <small class="text-muted fw-semibold">@s.Categoria</small>
                         </div>
                     </div>
-                    <span class="tag @s.ColorBadge">
+                    <span class="tag @s.ColorBadge text-wrap">
                         <i class="bi bi-@(s.Conectado ? "check-circle-fill" : "exclamation-triangle-fill") me-1"></i>@s.EstadoTexto
                     </span>
                 </div>
@@ -78,12 +80,96 @@
     }
 </div>
 
+@if (Model.MetricasSentimiento is not null)
+{
+    var m = Model.MetricasSentimiento;
+    <div class="card-u p mt-4" data-ml-sentimiento-metricas>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-bar-chart-line-fill text-danger fs-5"></i>
+                <h3 class="h6 fw-bold mb-0">Métricas del Modelo ML.NET · Análisis de Sentimiento</h3>
+            </div>
+            <span class="badge bg-light text-secondary border text-wrap text-break mw-100">Archivo: @Model.RutaModeloSentimiento</span>
+        </div>
+        <div class="row g-3 text-center">
+            <div class="col-6 col-md-3">
+                <div class="p-2 rounded bg-light border">
+                    <small class="text-muted d-block">Accuracy (Test 20%)</small>
+                    <span class="fw-bold text-success">@m.Accuracy.ToString("P1")</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-2 rounded bg-light border">
+                    <small class="text-muted d-block">F1 Score</small>
+                    <span class="fw-bold text-primary">@m.F1Score.ToString("P1")</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-2 rounded bg-light border">
+                    <small class="text-muted d-block">LogLoss</small>
+                    <span class="fw-bold text-dark">@(m.LogLoss?.ToString("0.000") ?? "—")</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-2 rounded bg-light border">
+                    <small class="text-muted d-block">Ejemplos (Pos / Neg)</small>
+                    <span class="fw-bold text-secondary">@m.EjemplosTotales (@m.Positivos / @m.Negativos)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (Model.MetricasRecomendacion is not null)
+{
+    var r = Model.MetricasRecomendacion;
+    <div class="card-u p mt-4" data-ml-recomendacion-metricas>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-stars text-warning fs-5"></i>
+                <h3 class="h6 fw-bold mb-0">Métricas del Modelo ML.NET · Recomendación por Factorización de Matrices</h3>
+            </div>
+            <span class="badge bg-light text-secondary border text-wrap text-break mw-100">Archivo: @Model.RutaModeloRecomendacion</span>
+        </div>
+        <div class="row g-3 text-center">
+            <div class="col-6 col-md-3">
+                <div class="p-2 rounded bg-light border">
+                    <small class="text-muted d-block">RMSE (Test 20%)</small>
+                    <span class="fw-bold text-success">@(r.Rms?.ToString("0.000") ?? "No disponible")</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-2 rounded bg-light border">
+                    <small class="text-muted d-block">Interacciones (Train / Test)</small>
+                    <span class="fw-bold text-primary">@r.EjemplosTotales (@r.EjemplosEntrenamiento / @r.EjemplosPrueba)</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-2 rounded bg-light border">
+                    <small class="text-muted d-block">Usuarios en Matriz</small>
+                    <span class="fw-bold text-dark">@r.Usuarios</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-2 rounded bg-light border">
+                    <small class="text-muted d-block">Restaurantes en Matriz</small>
+                    <span class="fw-bold text-secondary">@r.Restaurantes</span>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <div class="card-u p mt-4 bg-light">
     <div class="d-flex align-items-center gap-2 mb-2">
         <i class="bi bi-shield-check text-success fs-5"></i>
-        <h3 class="h6 fw-bold mb-0">Diseño Resiliente (Graceful Fallback)</h3>
+        <h3 class="h6 fw-bold mb-0">Cómo interpretar los estados</h3>
     </div>
     <p class="small text-muted mb-0">
-        Todos los servicios externos (Redis, CloudAMQP, Algolia, PieHost) cuentan con una capa de respaldo local en memoria. Si las credenciales no se encuentran o una cuota gratuita temporalmente se satura, el sistema conmuta automáticamente a sus proveedores locales sin interrumpir el funcionamiento ni generar errores al usuario.
+        «Configurado» significa que hay parámetros presentes, no que la conexión se haya comprobado.
+        Groq y Qdrant muestran la última operación de este proceso con su hora de Lima; no es una prueba continua de disponibilidad.
+        Para actualizar esa evidencia, realiza una consulta en el asistente y recarga esta página.
+        Redis, Algolia y Qdrant permiten continuar con búsquedas o caché locales; RabbitMQ tiene una cola local sin durabilidad.
+        Groq no genera respuestas sin proveedor y PieSocket no dispone de push local de respaldo.
     </p>
 </div>

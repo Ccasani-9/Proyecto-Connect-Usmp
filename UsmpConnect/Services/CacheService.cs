@@ -13,69 +13,80 @@ public interface IRedisCacheService
     string Estado { get; }
 }
 
-public class RedisCacheService : IRedisCacheService
+public sealed class RedisCacheService : IRedisCacheService, IDisposable
 {
     private readonly IMemoryCache _memoryCache;
     private readonly ILogger<RedisCacheService> _logger;
     private readonly IConnectionMultiplexer? _redis;
     private readonly IDatabase? _db;
-    private readonly bool _usandoRedis;
+    private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly HashSet<string> _invalidacionesPendientes = [];
 
-    public bool IsConnected => _usandoRedis && (_redis?.IsConnected ?? false);
+    public bool IsConnected => _redis?.IsConnected ?? false;
     public string Estado => IsConnected ? "Redis Cloud (Conectado)" : "Caché en Memoria (Fallback)";
 
     public RedisCacheService(IConfiguration config, IMemoryCache memoryCache, ILogger<RedisCacheService> logger)
     {
         _memoryCache = memoryCache;
         _logger = logger;
-
         var connStr = config["Redis:ConnectionString"];
-        if (!string.IsNullOrWhiteSpace(connStr))
+        if (string.IsNullOrWhiteSpace(connStr)) return;
+        try
         {
-            try
-            {
-                var options = ConfigurationOptions.Parse(connStr);
-                options.AbortOnConnectFail = false;
-                options.ConnectTimeout = 4000;
-                options.SyncTimeout = 4000;
-                _redis = ConnectionMultiplexer.Connect(options);
-                _db = _redis.GetDatabase();
-                _usandoRedis = true;
-                _logger.LogInformation("Redis conectado exitosamente a {Endpoint}", options.EndPoints.FirstOrDefault());
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "No se pudo conectar a Redis Cloud. Usando MemoryCache como fallback.");
-                _usandoRedis = false;
-            }
+            var options = ConfigurationOptions.Parse(connStr);
+            options.AbortOnConnectFail = false;
+            options.ConnectTimeout = 4000;
+            options.SyncTimeout = 4000;
+            options.AsyncTimeout = 4000;
+            // No acumular escrituras antiguas para reproducirlas después de una caída.
+            options.BacklogPolicy = BacklogPolicy.FailFast;
+            _redis = ConnectionMultiplexer.Connect(options);
+            _db = _redis.GetDatabase();
+            _logger.LogInformation("Caché inicializada: {Estado}", Estado);
         }
-        else
+        catch (Exception ex)
         {
-            _usandoRedis = false;
+            _logger.LogWarning(ex, "No se pudo inicializar Redis. Usando MemoryCache.");
         }
     }
 
     public async Task<T?> GetAsync<T>(string key)
     {
         var fullKey = $"usmp:{key}";
-        if (IsConnected && _db != null)
+        await _gate.WaitAsync();
+        try
         {
-            try
+            if (IsConnected && _db is not null)
             {
-                var val = await _db.StringGetAsync(fullKey);
-                if (val.HasValue)
+                try
                 {
-                    return JsonSerializer.Deserialize<T>((string)val!);
+                    if (_invalidacionesPendientes.Contains(fullKey))
+                    {
+                        await _db.KeyDeleteAsync(fullKey);
+                        _invalidacionesPendientes.Remove(fullKey);
+                    }
+                    var val = await _db.StringGetAsync(fullKey);
+                    if (val.HasValue) return JsonSerializer.Deserialize<T>((string)val!);
+                    // Otra instancia pudo invalidar o la clave pudo expirar.
+                    // Una ausencia confirmada en Redis no debe revivir la copia local anterior.
+                    _memoryCache.Remove(fullKey);
+                    return default;
+                }
+                catch (JsonException ex)
+                {
+                    _memoryCache.Remove(fullKey);
+                    _invalidacionesPendientes.Add(fullKey);
+                    _logger.LogWarning(ex, "Entrada de caché inválida ({Key}); se recargará desde SQLite", fullKey);
+                    return default;
+                }
+                catch (RedisException ex)
+                {
+                    _logger.LogWarning(ex, "Error al leer de Redis ({Key}). Usando respaldo local.", fullKey);
                 }
             }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error al leer de Redis ({Key}). Leyendo de memoria.", fullKey);
-            }
+            return _memoryCache.TryGetValue(fullKey, out T? localVal) ? localVal : default;
         }
-
-        // Fallback en memoria
-        return _memoryCache.TryGetValue(fullKey, out T? localVal) ? localVal : default;
+        finally { _gate.Release(); }
     }
 
     public async Task SetAsync<T>(string key, T data, TimeSpan? expiry = null)
@@ -83,37 +94,59 @@ public class RedisCacheService : IRedisCacheService
         var fullKey = $"usmp:{key}";
         var json = JsonSerializer.Serialize(data);
         var tiempo = expiry ?? TimeSpan.FromMinutes(10);
-
-        if (IsConnected && _db != null)
+        await _gate.WaitAsync();
+        try
         {
-            try
+            if (_db is not null)
             {
-                await _db.StringSetAsync(fullKey, json, tiempo);
+                // Si falla la escritura, borrar la copia remota anterior al recuperar conexión.
+                _invalidacionesPendientes.Add(fullKey);
+                if (IsConnected)
+                {
+                    try
+                    {
+                        await _db.StringSetAsync(fullKey, json, tiempo);
+                        _invalidacionesPendientes.Remove(fullKey);
+                    }
+                    catch (RedisException ex)
+                    {
+                        _logger.LogWarning(ex, "Error al escribir en Redis ({Key}). Usando respaldo local.", fullKey);
+                    }
+                }
             }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error al escribir en Redis ({Key}). Guardando en memoria.", fullKey);
-            }
+            _memoryCache.Set(fullKey, data, tiempo);
         }
-
-        _memoryCache.Set(fullKey, data, tiempo);
+        finally { _gate.Release(); }
     }
 
     public async Task RemoveAsync(string key)
     {
         var fullKey = $"usmp:{key}";
-        if (IsConnected && _db != null)
+        await _gate.WaitAsync();
+        try
         {
-            try
+            _memoryCache.Remove(fullKey);
+            if (_db is null) return;
+            _invalidacionesPendientes.Add(fullKey);
+            if (IsConnected)
             {
-                await _db.KeyDeleteAsync(fullKey);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error al borrar en Redis ({Key}).", fullKey);
+                try
+                {
+                    await _db.KeyDeleteAsync(fullKey);
+                    _invalidacionesPendientes.Remove(fullKey);
+                }
+                catch (RedisException ex)
+                {
+                    _logger.LogWarning(ex, "Invalidación de Redis pendiente hasta recuperar conexión ({Key})", fullKey);
+                }
             }
         }
+        finally { _gate.Release(); }
+    }
 
-        _memoryCache.Remove(fullKey);
+    public void Dispose()
+    {
+        _redis?.Dispose();
+        _gate.Dispose();
     }
 }

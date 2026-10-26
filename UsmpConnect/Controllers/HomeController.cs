@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using UsmpConnect.Data;
 using UsmpConnect.Models;
 using UsmpConnect.Services;
@@ -9,20 +8,31 @@ using UsmpConnect.ViewModels;
 
 namespace UsmpConnect.Controllers;
 
-public class HomeController(ApplicationDbContext db) : Controller
+public class HomeController(
+    ApplicationDbContext db,
+    CatalogoRestaurantesService catalogoRestaurantes) : Controller
 {
+    [AllowAnonymous]
     public async Task<IActionResult> Index()
     {
         var userId = User.GetUserId();
+        var usuarioClave = !string.IsNullOrWhiteSpace(User.Identity?.Name)
+            ? User.Identity!.Name
+            : userId;
         var hoy = HoraPeru.Hoy;
         var hora = HoraPeru.Ahora.Hour;
 
         var semana = await Agenda.ClasesSemanaAsync(db, userId, false);
         var eventos = await Agenda.EventosAsync(db, userId);
 
+        var nombre = User.GetNombre();
+        var primerNombre = !string.IsNullOrWhiteSpace(nombre) ? (nombre.Split(' ').FirstOrDefault() ?? "") : "Comunidad USMP";
+
+        var (recomendados, personalizada) = await catalogoRestaurantes.ObtenerRecomendadosAsync(usuarioClave, topK: 3);
+
         var vm = new InicioViewModel
         {
-            PrimerNombre = User.GetNombre().Split(' ').FirstOrDefault() ?? "",
+            PrimerNombre = primerNombre,
             Saludo = hora < 12 ? "Buenos días" : hora < 19 ? "Buenas tardes" : "Buenas noches",
             EsProfesor = false,
             Hoy = Agenda.Dia(semana, hoy, "HOY"),
@@ -30,7 +40,9 @@ public class HomeController(ApplicationDbContext db) : Controller
             Eventos = eventos,
             ProximosEventos = eventos.Where(e => DateOnly.Parse(e.Fecha) >= hoy).Take(4).ToList(),
             FechaHoy = hoy,
-            Notas = await NotasController.NotasAlumnoAsync(db, userId)
+            HuariqueRecomendado = recomendados.FirstOrDefault(),
+            AlternativasRecomendadas = recomendados.Skip(1).ToList(),
+            RecomendacionPersonalizada = personalizada
         };
 
         return View(vm);

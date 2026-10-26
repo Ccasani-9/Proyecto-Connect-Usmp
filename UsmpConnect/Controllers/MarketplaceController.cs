@@ -11,11 +11,12 @@ namespace UsmpConnect.Controllers;
 /// <summary>
 /// Marketplace Comunitario: Tablón de compra, venta y donación entre alumnos de la USMP.
 /// </summary>
-public class MarketplaceController(ApplicationDbContext db, IAlmacenArchivos almacen) : Controller
+public class MarketplaceController(ApplicationDbContext db, IAlmacenArchivos almacen, IBuscadorAlgolia buscador) : Controller
 {
     private const long MaxImagenBytes = 5 * 1024 * 1024; // 5 MB para fotos
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> Index(string? q, CategoriaMarketplace? categoria)
     {
         var query = db.Articulos
@@ -91,6 +92,7 @@ public class MarketplaceController(ApplicationDbContext db, IAlmacenArchivos alm
 
         db.Articulos.Add(articulo);
         await db.SaveChangesAsync();
+        await buscador.SincronizarTodoAsync(db);
 
         TempData["Ok"] = "¡Artículo publicado correctamente en el Marketplace!";
         return RedirectToAction(nameof(Index));
@@ -109,6 +111,7 @@ public class MarketplaceController(ApplicationDbContext db, IAlmacenArchivos alm
 
         articulo.Estado = nuevoEstado;
         await db.SaveChangesAsync();
+        await buscador.SincronizarTodoAsync(db);
 
         TempData["Ok"] = $"Estado de '{articulo.Titulo}' actualizado a {nuevoEstado}.";
         return RedirectToAction(nameof(Index));
@@ -127,6 +130,7 @@ public class MarketplaceController(ApplicationDbContext db, IAlmacenArchivos alm
 
         db.Articulos.Remove(articulo);
         await db.SaveChangesAsync();
+        await buscador.SincronizarTodoAsync(db);
 
         TempData["Ok"] = "Artículo eliminado correctamente.";
         return RedirectToAction(nameof(Index));

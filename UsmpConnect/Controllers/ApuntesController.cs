@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UsmpConnect.Data;
@@ -9,10 +10,11 @@ using UsmpConnect.ViewModels;
 namespace UsmpConnect.Controllers;
 
 /// <summary>Banco de Apuntes: resúmenes, exámenes resueltos y guías que comparten los alumnos.</summary>
-public class ApuntesController(ApplicationDbContext db, IAlmacenArchivos almacen, INotificacionService notificaciones) : Controller
+public class ApuntesController(ApplicationDbContext db, IAlmacenArchivos almacen, INotificacionService notificaciones, IBuscadorAlgolia buscador) : Controller
 {
     private const long MaxArchivo = 25 * 1024 * 1024;
 
+    [AllowAnonymous]
     public async Task<IActionResult> Index(string? q, int? ciclo, int? cursoId, TipoDocumento? tipo, string orden = "calificacion")
     {
         var userId = User.GetUserId();
@@ -107,12 +109,14 @@ public class ApuntesController(ApplicationDbContext db, IAlmacenArchivos almacen
             AutorId = User.GetUserId()
         });
         await db.SaveChangesAsync();
+        await buscador.SincronizarTodoAsync(db);
 
         TempData["Toast"] = "¡Gracias por compartir! Tu recurso ya está en el Banco de Apuntes.";
         return RedirectToAction(nameof(Index), new { orden = "recientes" });
     }
 
     /// <summary>Vista previa: muestra el PDF dentro del navegador. Los Word se descargan.</summary>
+    [AllowAnonymous]
     public async Task<IActionResult> Ver(int id)
     {
         var apunte = await db.Apuntes.AsNoTracking().Include(a => a.Curso).FirstOrDefaultAsync(a => a.Id == id);
@@ -167,6 +171,7 @@ public class ApuntesController(ApplicationDbContext db, IAlmacenArchivos almacen
             calificacion.Fecha = DateTime.UtcNow;
         }
         await db.SaveChangesAsync();
+        await buscador.SincronizarTodoAsync(db);
 
         if (nueva)
         {
@@ -188,6 +193,7 @@ public class ApuntesController(ApplicationDbContext db, IAlmacenArchivos almacen
 
         db.Apuntes.Remove(apunte);
         await db.SaveChangesAsync();
+        await buscador.SincronizarTodoAsync(db);
 
         if (apunte.ArchivoUrl is not null)
         {

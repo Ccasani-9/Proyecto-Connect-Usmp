@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UsmpConnect.Data;
@@ -15,6 +16,7 @@ public class LostFoundController(ApplicationDbContext db, IAlmacenArchivos almac
 {
     private const long MaxFoto = 5 * 1024 * 1024;
 
+    [AllowAnonymous]
     public async Task<IActionResult> Index(string? tab = null, TipoReporte? tipo = null)
     {
         var userId = User.GetUserId();

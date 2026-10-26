@@ -7,13 +7,13 @@
     // Menú lateral. Cada módulo vive en su propio controlador; si aún no existe, se muestra "En construcción".
     var menu = new[]
     {
-        (Texto: "Inicio",                 Icono: "house",    Activo: "house-fill",    Url: "/",                 Controlador: "home"),
-        (Texto: "Restaurantes Cercanos",  Icono: "geo-alt",  Activo: "geo-alt-fill",  Url: "/Restaurantes",     Controlador: "foodspots"),
-        (Texto: "Cátedra & Tips",         Icono: "bookmark", Activo: "bookmark-fill", Url: "/Catedra",          Controlador: "catedra"),
-        (Texto: "Marketplace",            Icono: "bag",      Activo: "bag-fill",      Url: "/Marketplace",      Controlador: "marketplace"),
-        (Texto: "Banco de Apuntes",       Icono: "folder",   Activo: "folder-fill",   Url: "/Apuntes",          Controlador: "apuntes"),
-        (Texto: "Objetos Perdidos",       Icono: "search",   Activo: "search",        Url: "/ObjetosPerdidos",  Controlador: "lostfound"),
-        (Texto: "Mi Calendario",          Icono: "calendar", Activo: "calendar-fill", Url: "/Calendario",       Controlador: "calendario"),
+        (Texto: "Inicio",                 Icono: "house-door",          Activo: "house-door-fill",          Url: "/",                 Controlador: "home"),
+        (Texto: "Restaurantes Cercanos",  Icono: "shop",                Activo: "shop-window",              Url: "/Restaurantes",     Controlador: "foodspots"),
+        (Texto: "Cátedra & Tips",         Icono: "mortarboard",         Activo: "mortarboard-fill",         Url: "/Catedra",          Controlador: "catedra"),
+        (Texto: "Marketplace",            Icono: "bag-check",           Activo: "bag-check-fill",           Url: "/Marketplace",      Controlador: "marketplace"),
+        (Texto: "Banco de Apuntes",       Icono: "journal-bookmark",    Activo: "journal-bookmark-fill",    Url: "/Apuntes",          Controlador: "apuntes"),
+        (Texto: "Objetos Perdidos",       Icono: "box-seam",            Activo: "box-seam-fill",            Url: "/ObjetosPerdidos",  Controlador: "lostfound"),
+        (Texto: "Mi Calendario",          Icono: "calendar-event",      Activo: "calendar-event-fill",      Url: "/Calendario",       Controlador: "calendario"),
     };
 }
 <!DOCTYPE html>
@@ -28,6 +28,7 @@
     <link rel="icon" type="image/png" href="~/img/logo_USMP-CONNECT.png" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/asistente.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
@@ -59,28 +60,49 @@
             </a>
         </nav>
 
-        <div class="dropdown">
-            <button class="user-chip" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <span class="avatar">@User.GetIniciales()</span>
-                <span class="d-texto">
-                    <span class="nombre d-block">@User.GetNombre()</span>
-                    <span class="escuela d-block">@User.GetEscuela()</span>
-                </span>
-                <i class="bi bi-chevron-down d-texto"></i>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><span class="dropdown-item-text small text-muted">@User.Identity?.Name</span></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="/Notas"><i class="bi bi-journal-check me-2"></i>Mis notas</a></li>
-                <li><a class="dropdown-item" href="/Horario"><i class="bi bi-clock me-2"></i>Mi horario</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                    <form asp-controller="Cuenta" asp-action="Logout" method="post">
-                        <button class="dropdown-item text-danger" type="submit"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</button>
-                    </form>
-                </li>
-            </ul>
-        </div>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <div class="d-flex align-items-center gap-2">
+                @await Component.InvokeAsync("Notificaciones")
+                <div class="dropdown">
+                    <button class="user-chip" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        @if (!string.IsNullOrEmpty(User.GetFoto()))
+                        {
+                            <img src="@User.GetFoto()" alt="Avatar" class="avatar rounded-circle me-1" style="width:32px;height:32px;object-fit:cover;" referrerpolicy="no-referrer" />
+                        }
+                        else
+                        {
+                            <span class="avatar">@User.GetIniciales()</span>
+                        }
+                        <span class="d-texto">
+                            <span class="nombre d-block">@User.GetNombre()</span>
+                            <span class="escuela d-block">@User.GetEscuela()</span>
+                        </span>
+                        <i class="bi bi-chevron-down d-texto"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><span class="dropdown-item-text small text-muted">@User.Identity?.Name</span></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="https://calculadorafiausmp.com/" target="_blank" rel="noopener"><i class="bi bi-calculator me-2"></i>Calculadora FIA</a></li>
+                        <li><a class="dropdown-item" href="/Horario"><i class="bi bi-clock me-2"></i>Mi horario</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form asp-controller="Cuenta" asp-action="Logout" method="post">
+                                <button class="dropdown-item text-danger" type="submit"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex align-items-center gap-2">
+                <a href="/Cuenta/Login" class="btn btn-sm btn-light fw-bold px-3 py-2 d-flex align-items-center gap-2" style="border-radius:10px; font-size:0.85rem; box-shadow:0 2px 4px rgba(0,0,0,0.15);">
+                    <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                </a>
+            </div>
+        }
     </header>
 
     <aside class="sidebar">
@@ -99,7 +121,7 @@
                 <span>Correo USMP</span>
             </a>
             <a href="https://campusvirtual.aulavirtualusmp.pe/mdlfia425/login/index.php" target="_blank" rel="noopener" class="mobile-portal-link">
-                <img src="~/img/Logo-FIA.png" alt="FIA" style="filter: brightness(0);" />
+                <img src="~/img/logo_AULA_VIRTUAL_FIA.png" alt="Aula Virtual FIA" />
                 <span>Aula Virtual FIA</span>
             </a>
             <a href="https://fioriprd.udm.hec.ondemand.com/sap/bc/ui2/flp?sap-client=400" target="_blank" rel="noopener" class="mobile-portal-link">
@@ -119,10 +141,15 @@
     <div class="sidebar-backdrop" onclick="document.body.classList.remove('sidebar-open')"></div>
 
     <main class="main" onclick="document.body.classList.remove('sidebar-open')">
+        <partial name="_BusquedaGlobal" />
         @RenderBody()
     </main>
 
     <partial name="_ModalesGlobales" />
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <partial name="_AsistenteChat" />
+    }
 
     @if (TempData["Toast"] is string toast)
     {
@@ -135,8 +162,13 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script>window.pieHostUrl = '@Html.Raw(PieHost.WebSocketClientUrl)';</script>
+    <script>window.pieHostUrl = @Json.Serialize(PieHost.WebSocketClientUrl);</script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/busqueda.js" asp-append-version="true"></script>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <script src="~/js/asistente.js" asp-append-version="true"></script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

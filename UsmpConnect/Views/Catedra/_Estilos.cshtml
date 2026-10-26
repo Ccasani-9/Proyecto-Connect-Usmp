@@ -4,9 +4,264 @@
     .cat-barra .btn-guinda { margin-left: auto; }
     .dif-barra { height: 8px; border-radius: 999px; background: #eef0f3; overflow: hidden; }
     .dif-barra span { display: block; height: 100%; background: var(--guinda); border-radius: 999px; }
-    .curso-card { display: flex; flex-direction: column; gap: 10px; height: 100%; color: var(--text); transition: border-color .15s, transform .15s; }
-    .curso-card:hover { border-color: var(--guinda-100); color: var(--text); transform: translateY(-2px); }
     .curso-meta { color: var(--muted); font-size: .82rem; }
+    .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+    .chips .chip { flex-shrink: 0; }
+
+    /* Selector desplegable moderno de Carreras FIA */
+    .carrera-dropdown-wrap {
+        position: relative;
+    }
+    .carrera-select-trigger {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 5px 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 44px;
+    }
+    .carrera-select-trigger:hover,
+    .carrera-select-trigger:focus,
+    .show > .carrera-select-trigger {
+        border-color: #cbd5e1;
+        background: #fafafa;
+        box-shadow: 0 4px 12px -2px rgba(122, 21, 45, 0.08);
+    }
+    .show > .carrera-select-trigger {
+        border-color: #7a152d;
+        box-shadow: 0 0 0 3px rgba(122, 21, 45, 0.12);
+    }
+    .carrera-icon-badge {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #fdf2f4 0%, #fee2e2 100%);
+        color: #7a152d;
+        font-size: 1rem;
+    }
+    .carrera-label-kicker {
+        font-size: 0.64rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #64748b;
+        line-height: 1.1;
+    }
+    .carrera-nombre-texto {
+        font-size: 0.86rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.2;
+    }
+    .carrera-chevron {
+        font-size: 0.8rem;
+        transition: transform 0.22s ease;
+    }
+    .carrera-select-trigger.show .carrera-chevron,
+    .show > .carrera-select-trigger .carrera-chevron {
+        transform: rotate(180deg);
+        color: #7a152d;
+    }
+
+    /* Menú desplegable flotante de carreras */
+    .carrera-dropdown-menu {
+        width: 100%;
+        min-width: 320px;
+        max-width: 440px;
+        max-height: 420px;
+        overflow-y: auto;
+        border-radius: 14px;
+        border: 1px solid rgba(0,0,0,0.08);
+        box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.16), 0 0 1px rgba(0,0,0,0.2) !important;
+        margin-top: 6px !important;
+        z-index: 1060;
+    }
+    .carrera-menu-header {
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 6px;
+    }
+    .carrera-item-btn {
+        width: 100%;
+        border-radius: 10px;
+        padding: 8px 10px;
+        margin-bottom: 2px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: #1e293b;
+        transition: all 0.15s ease;
+        white-space: normal;
+        text-align: left;
+    }
+    .carrera-item-btn:hover {
+        background-color: #fdf2f4;
+        color: #7a152d;
+        border-color: #fce7eb;
+    }
+    .carrera-item-btn.active-carrera {
+        background-color: #fdf2f4;
+        color: #7a152d;
+        border-color: #fbcfe8;
+        font-weight: 600;
+    }
+    .carrera-item-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        background: #f1f5f9;
+        color: #475569;
+        font-size: 0.95rem;
+        transition: all 0.15s ease;
+    }
+    .carrera-item-btn:hover .carrera-item-icon,
+    .carrera-item-btn.active-carrera .carrera-item-icon {
+        background: #fee2e2;
+        color: #7a152d;
+    }
+    .carrera-item-title {
+        font-size: 0.84rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.25;
+        transition: color 0.15s ease;
+    }
+    .carrera-item-btn:hover .carrera-item-title,
+    .carrera-item-btn.active-carrera .carrera-item-title {
+        color: #7a152d;
+    }
+    .carrera-item-subtitle {
+        font-size: 0.72rem;
+        line-height: 1.2;
+    }
+    .carrera-check-pill {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #7a152d;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+    }
+
+    /* Rediseño moderno de la grilla y tarjetas de Cátedra */
+    .curso-grid-modern {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+        gap: 1.25rem;
+    }
+    .curso-card-modern {
+        display: flex;
+        flex-direction: column;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 1rem;
+        padding: 1.25rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        color: inherit;
+        text-decoration: none;
+        height: 100%;
+        position: relative;
+    }
+    .curso-card-modern:hover {
+        transform: translateY(-4px);
+        border-color: #fbcfe8;
+        box-shadow: 0 12px 28px -6px rgba(122, 21, 45, 0.12);
+        color: inherit;
+    }
+    .badge-curso-codigo {
+        background: #f1f5f9;
+        color: #334155;
+        font-weight: 700;
+        font-size: 0.74rem;
+        padding: 3px 8px;
+        border-radius: 6px;
+        letter-spacing: 0.3px;
+    }
+    .badge-curso-creditos {
+        font-size: 0.74rem;
+        color: #64748b;
+        font-weight: 600;
+    }
+    .badge-curso-ciclo {
+        background: #fdf2f4;
+        color: #7a152d;
+        border: 1px solid #fbcfe8;
+        font-weight: 700;
+        font-size: 0.72rem;
+        padding: 3px 10px;
+        border-radius: 999px;
+    }
+    .curso-titulo-modern {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.35;
+        margin-bottom: 0.85rem;
+        transition: color 0.15s ease;
+    }
+    .curso-card-modern:hover .curso-titulo-modern {
+        color: #7a152d;
+    }
+    .curso-dif-box {
+        background: #f8fafc;
+        border: 1px solid #f1f5f9;
+        border-radius: 10px;
+        padding: 9px 12px;
+        margin-bottom: 0.85rem;
+    }
+    .curso-dif-label {
+        font-size: 0.74rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+    .dif-barra-modern {
+        height: 6px;
+        border-radius: 999px;
+        background: #e2e8f0;
+        overflow: hidden;
+    }
+    .dif-barra-modern span {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+        transition: width 0.3s ease;
+    }
+    .dif-alta { background: linear-gradient(90deg, #b91c1c, #7a152d); }
+    .dif-media { background: linear-gradient(90deg, #f59e0b, #d97706); }
+    .dif-baja { background: linear-gradient(90deg, #10b981, #059669); }
+    .dif-cero { background: #cbd5e1; }
+
+    .pill-tips-tag {
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 8px;
+        background: #f1f5f9;
+        color: #64748b;
+    }
+    .pill-tips-tag.con-tips {
+        background: #fdf2f4;
+        color: #7a152d;
+        border: 1px solid #fbcfe8;
+    }
+    .btn-ver-tips-link {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #7a152d;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: gap 0.2s ease;
+    }
+    .curso-card-modern:hover .btn-ver-tips-link {
+        gap: 7px;
+    }
+
     .estrellas { color: #d4a017; letter-spacing: 1px; }
     .tag-alta { background: #fde4cf; color: #b45309; }
     .tip-voto { border: 0; background: #f4f5f7; border-radius: 8px; padding: 5px 12px; font-weight: 700; font-size: .85rem; color: #3f3f46; }

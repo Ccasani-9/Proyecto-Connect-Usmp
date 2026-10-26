@@ -1,5 +1,12 @@
 // USMP Connect — utilidades compartidas por todos los módulos.
 
+/** Codifica texto antes de incluirlo en una plantilla HTML. */
+function usmpEscaparHtml(valor) {
+    return String(valor ?? '').replace(/[&<>"']/g, caracter => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[caracter]));
+}
+
 /** Token antiforgery (lo trae cualquier <form method="post"> del layout). */
 function usmpToken() {
     const input = document.querySelector('input[name="__RequestVerificationToken"]');
@@ -23,18 +30,40 @@ function usmpToast(mensaje, tipo = 'ok') {
     setTimeout(() => div.remove(), 4000);
 }
 
+/** Consulta únicamente las notificaciones de la sesión autenticada. */
+async function usmpActualizarNotificaciones() {
+    const noti = document.getElementById('notificaciones');
+    if (!noti || noti.querySelector('.show')) return;
+    try {
+        const respuesta = await fetch('/Notificaciones/Resumen', { cache: 'no-store' });
+        if (!respuesta.ok || respuesta.redirected) return;
+        const plantilla = document.createElement('template');
+        plantilla.innerHTML = await respuesta.text();
+        const actualizado = plantilla.content.querySelector('#notificaciones');
+        if (actualizado && noti.isConnected && !noti.querySelector('.show')) {
+            noti.replaceWith(actualizado);
+        }
+    } catch { /* La campana conserva los datos cargados por el servidor. */ }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Toasts de TempData
     document.querySelectorAll('[data-autohide]').forEach(t => setTimeout(() => t.remove(), 4500));
 
     // Al abrir Noticias, marcar como leídas
-    const noti = document.getElementById('notificaciones');
-    if (noti) {
-        noti.addEventListener('shown.bs.dropdown', () => {
-            const badge = noti.querySelector('[data-noti-count]');
-            if (badge) { badge.remove(); usmpPost('/Notificaciones/MarcarLeidas'); }
-        }, { once: true });
-    }
+    document.addEventListener('shown.bs.dropdown', event => {
+        const noti = event.target.closest('#notificaciones');
+        if (!noti) return;
+        const badge = noti.querySelector('[data-noti-count]');
+        if (badge) {
+            usmpPost('/Notificaciones/MarcarLeidas').then(respuesta => {
+                if (respuesta.ok) badge.remove();
+            });
+        }
+    });
+    document.addEventListener('hidden.bs.dropdown', event => {
+        if (event.target.closest('#notificaciones')) usmpActualizarNotificaciones();
+    });
 
     // Zonas de subida: <label class="dropzone"><input type="file" hidden data-dropzone> ... <span data-dropzone-text></span></label>
     // Si el input tiene data-preview="#idImg", muestra la vista previa de la imagen.
@@ -76,17 +105,26 @@ document.addEventListener('DOMContentLoaded', () => {
     iniciarPieHostWebSockets();
 });
 
-function iniciarPieHostWebSockets() {
+function iniciarPieHostWebSockets(intento = 0) {
     if (!window.pieHostUrl || window.pieHostUrl.trim() === '') return;
     try {
         const ws = new WebSocket(window.pieHostUrl);
+        ws.onopen = () => { intento = 0; };
         ws.onmessage = (event) => {
             try {
                 const msg = JSON.parse(event.data);
-                if (msg.evento === 'nueva_resena') {
-                    usmpToast(`${msg.datos.Usuario} calificó ${msg.datos.RestauranteNombre} (${msg.datos.NuevaCalificacion} ⭐)`);
+                if (msg.evento === 'nueva_resena' && msg.datos) {
+                    const textoToast = `${msg.datos.Usuario || 'Un estudiante'} calificó ${msg.datos.RestauranteNombre} (${msg.datos.NuevaCalificacion} ⭐)`;
+                    usmpToast(textoToast);
+                    usmpActualizarNotificaciones();
                 }
             } catch (e) {}
+        };
+        ws.onclose = () => {
+            if (intento < 5) {
+                const espera = Math.min(15000, 2000 * Math.pow(2, intento));
+                setTimeout(() => iniciarPieHostWebSockets(intento + 1), espera);
+            }
         };
     } catch (e) {
         // Fallback silencioso

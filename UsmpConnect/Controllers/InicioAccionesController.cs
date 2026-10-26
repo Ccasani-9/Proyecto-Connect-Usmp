@@ -11,7 +11,7 @@ public class HorarioController(ApplicationDbContext db) : Controller
 {
     public async Task<IActionResult> Index()
     {
-        var clases = await Agenda.ClasesSemanaAsync(db, User.GetUserId(), User.EsProfesor());
+        var clases = await Agenda.ClasesSemanaAsync(db, User.GetUserId(), false);
         ViewData["Hoy"] = HoraPeru.Hoy.DayOfWeek;
         return View(clases);
     }
@@ -73,6 +73,11 @@ public class CasosController(ApplicationDbContext db, INotificacionService notif
 
 public class NotificacionesController(ApplicationDbContext db) : Controller
 {
+    [HttpGet]
+    [Microsoft.AspNetCore.Authorization.Authorize]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public IActionResult Resumen() => ViewComponent("Notificaciones");
+
     [HttpPost]
     public async Task<IActionResult> MarcarLeidas()
     {

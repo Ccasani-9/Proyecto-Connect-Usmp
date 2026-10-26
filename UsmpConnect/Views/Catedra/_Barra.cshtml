@@ -1,23 +1,127 @@
 @model CatedraBarraVM
+@using UsmpConnect.Models
 
-<div class="card-u cat-barra">
-    <form method="get" action="/Catedra" class="search-box">
-        @if (Model.Ciclo is not null)
-        {
-            <input type="hidden" name="ciclo" value="@Model.Ciclo" />
+<div class="card-u p-3 mb-3">
+    <!-- Fila 1: Selector de Carrera, Buscador y Botón Aportar Tip -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <!-- Selector de Carrera FIA (Custom Dropdown moderno con iconos y estados) -->
+        @{
+            var carreraActual = CarrerasFia.Item(Model.Carrera);
         }
-        <i class="bi bi-search"></i>
-        <input class="form-control" name="q" value="@Model.Busqueda" placeholder="Buscar curso o docente..." aria-label="Buscar curso o docente" />
-    </form>
-    <div class="chips">
-        <a class="chip @(Model.Ciclo is null ? "active" : "")" href="/Catedra@(string.IsNullOrWhiteSpace(Model.Busqueda) ? "" : "?q=" + Uri.EscapeDataString(Model.Busqueda))">Todos</a>
-        @for (var c = 1; c <= 5; c++)
+        <div class="dropdown carrera-dropdown-wrap flex-grow-1" style="max-width: 460px; min-width: 280px;">
+            <button class="carrera-select-trigger btn w-100 text-start d-flex align-items-center justify-content-between"
+                    type="button"
+                    id="carreraDropdownBtn"
+                    data-bs-toggle="dropdown"
+                    data-bs-display="static"
+                    aria-expanded="false">
+                <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
+                    <div class="carrera-icon-badge flex-shrink-0 d-flex align-items-center justify-content-center">
+                        <i class="bi @carreraActual.Icono"></i>
+                    </div>
+                    <div class="d-flex flex-column text-truncate">
+                        <span class="carrera-label-kicker">Carrera FIA</span>
+                        <span class="carrera-nombre-texto text-truncate" title="@carreraActual.Nombre">@carreraActual.Nombre</span>
+                    </div>
+                </div>
+                <div class="carrera-chevron flex-shrink-0 text-muted ms-1">
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+            </button>
+
+            <ul class="dropdown-menu carrera-dropdown-menu shadow-lg border-0 p-2" aria-labelledby="carreraDropdownBtn">
+                <li class="carrera-menu-header px-2 py-1 mb-1 d-flex align-items-center justify-content-between">
+                    <span class="text-uppercase fw-bold text-muted" style="font-size: 0.68rem; letter-spacing: 0.5px;">
+                        <i class="bi bi-mortarboard me-1 text-danger"></i>Escuelas Profesionales
+                    </span>
+                    <span class="badge bg-light text-secondary border" style="font-size: 0.65rem;">8 Carreras</span>
+                </li>
+                @foreach (var c in CarrerasFia.Lista)
+                {
+                    var esActiva = string.Equals(carreraActual.Id, c.Id, StringComparison.OrdinalIgnoreCase);
+                    <li>
+                        <button type="button"
+                                class="dropdown-item carrera-item-btn d-flex align-items-center justify-content-between @(esActiva ? "active-carrera" : "")"
+                                onclick="filtrarCarrera('@c.Id')">
+                            <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
+                                <div class="carrera-item-icon flex-shrink-0 d-flex align-items-center justify-content-center">
+                                    <i class="bi @c.Icono"></i>
+                                </div>
+                                <div class="d-flex flex-column text-truncate">
+                                    <span class="carrera-item-title text-truncate">@c.Nombre</span>
+                                    <span class="carrera-item-subtitle text-muted">@c.NombreCorto · FIA USMP</span>
+                                </div>
+                            </div>
+                            @if (esActiva)
+                            {
+                                <div class="carrera-check-pill flex-shrink-0 ms-2">
+                                    <i class="bi bi-check-lg"></i>
+                                </div>
+                            }
+                        </button>
+                    </li>
+                }
+            </ul>
+        </div>
+
+        <!-- Buscador de Curso o Docente dentro de la carrera -->
+        <form method="get" action="/Catedra" class="search-box flex-grow-1" style="max-width: 340px; min-width: 220px;">
+            @if (Model.Ciclo is not null)
+            {
+                <input type="hidden" name="ciclo" value="@Model.Ciclo" />
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.Carrera))
+            {
+                <input type="hidden" name="carrera" value="@Model.Carrera" />
+            }
+            <i class="bi bi-search"></i>
+            <input class="form-control" name="q" value="@Model.Busqueda" placeholder="Buscar curso o docente..." aria-label="Buscar curso o docente" style="height: 44px; border-radius: 11px;" />
+        </form>
+
+        <!-- Botón Aportar Tip (si es alumno) -->
+        @if (Model.PuedeAportar)
         {
-            <a class="chip @(Model.Ciclo == c ? "active" : "")" href="@Url.Action("Index", "Catedra", new { q = Model.Busqueda, ciclo = c })">@Curso.Romano(c) Ciclo</a>
+            <button class="btn btn-guinda btn-sm px-3 py-2 fw-semibold shadow-2xs d-inline-flex align-items-center gap-2" type="button" data-bs-toggle="modal" data-bs-target="#modalTip" style="height: 44px; border-radius: 11px;">
+                <i class="bi bi-plus-circle-fill"></i>
+                <span>Aportar un Tip</span>
+            </button>
         }
     </div>
-    @if (Model.PuedeAportar)
-    {
-        <button class="btn-guinda" type="button" data-bs-toggle="modal" data-bs-target="#modalTip">+ Aportar un Tip</button>
-    }
+
+    <!-- Fila 2: Chips de Ciclos 1 al 10 (Sin 'Todos', selección directa) -->
+    <div class="d-flex align-items-center gap-2 pt-2 border-top">
+        <span class="text-muted fw-bold small text-nowrap d-none d-md-inline" style="font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.5px;">
+            <i class="bi bi-layers-fill text-danger me-1"></i>Ciclo:
+        </span>
+        <div class="chips d-flex align-items-center gap-1 overflow-x-auto py-1 flex-nowrap" style="scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
+            @for (var c = 1; c <= 10; c++)
+            {
+                var activo = (Model.Ciclo ?? 1) == c;
+                <a class="chip @(activo ? "active" : "")"
+                   href="@Url.Action("Index", "Catedra", new { q = Model.Busqueda, ciclo = c, carrera = Model.Carrera ?? CarrerasFia.Sistemas })">
+                   @Curso.Romano(c) Ciclo
+                </a>
+            }
+        </div>
+    </div>
 </div>
+
+<script>
+    function filtrarCarrera(carreraId) {
+        const url = new URL(window.location.origin + '/Catedra');
+        url.searchParams.set('carrera', carreraId);
+        @if (Model.Ciclo.HasValue)
+        {
+            <text>url.searchParams.set('ciclo', '@Model.Ciclo.Value');</text>
+        }
+        else
+        {
+            <text>url.searchParams.set('ciclo', '1');</text>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Busqueda))
+        {
+            <text>url.searchParams.set('q', @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Busqueda)));</text>
+        }
+        window.location.href = url.toString();
+    }
+</script>

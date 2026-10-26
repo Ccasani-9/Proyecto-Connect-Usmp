@@ -1,0 +1,30 @@
+@model List<UsmpConnect.Services.AlgoliaItem>
+@{ ViewData["Title"] = "Resultados de búsqueda"; var texto = ViewData["BusquedaGlobal"] as string; }
+<h1 class="h4 fw-bold mb-3">Resultados de búsqueda</h1>
+@if (string.IsNullOrWhiteSpace(texto))
+{
+    <div class="card-u p-4 text-muted">Escribe el nombre de un curso, docente, apunte, restaurante o artículo para comenzar.</div>
+}
+else if (Model.Count == 0)
+{
+    <div class="card-u p-4">No encontramos resultados para “@texto”. Prueba con otro nombre o una palabra más corta.</div>
+}
+else
+{
+    <p class="text-muted">@Model.Count resultados para “@texto”</p>
+    @foreach (var grupo in Model.GroupBy(r => r.Tipo))
+    {
+        <section class="mb-4" aria-label="@grupo.Key">
+            <h2 class="h6 fw-bold">@grupo.Key</h2>
+            <div class="card-u overflow-hidden">
+                @foreach (var item in grupo)
+                {
+                    <a href="@item.Url" class="busqueda-item">
+                        <strong>@item.Titulo</strong><span>@item.Descripcion</span>
+                        @if (item.Precio.HasValue) { <small>S/ @item.Precio.Value.ToString("N2")</small> }
+                    </a>
+                }
+            </div>
+        </section>
+    }
+}

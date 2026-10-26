@@ -1,3 +1,5 @@
+using UsmpConnect.Services;
+
 namespace UsmpConnect.ViewModels;
 
 public record ServicioStatusVM(
@@ -19,4 +21,8 @@ public class TecnologiaViewModel
     public int TotalRestaurantes { get; set; }
     public int TotalApuntes { get; set; }
     public int TotalArticulos { get; set; }
+    public MetricasEntrenamientoSentimiento? MetricasSentimiento { get; set; }
+    public string RutaModeloSentimiento { get; set; } = string.Empty;
+    public MetricasEntrenamientoRecomendacion? MetricasRecomendacion { get; set; }
+    public string RutaModeloRecomendacion { get; set; } = string.Empty;
 }

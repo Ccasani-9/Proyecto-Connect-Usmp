@@ -3,20 +3,17 @@
 @model UsmpConnect.ViewModels.InicioViewModel
 @{
     ViewData["Title"] = "Inicio";
-
-    static string ClaseNota(decimal? n) => n switch { null => "tag-muted", >= 13 => "tag-ok", >= 10.5m => "tag-warn", _ => "tag-bad" };
-    static string F(decimal? n) => n?.ToString("0.0") ?? "—";
 }
 
 <!-- Banner / carrusel -->
 <section class="hero" id="hero">
     <div class="slide active">
         <div>
-            <span class="hero-tag">MATRÍCULA 2026-II</span>
-            <h2>¿Tuviste algún inconveniente con tu matrícula?</h2>
-            <p>Registra tu caso y un asesor especializado te ayudará a resolverlo en la brevedad.</p>
+            <span class="hero-tag">RESTAURANTES CERCANOS</span>
+            <h2>¿Buscando dónde almorzar cerca del campus?</h2>
+            <p>Descubre los huariques y restaurantes en La Fontana, Frutales y Constructores con menús para alumnos.</p>
         </div>
-        <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#modalCaso">Reportar caso <i class="bi bi-arrow-right"></i></button>
+        <a class="btn btn-light" href="/Restaurantes">Explorar Restaurantes <i class="bi bi-arrow-right"></i></a>
     </div>
     <div class="slide">
         <div>
@@ -48,45 +45,89 @@
 </div>
 
 <div class="row g-3">
-    <!-- Mis notas (alumno) -->
+    <!-- Huarique del Día / Dónde Almorzar Hoy -->
     <div class="col-xl-4 col-lg-6">
-        <div class="card-u p h-100">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h3 class="card-title-u">Mis notas</h3>
-                <div class="d-flex align-items-center gap-3">
-                    <a class="ver-todo" href="/Notas">Ver todo &gt;</a>
-                    <span class="icon-bubble"><i class="bi bi-journal-bookmark"></i></span>
+        <div class="card-u p h-100 d-flex flex-column justify-content-between" data-recomendacion-home>
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-danger-subtle text-danger fw-bold px-2 py-1" style="font-size:0.72rem; border-radius:6px;">
+                            @(Model.RecomendacionPersonalizada ? "PARA TI HOY" : "MÁS POPULARES")
+                        </span>
+                        <h3 class="card-title-u mb-0" style="font-size:1.05rem;">¿Dónde almorzar hoy?</h3>
+                    </div>
+                    <a class="ver-todo" href="/Restaurantes">Ver mapa &gt;</a>
                 </div>
-            </div>
-            @for (var i = 0; i < Model.Notas.Count; i++)
-            {
-                var n = Model.Notas[i];
-                var abierto = n.EP.HasValue && i < 2;
-                <div class="acordeon-item">
-                    <button class="acordeon-btn" type="button" data-bs-toggle="collapse" data-bs-target="#nota@(i)" aria-expanded="@(abierto ? "true" : "false")">
-                        <span>@n.Curso</span><i class="bi @(abierto ? "bi-dash-lg" : "bi-plus-lg")"></i>
-                    </button>
-                    <div class="collapse @(abierto ? "show" : "")" id="nota@(i)">
-                        <div class="acordeon-body">
-                            @if (n.PP is null && n.EP is null && n.EF is null)
-                            {
-                                <span class="small text-muted">Aún no hay notas registradas · @n.Docente</span>
-                            }
-                            else
-                            {
-                                @if (n.PP.HasValue) { <span class="tag @ClaseNota(n.PP)">PP: @F(n.PP)</span> }
-                                <span class="tag @ClaseNota(n.EP)">EP: @F(n.EP)</span>
-                                <span class="tag @ClaseNota(n.EF)">EF: @F(n.EF)</span>
-                                <span class="tag @ClaseNota(n.Promedio)">Prom: @F(n.Promedio)</span>
-                            }
+
+                @if (Model.HuariqueRecomendado != null)
+                {
+                    var h = Model.HuariqueRecomendado;
+                    <div class="rounded-3 overflow-hidden border mb-3" style="background:#fff; border-color:var(--border) !important;">
+                        <div class="position-relative" style="height:140px; overflow:hidden;">
+                            <img src="@h.FotoUrl" alt="@h.Nombre" style="width:100%; height:100%; object-fit:cover;" />
+                            <div class="position-absolute top-0 start-0 m-2">
+                                <span class="badge bg-dark bg-opacity-75 text-white" style="backdrop-filter:blur(4px); font-size:0.75rem;">
+                                    <i class="bi bi-tag me-1"></i>@h.CategoriaTexto
+                                </span>
+                            </div>
+                            <div class="position-absolute top-0 end-0 m-2">
+                                <span class="badge bg-white text-dark shadow-sm fw-bold" style="font-size:0.75rem;">
+                                    <i class="bi bi-star-fill text-warning"></i> @h.CalificacionPromedio.ToString("0.0") (@h.TotalResenas)
+                                </span>
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <h4 class="fw-bold mb-1 text-truncate" style="font-size:1.02rem;">@h.Nombre</h4>
+                            <p class="text-muted small mb-3" style="display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:34px; line-height:1.35;">
+                                @h.Descripcion
+                            </p>
+                            <div class="d-flex flex-column gap-2 text-muted small pt-2 border-top">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-geo-alt-fill text-danger flex-shrink-0"></i>
+                                    <span class="text-truncate">@h.DistanciaTexto</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-clock-fill text-primary flex-shrink-0"></i>
+                                    <span class="text-truncate">@h.HorarioAtencion</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-pin-map text-secondary flex-shrink-0"></i>
+                                    <span class="text-truncate">@h.Direccion</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            }
-            @if (Model.Notas.Count == 0)
-            {
-                <div class="vacio"><i class="bi bi-journal"></i>No tienes cursos matriculados.</div>
-            }
+
+                    @if (Model.AlternativasRecomendadas.Count > 0)
+                    {
+                        <div class="mb-3">
+                            <small class="text-muted fw-semibold d-block mb-1" style="font-size:0.75rem;">Otras opciones recomendadas:</small>
+                            <div class="d-flex flex-column gap-1">
+                                @foreach (var alt in Model.AlternativasRecomendadas)
+                                {
+                                    <a href="/Restaurantes?q=@Uri.EscapeDataString(alt.Nombre)" class="d-flex justify-content-between align-items-center px-2 py-1 rounded border text-decoration-none bg-light" style="font-size:0.8rem; color:var(--text);">
+                                        <span class="text-truncate fw-medium">@alt.Nombre <small class="text-muted">· @alt.CategoriaTexto</small></span>
+                                        <span class="text-warning fw-bold flex-shrink-0 ms-2"><i class="bi bi-star-fill"></i> @alt.CalificacionPromedio.ToString("0.0")</span>
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="p-4 text-center text-muted">
+                        <i class="bi bi-shop fs-1 d-block mb-2 text-muted"></i>
+                        <p class="small">Explora los restaurantes y huariques recomendados alrededor de la FIA.</p>
+                    </div>
+                }
+            </div>
+
+            <div>
+                <a href="/Restaurantes" class="btn btn-guinda w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold" style="border-radius:10px;">
+                    <i class="bi bi-compass"></i> Explorar Restaurantes y Huariques <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
         </div>
     </div>
 
@@ -154,37 +195,15 @@
                     </li>
                 }
             </ul>
-            <button class="btn-dashed" data-bs-toggle="modal" data-bs-target="#modalEvento">+ Agregar recordatorio/actividad</button>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <button class="btn-dashed" data-bs-toggle="modal" data-bs-target="#modalEvento">+ Agregar recordatorio/actividad</button>
+            }
+            else
+            {
+                <a href="/Cuenta/Login" class="btn-dashed text-decoration-none text-center d-block">+ Iniciar sesión para agregar recordatorios</a>
+            }
         </div>
-    </div>
-</div>
-
-<!-- Modal: reportar caso de matrícula -->
-<div class="modal fade" id="modalCaso" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <form class="modal-content" asp-controller="Casos" asp-action="Crear" method="post">
-            <div class="modal-header">
-                <h5 class="modal-title">Reportar caso de matrícula</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label" for="casoTipo">Tipo de inconveniente</label>
-                    <select class="form-select" id="casoTipo" name="tipo" required>
-                        <option value="">Seleccionar</option>
-                        @foreach (var t in CasosController.Tipos)
-                        {
-                            <option>@t</option>
-                        }
-                    </select>
-                </div>
-                <div class="mb-4">
-                    <label class="form-label" for="casoDesc">Describe tu caso</label>
-                    <textarea class="form-control" id="casoDesc" name="descripcion" rows="4" maxlength="1000" required placeholder="Ej: El curso Física I no aparece en mi horario aunque ya pagué la matrícula..."></textarea>
-                </div>
-                <button class="btn-guinda w-100" type="submit">Enviar caso</button>
-            </div>
-        </form>
     </div>
 </div>
 
@@ -224,13 +243,6 @@
             hero.addEventListener('mouseenter', () => clearInterval(timer));
             hero.addEventListener('mouseleave', () => timer = setInterval(() => ir((i + 1) % slides.length), 7000));
         })();
-
-        // Acordeón de notas: cambiar + / −
-        document.querySelectorAll('.acordeon-item .collapse').forEach(c => {
-            const icono = c.previousElementSibling?.querySelector('i');
-            c.addEventListener('show.bs.collapse', () => icono.className = 'bi bi-dash-lg');
-            c.addEventListener('hide.bs.collapse', () => icono.className = 'bi bi-plus-lg');
-        });
 
         // Pestañas Hoy / Mañana
         document.querySelectorAll('[data-dia]').forEach(b => b.addEventListener('click', () => {

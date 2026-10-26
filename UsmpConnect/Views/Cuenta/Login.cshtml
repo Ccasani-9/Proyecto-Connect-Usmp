@@ -5,48 +5,200 @@
     ViewData["Title"] = "Iniciar sesión";
 }
 
-<h2>Iniciar sesión</h2>
-<p class="text-muted mb-4">Ingresa con tu correo institucional USMP.</p>
+<div class="d-md-none text-center mb-4">
+    <img src="~/img/logo_USMP-CONNECT.png" alt="USMP Connect Logo" style="width:70px; height:70px; object-fit:contain;" />
+    <h3 class="fw-bold mt-2 mb-0" style="color:var(--guinda); font-size:1.35rem;">USMP CONNECT</h3>
+</div>
 
-<form asp-action="Login" method="post" novalidate>
+<div class="mb-4">
+    <h2 class="fw-bold mb-1" style="color:#1e293b;">Iniciar sesión</h2>
+    <p class="text-muted small mb-0">Ingresa con tu correo institucional USMP para acceder al campus virtual.</p>
+</div>
+
+<form asp-action="Login" method="post" novalidate id="formLogin">
     <input type="hidden" asp-for="ReturnUrl" />
-    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small rounded-3"></div>
 
     <div class="mb-3">
-        <label asp-for="Email" class="form-label"></label>
-        <input asp-for="Email" class="form-control" placeholder="nombre.apellido@usmp.pe" autocomplete="username" autofocus />
-        <span asp-validation-for="Email"></span>
+        <label asp-for="Email" class="form-label fw-semibold small text-secondary mb-1">Correo institucional</label>
+        <div class="input-group">
+            <span class="input-group-text bg-white border-end-0 text-muted ps-3"><i class="bi bi-envelope"></i></span>
+            <input asp-for="Email" class="form-control border-start-0 ps-2" placeholder="nombre.apellido@usmp.pe" autocomplete="username" autofocus />
+        </div>
+        <span asp-validation-for="Email" class="text-danger small"></span>
     </div>
+
     <div class="mb-3">
-        <label asp-for="Password" class="form-label"></label>
-        <input asp-for="Password" class="form-control" placeholder="••••••••" autocomplete="current-password" />
-        <span asp-validation-for="Password"></span>
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <label asp-for="Password" class="form-label fw-semibold small text-secondary mb-0">Contraseña</label>
+        </div>
+        <div class="input-group">
+            <span class="input-group-text bg-white border-end-0 text-muted ps-3"><i class="bi bi-lock"></i></span>
+            <input asp-for="Password" class="form-control border-start-0 border-end-0 ps-2" placeholder="••••••••" autocomplete="current-password" id="inputPassword" />
+            <button class="btn btn-outline-secondary border-start-0 bg-white text-muted pe-3" type="button" id="btnTogglePassword" tabindex="-1" title="Ver contraseña">
+                <i class="bi bi-eye" id="eyeIcon"></i>
+            </button>
+        </div>
+        <span asp-validation-for="Password" class="text-danger small"></span>
     </div>
-    <div class="form-check mb-4">
-        <input asp-for="Recordarme" class="form-check-input" />
-        <label asp-for="Recordarme" class="form-check-label"></label>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="form-check">
+            <input asp-for="Recordarme" class="form-check-input" />
+            <label asp-for="Recordarme" class="form-check-label small text-secondary"></label>
+        </div>
     </div>
-    <button type="submit" class="btn-guinda w-100 py-2">Ingresar</button>
+
+    <button type="submit" class="btn-guinda w-100 py-2 d-flex align-items-center justify-content-center gap-2 fw-semibold rounded-3 shadow-sm">
+        <i class="bi bi-box-arrow-in-right"></i> Ingresar al Portal
+    </button>
 </form>
 
-<p class="text-center mt-4 mb-0">¿No tienes cuenta? <a asp-action="Registro" class="fw-bold">Regístrate</a></p>
+<div class="d-flex align-items-center my-3">
+    <hr class="flex-grow-1 my-0 text-muted opacity-25">
+    <span class="px-3 text-muted small fw-medium" style="font-size:0.75rem;">O ACCEDE RÁPIDAMENTE</span>
+    <hr class="flex-grow-1 my-0 text-muted opacity-25">
+</div>
 
-<div class="demo-box">
-    <div class="fw-bold mb-2"><i class="bi bi-person-badge me-1"></i>Cuentas de demostración <span class="text-muted fw-normal">(clave: @DemoUsers.Password)</span></div>
-    <div class="d-flex gap-2 flex-wrap">
-        <button type="button" data-demo="@DemoUsers.Alessandro"><i class="bi bi-mortarboard me-1"></i>Alumno · Alessandro</button>
-        <button type="button" data-demo="@DemoUsers.Maria"><i class="bi bi-mortarboard me-1"></i>Alumna · María</button>
-        <button type="button" data-demo="@DemoUsers.Carlos"><i class="bi bi-mortarboard me-1"></i>Alumno · Carlos</button>
+<!-- Botón Google -->
+<button type="button" class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2 mb-3 bg-white text-dark rounded-3 shadow-2xs" id="btnGoogleLogin" style="border-color:#dadce0; font-size:0.88rem; font-weight:500;">
+    <svg width="18" height="18" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+    </svg>
+    <span>Continuar con Google</span>
+</button>
+
+<!-- Box de Cuentas Demo por Carrera -->
+<div class="demo-box p-3 rounded-3 mt-2" style="background:#f8fafc; border:1px solid #e2e8f0;">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="fw-bold small text-dark"><i class="bi bi-mortarboard-fill text-warning me-1"></i>Perfiles Demo de Evaluación</span>
+        <span class="badge bg-white text-secondary border" style="font-size:0.7rem;">Clave: @DemoUsers.Password</span>
+    </div>
+    <p class="text-muted small mb-2" style="font-size:0.75rem;">1 clic para ingresar con cuentas de prueba:</p>
+    <div class="d-grid gap-2">
+        <button type="button" class="btn btn-sm btn-white text-start d-flex align-items-center justify-content-between p-2 border rounded-2 bg-white" data-demo="@DemoUsers.Alessandro" style="transition: all .15s ease;">
+            <div class="d-flex align-items-center gap-2">
+                <span class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:30px;height:30px;font-size:0.75rem;">AM</span>
+                <div>
+                    <strong class="d-block text-dark" style="font-size:0.83rem; line-height:1.2;">Alessandro Morales</strong>
+                    <small class="text-muted" style="font-size:0.73rem;">Ing. Computación y Sistemas</small>
+                </div>
+            </div>
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size:0.7rem;">Ingresar &rarr;</span>
+        </button>
+        <button type="button" class="btn btn-sm btn-white text-start d-flex align-items-center justify-content-between p-2 border rounded-2 bg-white" data-demo="@DemoUsers.Maria" style="transition: all .15s ease;">
+            <div class="d-flex align-items-center gap-2">
+                <span class="avatar-sm bg-success text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:30px;height:30px;font-size:0.75rem;">MG</span>
+                <div>
+                    <strong class="d-block text-dark" style="font-size:0.83rem; line-height:1.2;">María Gonzales</strong>
+                    <small class="text-muted" style="font-size:0.73rem;">Ing. Industrial</small>
+                </div>
+            </div>
+            <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:0.7rem;">Ingresar &rarr;</span>
+        </button>
+        <button type="button" class="btn btn-sm btn-white text-start d-flex align-items-center justify-content-between p-2 border rounded-2 bg-white" data-demo="@DemoUsers.Carlos" style="transition: all .15s ease;">
+            <div class="d-flex align-items-center gap-2">
+                <span class="avatar-sm bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:30px;height:30px;font-size:0.75rem;">CR</span>
+                <div>
+                    <strong class="d-block text-dark" style="font-size:0.83rem; line-height:1.2;">Carlos Rojas</strong>
+                    <small class="text-muted" style="font-size:0.73rem;">Ing. Civil</small>
+                </div>
+            </div>
+            <span class="badge bg-warning-subtle text-dark border border-warning-subtle" style="font-size:0.7rem;">Ingresar &rarr;</span>
+        </button>
     </div>
 </div>
 
+<p class="text-center mt-3 mb-0 small text-muted">¿Eres alumno nuevo? <a asp-action="Registro" class="fw-bold text-decoration-none" style="color:var(--guinda);">Crear cuenta</a></p>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOmZ_zHT2LQx3j6yyHa93qo1-uxGM5z5s",
+            authDomain: "usmp-connect.firebaseapp.com",
+            projectId: "usmp-connect",
+            storageBucket: "usmp-connect.firebasestorage.app",
+            messagingSenderId: "160957209032",
+            appId: "1:160957209032:web:87499388926533345b88fd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        auth.languageCode = 'es';
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+
+        const btnGoogle = document.getElementById('btnGoogleLogin');
+        const originalGoogleHtml = btnGoogle.innerHTML;
+
+        btnGoogle.addEventListener('click', async () => {
+            btnGoogle.disabled = true;
+            btnGoogle.innerHTML = `<span class="spinner-border spinner-border-sm me-2 text-danger" role="status"></span> Conectando con Google...`;
+
+            try {
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+
+                // El servidor valida la firma y obtiene la identidad del token.
+                const idToken = await user.getIdToken();
+                const resp = await fetch('/Cuenta/GoogleLogin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ idToken })
+                });
+
+                if (resp.ok) {
+                    const data = await resp.json().catch(() => ({}));
+                    window.location.href = data.redirectUrl || '/';
+                } else {
+                    let errMsg = 'No se pudo iniciar sesión en el servidor (HTTP ' + resp.status + ').';
+                    try {
+                        const err = await resp.json();
+                        if (err && err.error) errMsg = err.error;
+                    } catch (_) {}
+                    alert(errMsg);
+                    btnGoogle.disabled = false;
+                    btnGoogle.innerHTML = originalGoogleHtml;
+                }
+            } catch (error) {
+                console.error("Firebase Google Auth error:", error);
+                if (error.code === 'auth/operation-not-allowed') {
+                    alert('Atención: El proveedor Google aún no está habilitado en Firebase Console.\n\nVe a Firebase Console > Authentication > pestaña "Sign-in method" > Activa el proveedor "Google".');
+                } else if (error.code !== 'auth/popup-closed-by-user') {
+                    alert('Error al conectar con Google: ' + (error.message || error.code));
+                }
+                btnGoogle.disabled = false;
+                btnGoogle.innerHTML = originalGoogleHtml;
+            }
+        });
+
+        // Toggle ver/ocultar contraseña
+        const btnToggle = document.getElementById('btnTogglePassword');
+        const inputPass = document.getElementById('inputPassword');
+        const eyeIcon = document.getElementById('eyeIcon');
+        if (btnToggle && inputPass && eyeIcon) {
+            btnToggle.addEventListener('click', () => {
+                const isPass = inputPass.type === 'password';
+                inputPass.type = isPass ? 'text' : 'password';
+                eyeIcon.className = isPass ? 'bi bi-eye-slash' : 'bi bi-eye';
+            });
+        }
+
+        // Cuentas demo: autocompletar e ingresar
         document.querySelectorAll('[data-demo]').forEach(b => b.addEventListener('click', () => {
             document.getElementById('Email').value = b.dataset.demo;
-            document.getElementById('Password').value = '@DemoUsers.Password';
-            b.closest('.auth-form').querySelector('form').submit();
+            document.getElementById('inputPassword').value = '@DemoUsers.Password';
+            document.getElementById('formLogin').submit();
         }));
     </script>
 }
