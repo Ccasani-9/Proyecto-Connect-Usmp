@@ -131,6 +131,8 @@ Todas las cuentas demo utilizan la contraseña predeterminada: `Usmp2026!`
 
 ## 🔒 Variables de Entorno en Producción
 
+Para preparar la exposición: [Guía de sustentación](docs/GUIA_SUSTENTACION.md), [verificación de la publicación](docs/VERIFICACION_PUBLICACION.md) y [configuración de Render](docs/RENDER_DEMO.md).
+
 Para el despliegue en contenedores Docker o plataformas en la nube (como Render), la aplicación consume las siguientes variables de configuración:
 
 ```ini
