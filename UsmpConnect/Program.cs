@@ -92,6 +92,18 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddScoped<INotificacionService, NotificacionService>();
 builder.Services.AddSingleton<IAlmacenArchivos, AlmacenArchivosLocal>();
 builder.Services.AddServiciosNube();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.Name = ".UsmpConnect.Asistente";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+});
+builder.Services.AddScoped<UsmpConnect.Services.Agente.IAsistenteService, UsmpConnect.Services.Agente.AgenteUsmpService>();
+builder.Services.AddSingleton<UsmpConnect.Services.Agente.ConversacionesActivas>();
 builder.Services.AddHttpClient<IFirebaseTokenValidator, FirebaseTokenValidator>(client =>
     client.Timeout = TimeSpan.FromSeconds(10));
 
@@ -185,6 +197,7 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseSession();
 
 app.MapStaticAssets();
 app.MapControllers();

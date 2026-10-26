@@ -28,6 +28,7 @@
     <link rel="icon" type="image/png" href="~/img/logo_USMP-CONNECT.png" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/asistente.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
@@ -145,6 +146,10 @@
     </main>
 
     <partial name="_ModalesGlobales" />
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <partial name="_AsistenteChat" />
+    }
 
     @if (TempData["Toast"] is string toast)
     {
@@ -160,6 +165,10 @@
     <script>window.pieHostUrl = @Json.Serialize(PieHost.WebSocketClientUrl);</script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/busqueda.js" asp-append-version="true"></script>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <script src="~/js/asistente.js" asp-append-version="true"></script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
