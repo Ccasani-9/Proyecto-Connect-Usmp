@@ -14,6 +14,7 @@ public sealed class CatalogoRestaurantesService(
     IBuscadorAlgolia algolia,
     IColaMensajes cola,
     IAnalisisSentimientoService sentimiento,
+    IRecomendacionRestaurantesService recomendador,
     ILogger<CatalogoRestaurantesService> logger)
 {
     public const string CacheKey = "foodspots:catalogo:v1";
@@ -37,7 +38,7 @@ public sealed class CatalogoRestaurantesService(
             var entidades = await db.Restaurantes.Include(r => r.Platos).AsNoTracking()
                 .OrderBy(r => r.Id).ToListAsync(cancellationToken);
             items = entidades.Select(r => new RestauranteItemVM(
-                r.Id, r.Nombre, r.Descripcion, r.Categoria.ToString(), r.Categoria, r.Rango,
+                r.Id, r.Nombre, r.Descripcion, r.Categoria.Nombre(), r.Categoria, r.Rango,
                 r.Direccion, r.DistanciaTexto, r.RangoPrecios, r.HorarioAtencion, r.TelefonoWhatsApp,
                 r.FotoUrl, r.Latitud, r.Longitud, r.CalificacionPromedio, r.TotalResenas,
                 r.Platos.Select(p => new PlatoItemVM(p.Id, p.Nombre, p.Precio, p.Descripcion, p.EsPopular)).ToList()
@@ -47,6 +48,43 @@ public sealed class CatalogoRestaurantesService(
             return new(items, "SQLite");
         }
         finally { Gate.Release(); }
+    }
+
+    public async Task<(List<RestauranteItemVM> Recomendados, bool Personalizada)> ObtenerRecomendadosAsync(
+        string? usuarioClave,
+        int topK = 3,
+        CancellationToken cancellationToken = default)
+    {
+        var datos = await ObtenerAsync(cancellationToken);
+        if (datos.Restaurantes.Count == 0)
+            return ([], false);
+
+        var porId = datos.Restaurantes.ToDictionary(r => r.Id);
+        var recs = await recomendador.RecomendarAsync(
+            usuarioClave,
+            porId.Keys,
+            topK,
+            cancellationToken);
+
+        if (recs.Count > 0)
+        {
+            var ordenados = recs
+                .Where(r => porId.ContainsKey(r.RestauranteId))
+                .Select(r => porId[r.RestauranteId])
+                .ToList();
+
+            var personalizada = recs.Any(r => !r.DeFrio);
+            return (ordenados, personalizada);
+        }
+
+        // Respaldo por calificación promedio si el recomendador está deshabilitado
+        var populares = datos.Restaurantes
+            .OrderByDescending(r => r.CalificacionPromedio)
+            .ThenByDescending(r => r.TotalResenas)
+            .Take(Math.Max(1, topK))
+            .ToList();
+
+        return (populares, false);
     }
 
     public async Task<(List<RestauranteItemVM> Restaurantes, string Fuente)> FiltrarAsync(

@@ -14,12 +14,15 @@ public class TecnologiaController(
     IColaMensajes amqp,
     IBuscadorAlgolia algolia,
     IPieHostService pieHost,
-    IAnalisisSentimientoService sentimiento) : Controller
+    IAnalisisSentimientoService sentimiento,
+    IRecomendacionRestaurantesService recomendador) : Controller
 {
     public async Task<IActionResult> Index()
     {
         if (sentimiento.EstaHabilitado && !sentimiento.EstaListo)
             await sentimiento.InicializarAsync();
+        if (recomendador.EstaHabilitado && !recomendador.EstaListo)
+            await recomendador.SincronizarConBaseDatosAsync(db);
 
         var vm = new TecnologiaViewModel
         {
@@ -30,6 +33,8 @@ public class TecnologiaController(
             TotalArticulos = await db.Articulos.CountAsync(),
             MetricasSentimiento = sentimiento.UltimasMetricas,
             RutaModeloSentimiento = Path.GetFileName(sentimiento.ModelPath),
+            MetricasRecomendacion = recomendador.UltimasMetricas,
+            RutaModeloRecomendacion = Path.GetFileName(recomendador.ModelPath),
             Servicios = new List<ServicioStatusVM>
             {
                 new(
@@ -91,6 +96,16 @@ public class TecnologiaController(
                     "cpu-fill",
                     sentimiento.EstaListo ? "tag-ok" : "tag-warn",
                     "Entrenamiento e inferencia local con FeaturizeText + SdcaLogisticRegression para clasificar el sentimiento (Positivo/Negativo) de las reseñas estudiantiles."
+                ),
+                new(
+                    "ML.NET · Recomendación de Restaurantes",
+                    "Factorización de Matrices (Filtrado Colaborativo)",
+                    $"Data/ML/interacciones_restaurantes.csv -> {Path.GetFileName(recomendador.ModelPath)}",
+                    recomendador.EstaListo,
+                    recomendador.Estado,
+                    "stars",
+                    recomendador.EstaListo ? "tag-ok" : "tag-warn",
+                    "Entrenamiento con MatrixFactorizationTrainer sobre interacciones usuario-restaurante y respaldo de popularidad en frío para usuarios sin historial."
                 ),
                 new(
                     "Render Cloud PaaS",

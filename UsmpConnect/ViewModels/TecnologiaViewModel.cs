@@ -23,4 +23,6 @@ public class TecnologiaViewModel
     public int TotalArticulos { get; set; }
     public MetricasEntrenamientoSentimiento? MetricasSentimiento { get; set; }
     public string RutaModeloSentimiento { get; set; } = string.Empty;
+    public MetricasEntrenamientoRecomendacion? MetricasRecomendacion { get; set; }
+    public string RutaModeloRecomendacion { get; set; } = string.Empty;
 }
