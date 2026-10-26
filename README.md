@@ -89,7 +89,7 @@ A diferencia de los sistemas administrativos tradicionales, USMP Connect consoli
 | **Frontend** | **Razor Views + Bootstrap 5 + Vanilla JS** | Interfaz responsive, accesible y ligera sin sobrecarga de frameworks SPA. |
 | **Identidad Visual** | **CSS Institucional USMP** | Paleta cromática oficial (Guinda `#8B1D2C`, blanco y gris perla). |
 | **Contenedores** | **Docker Multi-Stage Build** | Imagen optimizada sobre `mcr.microsoft.com/dotnet/aspnet:10.0` (usuario no-root `$APP_UID`). |
-| **Despliegue** | **Render Cloud PaaS** | [https://usmpconnect.onrender.com/](https://usmpconnect.onrender.com/) — Integración continua (CI/CD) conectada a `main`. |
+| **Despliegue** | **Render Cloud PaaS** | [https://usmpconnect.onrender.com/](https://usmpconnect.onrender.com/) — Demo con despliegue automático desde `develop`, según la configuración comprobada en Render. El paso a `main` corresponde a la entrega estable. |
 
 ---
 
@@ -148,9 +148,16 @@ PieHost__ClusterId=<tu_cluster_piehost>
 PieHost__ApiKey=<tu_api_key_piehost>
 PieHost__ApiSecret=<tu_api_secret_piehost>
 PieHost__WebSocketUrl=<tu_websocket_url_piehost>
+Groq__ApiKey=<tu_api_key_groq>
+Groq__Model=openai/gpt-oss-20b
+Qdrant__Endpoint=<tu_endpoint_qdrant_cloud>
+Qdrant__ApiKey=<tu_api_key_qdrant>
+Qdrant__CollectionName=usmp_fia_e5_v1
 ```
 
 ### Datos de demostración y reinicio
+
+La preparación y comprobación del despliegue actual se detalla en [Render: configuración de la demo](docs/RENDER_DEMO.md). Las claves guardadas con Save only se activan en el próximo despliegue. El servicio actual publica automáticamente desde develop.
 
 La aplicación crea SQLite y siembra las cuentas y contenidos de ejemplo cuando la base de datos no existe. Por defecto conserva los datos entre arranques. `Database__ResetOnStartup=true` activa un reinicio destructivo de la base de datos **y de los archivos subidos**: úsalo únicamente para una demostración desechable y vuelve a desactivarlo después. Conservar datos en Render también requiere almacenamiento persistente; esta opción no convierte el disco efímero del alojamiento en persistente.
 
@@ -201,7 +208,7 @@ El buscador común ofrece sugerencias de restaurantes, cursos/docentes, apuntes 
 
 Algolia se consulta desde el servidor: las claves no se envían al navegador. Si no está configurado o falla la consulta se utiliza SQLite, con búsqueda sin distinguir tildes ni mayúsculas. Las búsquedas sin resultados en Algolia se respetan. Los resultados se contrastan con SQLite para no enlazar apuntes borrados ni artículos vendidos o reservados.
 
-Al arrancar y al publicar, calificar, eliminar o cambiar disponibilidad se solicita la sincronización del catálogo. Se agregan los cuatro tipos y se retiran los registros obsoletos de la aplicación. El índice debe ser propio de este proyecto; se gestionan los prefijos apunte_, market_, rest_ y curso_. La clave de escritura necesita permisos de browse, addObject y deleteObject. Algolia procesa las operaciones de forma asíncrona: la aceptación no significa que ya hayan aparecido todos los cambios. Si falla una sincronización, los datos permanecen en SQLite y se registra el fallo; el arranque siguiente vuelve a reconciliar. La acción manual de sincronización está restringida al rol Profesor.
+Al arrancar y al publicar, calificar, eliminar o cambiar disponibilidad se solicita la sincronización del catálogo. Se agregan los cuatro tipos y se retiran los registros obsoletos de la aplicación. El índice debe ser propio de este proyecto; se gestionan los prefijos apunte_, market_, rest_ y curso_. La clave de escritura necesita permisos de browse, addObject y deleteObject. Algolia procesa las operaciones de forma asíncrona: la aceptación no significa que ya hayan aparecido todos los cambios. Si falla una sincronización, los datos permanecen en SQLite y se registra el fallo; el arranque siguiente vuelve a reconciliar. Se retiró la acción web manual reservada al rol Profesor: la sincronización sigue en los flujos automáticos.
 # Fuentes de conocimiento del asistente FIA
 
 USMP Connect es una red social para alumnos. Las fuentes del asistente se preparan como archivos del proyecto, sin panel Profesor ni nuevo rol de administración. PdfPig y Qdrant extraen y recuperan las fuentes; el chat utiliza Groq y Semantic Kernel para responder con ellas y consultar los catálogos.

@@ -13,6 +13,7 @@ Panel flotante no modal con región etiquetada, botón de abrir/cerrar, Escape y
 Mensajes del modelo y de usuarios se renderizan con textContent, nunca HTML. Enlaces solo en tarjetas del servidor con rutas internas. El chat es transitorio y no comparte texto en URLs ni lo guarda en localStorage. Historial por sesión y usuario en el servidor, con seis intercambios; se pierde al reiniciar o expirar la sesión.
 
 ## Contratos de interacción
+- El panel `/Tecnologia` es diagnóstico para alumnos autenticados y sustentación. Reutiliza `card-u`, tarjetas Bootstrap y tags del tema; las etiquetas largas se envuelven. Los estados distinguen configuración de última operación y muestran hora de Lima; no ejecuta consultas de IA al abrirse. Swagger y pruebas de fuentes se acceden desde ese panel, sin agregar controles técnicos a las pantallas sociales.
 - Formularios: etiquetas y errores asociados; antiforgery; no validación nativa emergente; evitar envío duplicado.
 - Streaming: NDJSON completo por líneas, indicador de espera y botón Detener, desplazamiento solo al permanecer al final, errores visibles junto al campo.
 - Nueva conversación: confirmación dentro del panel, esperar respuesta del servidor antes de limpiar la vista.

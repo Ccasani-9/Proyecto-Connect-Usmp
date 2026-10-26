@@ -30,6 +30,12 @@ public class CuentaController(
         if (!ModelState.IsValid)
             return View(model);
 
+        var cuenta = await userManager.FindByEmailAsync(model.Email.Trim());
+        if (cuenta is null || !await userManager.IsInRoleAsync(cuenta, Roles.Alumno))
+        {
+            ModelState.AddModelError("", "Correo o contraseña incorrectos. USMP Connect es una comunidad para alumnos.");
+            return View(model);
+        }
         var result = await signInManager.PasswordSignInAsync(model.Email.Trim(), model.Password, model.Recordarme, lockoutOnFailure: true);
         if (result.Succeeded)
             return LocalRedirect(Url.IsLocalUrl(model.ReturnUrl) ? model.ReturnUrl! : "/");
@@ -72,6 +78,9 @@ public class CuentaController(
         const string proveedor = "Firebase";
         var user = await userManager.FindByLoginAsync(proveedor, identidad.Uid)
             ?? await userManager.FindByEmailAsync(identidad.Email);
+        if (user is not null && (await userManager.GetRolesAsync(user)).Count > 0
+            && !await userManager.IsInRoleAsync(user, Roles.Alumno))
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = "USMP Connect es una comunidad para alumnos." });
         if (user == null)
         {
             var nombreCompleto = string.IsNullOrWhiteSpace(identidad.Nombre) ? "Estudiante" : identidad.Nombre.Trim();

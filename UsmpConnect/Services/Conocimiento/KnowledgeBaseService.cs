@@ -6,7 +6,7 @@ using System.Text.Json;
 namespace UsmpConnect.Services.Conocimiento;
 
 public sealed class KnowledgeBaseService(CatalogoConocimiento catalogo, IHttpClientFactory clients,
-    IConfiguration config, ILogger<KnowledgeBaseService> logger) : IKnowledgeBaseService
+    IConfiguration config, ILogger<KnowledgeBaseService> logger, EstadoIntegraciones estados) : IKnowledgeBaseService
 {
     private readonly SemaphoreSlim _sincronizacion = new(1, 1);
     private bool _sincronizado;
@@ -45,6 +45,7 @@ public sealed class KnowledgeBaseService(CatalogoConocimiento catalogo, IHttpCli
                 var ids = await remoto.BuscarAsync(consulta, corpus.Version, limite, ct);
                 var conocidos = corpus.Fragmentos.ToDictionary(f => f.Id);
                 var fuentes = ids.Distinct().Where(conocidos.ContainsKey).Select(id => Fuente(conocidos[id])).Take(limite).ToArray();
+                estados.Registrar("qdrant", true, "Consulta semántica remota completada");
                 return new("qdrant", "Consulta semántica completada en Qdrant.", fuentes, corpus.Advertencias);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
@@ -59,8 +60,11 @@ public sealed class KnowledgeBaseService(CatalogoConocimiento catalogo, IHttpCli
         return Local(corpus, consulta, limite, estado);
     }
 
-    private static ResultadoConocimiento Local(CorpusConocimiento corpus, string consulta, int limite, string estado)
-        => new("local", estado, BuscarLocal(corpus.Fragmentos, consulta, limite), corpus.Advertencias);
+    private ResultadoConocimiento Local(CorpusConocimiento corpus, string consulta, int limite, string estado)
+    {
+        estados.Registrar("qdrant", false, "Consulta resuelta mediante búsqueda local por palabras");
+        return new("local", estado, BuscarLocal(corpus.Fragmentos, consulta, limite), corpus.Advertencias);
+    }
 
     private static FuenteConocimiento Fuente(FragmentoConocimiento fragmento) => new(fragmento.Fuente, fragmento.Pagina, fragmento.Texto);
 

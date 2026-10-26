@@ -1,12 +1,25 @@
-# Blueprint de Render: despliega la rama main con el Dockerfile de la raíz.
+# Configuración actual de la demo: despliega develop. El paso a main se hace al publicar la entrega estable.
 services:
   - type: web
     name: usmpconnect
     runtime: docker
     plan: free
-    branch: main
+    branch: develop
     dockerfilePath: ./Dockerfile
     autoDeploy: true
+    healthCheckPath: /health
     envVars:
-      - key: Registro__CodigoDocente
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: Database__ResetOnStartup
+        value: "false"
+      - key: Groq__ApiKey
         sync: false
+      - key: Groq__Model
+        value: openai/gpt-oss-20b
+      - key: Qdrant__Endpoint
+        sync: false
+      - key: Qdrant__ApiKey
+        sync: false
+      - key: Qdrant__CollectionName
+        value: usmp_fia_e5_v1

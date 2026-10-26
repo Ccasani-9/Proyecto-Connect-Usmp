@@ -74,12 +74,4 @@ public class FoodSpotsController(
         return Json(resultados);
     }
 
-    [HttpPost]
-    [Authorize(Roles = Roles.Profesor)]
-    public async Task<IActionResult> SincronizarAlgolia()
-    {
-        var aceptada = await algolia.SincronizarTodoAsync(db);
-        TempData[aceptada ? "Toast" : "ToastError"] = aceptada ? "Sincronización del catálogo solicitada." : "No se pudo sincronizar el catálogo. Revisa la configuración del servicio.";
-        return RedirectToAction(nameof(Index));
-    }
 }
