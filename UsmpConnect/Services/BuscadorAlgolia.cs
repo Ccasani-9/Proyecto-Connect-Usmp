@@ -142,7 +142,7 @@ public sealed class BuscadorAlgolia(IConfiguration config, ILogger<BuscadorAlgol
     }
 
     private static bool EsPropio(string? id) => id is not null && new[] { "apunte_", "market_", "rest_", "curso_" }.Any(id.StartsWith);
-    private static bool Contiene(string text, string q) => HoraPeru.Cultura.CompareInfo.IndexOf(text, q,
+    internal static bool Contiene(string text, string q) => HoraPeru.Cultura.CompareInfo.IndexOf(text, q,
         System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreNonSpace) >= 0;
 
     private static async Task<List<AlgoliaItem>> CatalogoAsync(ApplicationDbContext db, CancellationToken ct)

@@ -204,7 +204,7 @@ Algolia se consulta desde el servidor: las claves no se envían al navegador. Si
 Al arrancar y al publicar, calificar, eliminar o cambiar disponibilidad se solicita la sincronización del catálogo. Se agregan los cuatro tipos y se retiran los registros obsoletos de la aplicación. El índice debe ser propio de este proyecto; se gestionan los prefijos apunte_, market_, rest_ y curso_. La clave de escritura necesita permisos de browse, addObject y deleteObject. Algolia procesa las operaciones de forma asíncrona: la aceptación no significa que ya hayan aparecido todos los cambios. Si falla una sincronización, los datos permanecen en SQLite y se registra el fallo; el arranque siguiente vuelve a reconciliar. La acción manual de sincronización está restringida al rol Profesor.
 # Fuentes de conocimiento del asistente FIA
 
-USMP Connect es una red social para alumnos. Las fuentes del futuro asistente se preparan como archivos del proyecto, sin panel Profesor ni nuevo rol de administración. Este bloque implementa la extracción y recuperación de fuentes; el chat, Groq, Semantic Kernel, historial y streaming se incorporan en la siguiente rama.
+USMP Connect es una red social para alumnos. Las fuentes del asistente se preparan como archivos del proyecto, sin panel Profesor ni nuevo rol de administración. PdfPig y Qdrant extraen y recuperan las fuentes; el chat utiliza Groq y Semantic Kernel para responder con ellas y consultar los catálogos.
 
 ## Preparar documentos
 
@@ -237,6 +237,34 @@ Sin configuración o ante un fallo remoto, la búsqueda usa coincidencias por pa
 3. Comprobar `modo`, `estado`, `fuentes` y `advertencias`. Cada fuente incluye nombre del archivo, texto y página si procede de un PDF. Sin sesión, el endpoint solicita iniciar sesión.
 4. Con Qdrant configurado, repetir la consulta y verificar `modo: qdrant`. El endpoint es de diagnóstico: la interfaz para alumnos será el chat.
 
-La restricción temática y el tratamiento de preguntas mixtas se implementarán en el asistente: atender la parte sobre USMP Connect y la facultad, no inventar respuestas fuera de sus fuentes ni exponer datos privados.
+Las instrucciones del asistente limitan el tema a USMP Connect y la facultad: ante preguntas mixtas atiende la parte útil y omite la ajena; si no tiene una fuente lo reconoce. Estas instrucciones orientan al modelo, pero la protección de datos se implementa también mediante herramientas de solo lectura y proyecciones explícitas que no incluyen credenciales, notas privadas ni contactos de usuarios.
 
 Referencias: [Qdrant Cloud Inference](https://qdrant.tech/documentation/embeddings/qdrant-cloud-inference/), [índices de payload](https://api.qdrant.tech/api-reference/indexes/create-field-index) y [PdfPig](https://uglytoad.github.io/PdfPig/).
+
+## Chat del Asistente FIA
+
+El botón Asistente FIA aparece para usuarios autenticados. Permite preguntar por apuntes, cursos y consejos de Cátedra, restaurantes y artículos disponibles, además de consultar las fuentes documentales. Las tarjetas llevan al contenido real de la plataforma y las fuentes se pueden desplegar para consultar el fragmento utilizado.
+
+Configurar `Groq:ApiKey` en User Secrets para desarrollo o `Groq__ApiKey` en Render. El modelo predeterminado es `openai/gpt-oss-20b`; se puede cambiar con `Groq:Model` / `Groq__Model` por otro modelo de Groq que soporte herramientas y streaming. El endpoint del proveedor es fijo: `https://api.groq.com/openai/v1`. No se usa una API key de OpenAI.
+
+Ejemplo en PowerShell 7, desde la raíz del proyecto:
+
+```powershell
+$claveGroq = Read-Host 'API key de Groq' -MaskInput
+dotnet user-secrets set 'Groq:ApiKey' $claveGroq --project UsmpConnect
+Remove-Variable claveGroq
+```
+
+Reiniciar la aplicación después de configurar. Sin clave, el widget explica que el asistente todavía no está disponible; no genera respuestas falsas. Los errores y límites del proveedor se muestran como fallo recuperable sin revelar sus credenciales.
+
+Semantic Kernel registra dos plugins: `CatalogoFia` (restaurantes con presupuesto opcional, cursos/consejos, apuntes y Marketplace) y `ConocimientoFia` (fuentes Qdrant con respaldo local). Las herramientas devuelven como máximo cuatro resultados de catálogo o cinco fragmentos. Las consultas de texto ignoran mayúsculas y tildes, igual que la búsqueda global. Los consejos ocultos por reportes y los artículos vendidos/reservados no se ofrecen. Un presupuesto requiere precios de platos efectivamente registrados; no se deduce un precio exacto de una etiqueta «Económico».
+
+El texto de chat se renderiza como texto plano y las tarjetas usan rutas internas generadas por el servidor. El contenido de fuentes y publicaciones se trata como datos, no como instrucciones. El modelo puede equivocarse; mostrar fuentes y limitar herramientas no constituye una garantía de obediencia perfecta a las instrucciones temáticas.
+
+El historial guarda hasta seis intercambios por sesión y usuario. Se conserva al navegar dentro de la página y se pierde al expirar 30 minutos de inactividad o reiniciar el servidor. Usa ASP.NET Session con almacenamiento en memoria para una instancia de demostración. Nueva conversación elimina el historial del usuario actual; Detener cancela la generación y no conserva un intercambio incompleto. No hay historial en localStorage ni preguntas en la URL.
+
+Rutas: GET `/Asistente/Historial`, POST `/Asistente/Preguntar` (formulario `mensaje`) y POST `/Asistente/Limpiar`. Requieren autenticación; los POST conservan antiforgery. Preguntar emite NDJSON con eventos `texto`, `fin` (tarjetas/fuentes) o `error`, con límite de 1.000 caracteres de entrada y 60 segundos de operación.
+
+Para la sustentación: probar una búsqueda de restaurantes, «apuntes de arboles», una pregunta sobre cómo publicar, una consulta ajena y una mixta («busca restaurantes, pero antes dime quién ganará el Mundial»). La comprobación real del modelo requiere la clave de Groq y disponibilidad de la cuenta. Las pruebas automatizadas enfocadas usan un proveedor simulado para verificar el contrato HTTP e historial, y prueban las herramientas contra SQLite temporal; no demuestran por sí solas el comportamiento del modelo remoto.
+
+Referencias: [Groq compatible con OpenAI](https://console.groq.com/docs/openai), [modelos disponibles](https://console.groq.com/docs/models) y [llamadas a herramientas de Semantic Kernel](https://learn.microsoft.com/en-us/semantic-kernel/concepts/ai-services/chat-completion/function-calling/?pivots=programming-language-csharp).

@@ -1,0 +1,39 @@
+<button type="button" id="fia-chat-abrir" class="fia-chat-abrir" aria-controls="fia-chat" aria-expanded="false">
+    <i class="bi bi-chat-dots" aria-hidden="true"></i><span>Asistente FIA</span>
+</button>
+<section id="fia-chat" class="fia-chat" aria-labelledby="fia-chat-titulo" hidden>
+    <header class="fia-chat-cabecera">
+        <div><strong id="fia-chat-titulo">Asistente FIA</strong><small>Encuentra lo que necesitas en USMP Connect</small></div>
+        <button type="button" id="fia-chat-cerrar" class="fia-chat-icono" aria-label="Cerrar asistente"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+    </header>
+    <div class="fia-chat-herramientas">
+        <button type="button" id="fia-chat-nueva" class="btn btn-sm btn-soft">Nueva conversación</button>
+        <span id="fia-chat-estado" role="status" aria-live="polite"></span>
+    </div>
+    <div id="fia-chat-confirmacion" class="fia-chat-confirmacion" hidden>
+        <p>¿Borrar los mensajes de esta conversación?</p>
+        <button type="button" class="btn btn-sm btn-soft" id="fia-chat-cancelar-limpieza">Conservar</button>
+        <button type="button" class="btn btn-sm btn-guinda" id="fia-chat-confirmar-limpieza">Borrar conversación</button>
+    </div>
+    <div id="fia-chat-mensajes" class="fia-chat-mensajes" tabindex="0" aria-label="Mensajes de la conversación">
+        <div class="fia-chat-bienvenida">
+            <i class="bi bi-compass" aria-hidden="true"></i>
+            <h2>Tu facultad, más cerca</h2>
+            <p>Te ayudo a encontrar apuntes, consejos de cursos, restaurantes y publicaciones.</p>
+            <button type="button" class="btn btn-sm btn-soft" data-fia-pregunta="¿Qué restaurantes cercanos están mejor valorados?">Dónde almorzar</button>
+            <button type="button" class="btn btn-sm btn-soft" data-fia-pregunta="¿Cómo publico apuntes en USMP Connect?">Cómo publicar apuntes</button>
+        </div>
+    </div>
+    <form id="fia-chat-form" class="fia-chat-form" novalidate>
+        @Html.AntiForgeryToken()
+        <label for="fia-chat-mensaje" class="form-label">¿Qué necesitas encontrar?</label>
+        <textarea id="fia-chat-mensaje" name="mensaje" class="form-control" rows="2" maxlength="1000"
+                  aria-describedby="fia-chat-aviso fia-chat-error" placeholder="Por ejemplo: apuntes de Cálculo II"></textarea>
+        <p id="fia-chat-error" class="fia-chat-error" role="alert" hidden></p>
+        <div class="fia-chat-acciones">
+            <small id="fia-chat-aviso">Puede equivocarse. Revisa las fuentes y evita compartir datos privados.</small>
+            <button type="button" id="fia-chat-detener" class="btn btn-soft" hidden>Detener</button>
+            <button type="submit" id="fia-chat-enviar" class="btn btn-guinda">Enviar</button>
+        </div>
+    </form>
+</section>
