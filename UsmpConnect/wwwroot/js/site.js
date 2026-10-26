@@ -30,51 +30,20 @@ function usmpToast(mensaje, tipo = 'ok') {
     setTimeout(() => div.remove(), 4000);
 }
 
-/** Agrega una notificación en vivo al menú de Noticias de la barra superior. */
-function usmpAgregarNotificacionVivo(mensaje, url = '/Restaurantes', icono = 'star-fill') {
+/** Consulta únicamente las notificaciones de la sesión autenticada. */
+async function usmpActualizarNotificaciones() {
     const noti = document.getElementById('notificaciones');
-    if (!noti) return;
-
-    const btn = noti.querySelector('button[data-bs-toggle="dropdown"]');
-    if (btn) {
-        let badge = btn.querySelector('[data-noti-count]');
-        if (!badge) {
-            badge = document.createElement('span');
-            badge.className = 'badge-count';
-            badge.setAttribute('data-noti-count', '');
-            badge.textContent = '1';
-            btn.appendChild(badge);
-        } else {
-            const actual = parseInt(badge.textContent || '0', 10);
-            badge.textContent = String((Number.isNaN(actual) ? 0 : actual) + 1);
+    if (!noti || noti.querySelector('.show')) return;
+    try {
+        const respuesta = await fetch('/Notificaciones/Resumen', { cache: 'no-store' });
+        if (!respuesta.ok || respuesta.redirected) return;
+        const plantilla = document.createElement('template');
+        plantilla.innerHTML = await respuesta.text();
+        const actualizado = plantilla.content.querySelector('#notificaciones');
+        if (actualizado && noti.isConnected && !noti.querySelector('.show')) {
+            noti.replaceWith(actualizado);
         }
-    }
-
-    const lista = noti.querySelector('[data-noti-list]') || noti.querySelector('.noti-menu');
-    if (lista) {
-        const vacio = lista.querySelector('[data-noti-empty], .vacio');
-        if (vacio) vacio.remove();
-
-        const item = document.createElement('a');
-        item.className = 'noti-item no-leida';
-        item.href = url || '#';
-
-        const iconEl = document.createElement('i');
-        iconEl.className = `bi bi-${icono}`;
-
-        const bodyEl = document.createElement('div');
-        const textEl = document.createElement('div');
-        textEl.textContent = mensaje;
-        const timeEl = document.createElement('small');
-        timeEl.textContent = 'justo ahora';
-
-        bodyEl.appendChild(textEl);
-        bodyEl.appendChild(timeEl);
-        item.appendChild(iconEl);
-        item.appendChild(bodyEl);
-
-        lista.prepend(item);
-    }
+    } catch { /* La campana conserva los datos cargados por el servidor. */ }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -82,13 +51,19 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-autohide]').forEach(t => setTimeout(() => t.remove(), 4500));
 
     // Al abrir Noticias, marcar como leídas
-    const noti = document.getElementById('notificaciones');
-    if (noti) {
-        noti.addEventListener('shown.bs.dropdown', () => {
-            const badge = noti.querySelector('[data-noti-count]');
-            if (badge) { badge.remove(); usmpPost('/Notificaciones/MarcarLeidas'); }
-        });
-    }
+    document.addEventListener('shown.bs.dropdown', event => {
+        const noti = event.target.closest('#notificaciones');
+        if (!noti) return;
+        const badge = noti.querySelector('[data-noti-count]');
+        if (badge) {
+            usmpPost('/Notificaciones/MarcarLeidas').then(respuesta => {
+                if (respuesta.ok) badge.remove();
+            });
+        }
+    });
+    document.addEventListener('hidden.bs.dropdown', event => {
+        if (event.target.closest('#notificaciones')) usmpActualizarNotificaciones();
+    });
 
     // Zonas de subida: <label class="dropzone"><input type="file" hidden data-dropzone> ... <span data-dropzone-text></span></label>
     // Si el input tiene data-preview="#idImg", muestra la vista previa de la imagen.
@@ -141,11 +116,7 @@ function iniciarPieHostWebSockets(intento = 0) {
                 if (msg.evento === 'nueva_resena' && msg.datos) {
                     const textoToast = `${msg.datos.Usuario || 'Un estudiante'} calificó ${msg.datos.RestauranteNombre} (${msg.datos.NuevaCalificacion} ⭐)`;
                     usmpToast(textoToast);
-                    usmpAgregarNotificacionVivo(
-                        msg.datos.MensajeNotificacion || textoToast,
-                        '/Restaurantes',
-                        'star-fill'
-                    );
+                    usmpActualizarNotificaciones();
                 }
             } catch (e) {}
         };

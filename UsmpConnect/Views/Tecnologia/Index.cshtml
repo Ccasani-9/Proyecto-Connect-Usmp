@@ -133,7 +133,7 @@
             <div class="col-6 col-md-3">
                 <div class="p-2 rounded bg-light border">
                     <small class="text-muted d-block">RMSE (Test 20%)</small>
-                    <span class="fw-bold text-success">@r.Rms.ToString("0.000")</span>
+                    <span class="fw-bold text-success">@(r.Rms?.ToString("0.000") ?? "No disponible")</span>
                 </div>
             </div>
             <div class="col-6 col-md-3">

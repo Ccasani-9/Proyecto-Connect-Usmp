@@ -73,6 +73,11 @@ public class CasosController(ApplicationDbContext db, INotificacionService notif
 
 public class NotificacionesController(ApplicationDbContext db) : Controller
 {
+    [HttpGet]
+    [Microsoft.AspNetCore.Authorization.Authorize]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public IActionResult Resumen() => ViewComponent("Notificaciones");
+
     [HttpPost]
     public async Task<IActionResult> MarcarLeidas()
     {

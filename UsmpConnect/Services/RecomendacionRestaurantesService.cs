@@ -39,7 +39,7 @@ public class MetricasEntrenamientoRecomendacion
     public int EjemplosPrueba { get; set; }
     public int Usuarios { get; set; }
     public int Restaurantes { get; set; }
-    public double Rms { get; set; }
+    public double? Rms { get; set; }
     public double? R2 { get; set; }
     public DateTime FechaEntrenamiento { get; set; } = DateTime.UtcNow;
 }
@@ -103,7 +103,7 @@ public sealed class RecomendacionRestaurantesService : IRecomendacionRestaurante
         ? "Deshabilitado"
         : (EstaListo
             ? (UltimasMetricas is not null
-                ? $"Factorización de Matrices Activa (RMSE {UltimasMetricas.Rms:0.00})"
+                ? $"Factorización de Matrices Activa (RMSE {UltimasMetricas.Rms?.ToString("0.00") ?? "no disponible"})"
                 : "Factorización de Matrices Activa")
             : "Pendiente de inicialización");
 
@@ -380,8 +380,8 @@ public sealed class RecomendacionRestaurantesService : IRecomendacionRestaurante
 
             metricas.EjemplosEntrenamiento = countTrain;
             metricas.EjemplosPrueba = countTest;
-            metricas.Rms = double.IsNaN(eval.RootMeanSquaredError) ? 0 : Math.Round(eval.RootMeanSquaredError, 4);
-            metricas.R2 = double.IsNaN(eval.RSquared) ? null : Math.Round(eval.RSquared, 4);
+            metricas.Rms = double.IsFinite(eval.RootMeanSquaredError) ? Math.Round(eval.RootMeanSquaredError, 4) : null;
+            metricas.R2 = double.IsFinite(eval.RSquared) ? Math.Round(eval.RSquared, 4) : null;
         }
 
         return metricas;
