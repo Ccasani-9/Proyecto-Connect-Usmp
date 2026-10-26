@@ -73,7 +73,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 // ---------- MVC + API: todo requiere login salvo [AllowAnonymous]; todo POST MVC valida antiforgery ----------
 builder.Services.AddControllersWithViews(options =>
 {
-    options.Filters.Add(new AuthorizeFilter(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build()));
+    options.Filters.Add(new AuthorizeFilter(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().RequireRole(Roles.Alumno).Build()));
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
 });
 
@@ -216,5 +216,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
+
+app.MapGet("/health", () => Results.Ok(new { estado = "ok" })).AllowAnonymous();
 
 app.Run();

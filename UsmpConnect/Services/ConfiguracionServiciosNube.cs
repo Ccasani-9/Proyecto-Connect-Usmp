@@ -7,6 +7,7 @@ public static class ConfiguracionServiciosNube
     public static IServiceCollection AddServiciosNube(this IServiceCollection services)
     {
         services.AddMemoryCache();
+        services.AddSingleton<EstadoIntegraciones>();
         services.AddSingleton<IRedisCacheService, RedisCacheService>();
         services.AddSingleton<IAnalisisSentimientoService, AnalisisSentimientoService>();
         services.AddSingleton<IRecomendacionRestaurantesService, RecomendacionRestaurantesService>();

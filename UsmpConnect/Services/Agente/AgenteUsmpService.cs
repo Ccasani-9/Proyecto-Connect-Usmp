@@ -10,7 +10,7 @@ using UsmpConnect.Services.Conocimiento;
 namespace UsmpConnect.Services.Agente;
 
 public sealed class AgenteUsmpService(IConfiguration config, ApplicationDbContext db,
-    IKnowledgeBaseService conocimiento) : IAsistenteService
+    IKnowledgeBaseService conocimiento, EstadoIntegraciones estados) : IAsistenteService
 {
     public bool EstaConfigurado => !string.IsNullOrWhiteSpace(config["Groq:ApiKey"]);
     public const string Instrucciones = """
@@ -67,10 +67,25 @@ public sealed class AgenteUsmpService(IConfiguration config, ApplicationDbContex
                 ? FunctionChoiceBehavior.Required(funciones, options: opciones)
                 : FunctionChoiceBehavior.Auto(options: opciones)
         };
-        await foreach (var parte in kernel.GetRequiredService<IChatCompletionService>()
-            .GetStreamingChatMessageContentsAsync(chat, settings, kernel, ct))
+        var completo = false;
+        var huboTexto = false;
+        try
         {
-            if (!string.IsNullOrEmpty(parte.Content)) yield return parte.Content;
+            await foreach (var parte in kernel.GetRequiredService<IChatCompletionService>()
+                .GetStreamingChatMessageContentsAsync(chat, settings, kernel, ct))
+            {
+                if (!string.IsNullOrEmpty(parte.Content))
+                {
+                    huboTexto = true;
+                    yield return parte.Content;
+                }
+            }
+            completo = huboTexto;
+        }
+        finally
+        {
+            if (completo) estados.Registrar("groq", true, "Respuesta remota completada con Semantic Kernel");
+            else if (!ct.IsCancellationRequested) estados.Registrar("groq", false, "La última respuesta remota no se completó");
         }
     }
 

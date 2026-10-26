@@ -48,7 +48,7 @@ public class GoogleAccountTests
     {
         await using var factory = new IdentityFactory(new(uid, email, "Nombre de Google", null));
         using var client = factory.CreateSessionClient();
-        Assert.Equal(HttpStatusCode.OK, (await SignInAsync(client)).StatusCode);
+        Assert.Equal(role == Roles.Alumno ? HttpStatusCode.OK : HttpStatusCode.Forbidden, (await SignInAsync(client)).StatusCode);
         using var scope = factory.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var user = await users.FindByEmailAsync(email);

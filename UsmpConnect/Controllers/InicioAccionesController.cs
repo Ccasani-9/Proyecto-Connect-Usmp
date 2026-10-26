@@ -11,7 +11,7 @@ public class HorarioController(ApplicationDbContext db) : Controller
 {
     public async Task<IActionResult> Index()
     {
-        var clases = await Agenda.ClasesSemanaAsync(db, User.GetUserId(), User.EsProfesor());
+        var clases = await Agenda.ClasesSemanaAsync(db, User.GetUserId(), false);
         ViewData["Hoy"] = HoraPeru.Hoy.DayOfWeek;
         return View(clases);
     }
