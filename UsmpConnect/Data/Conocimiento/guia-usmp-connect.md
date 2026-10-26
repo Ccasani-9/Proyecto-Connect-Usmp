@@ -3,7 +3,7 @@
 Material de demostración del proyecto universitario. Describe la plataforma; no constituye normativa oficial de la USMP.
 
 ## Apuntes y materiales de cursos
-En la sección Apuntes puedes buscar materiales por curso y consultar los documentos compartidos por otros alumnos. Para publicar apuntes, abre Apuntes y utiliza el formulario de publicación. Selecciona el curso correspondiente y completa los datos solicitados. No compartas información personal de otras personas.
+En Banco de Apuntes puedes buscar materiales por curso y consultar los documentos compartidos por otros alumnos. Para publicar, abre el formulario «Subir Apunte o Guía». Completa Título del recurso, Asignatura (curso), Profesor, Tipo de documento y Descripción breve. Ciclo es un filtro opcional de la malla de I a V para elegir la asignatura; no es un período como 2024-I. Tipo de documento significa Resumen, Examen resuelto, Guía de laboratorio o Apuntes de clase; no es el formato del archivo. Adjunta un archivo PDF, DOC o DOCX. Finaliza con «Subir recurso». No hay campo de etiquetas o palabras clave. No compartas información personal de otras personas. Esta guía describe los controles del proyecto, no un trámite oficial de la universidad.
 
 ## Cátedra y consejos de estudiantes
 Cátedra reúne cursos y consejos aportados por alumnos sobre sus experiencias con cursos y docentes. Busca por curso, código o docente y abre el detalle del curso para leer los aportes. Las opiniones son de sus autores y no representan una evaluación oficial de la universidad.
