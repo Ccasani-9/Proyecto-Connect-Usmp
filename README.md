@@ -202,3 +202,41 @@ El buscador común ofrece sugerencias de restaurantes, cursos/docentes, apuntes 
 Algolia se consulta desde el servidor: las claves no se envían al navegador. Si no está configurado o falla la consulta se utiliza SQLite, con búsqueda sin distinguir tildes ni mayúsculas. Las búsquedas sin resultados en Algolia se respetan. Los resultados se contrastan con SQLite para no enlazar apuntes borrados ni artículos vendidos o reservados.
 
 Al arrancar y al publicar, calificar, eliminar o cambiar disponibilidad se solicita la sincronización del catálogo. Se agregan los cuatro tipos y se retiran los registros obsoletos de la aplicación. El índice debe ser propio de este proyecto; se gestionan los prefijos apunte_, market_, rest_ y curso_. La clave de escritura necesita permisos de browse, addObject y deleteObject. Algolia procesa las operaciones de forma asíncrona: la aceptación no significa que ya hayan aparecido todos los cambios. Si falla una sincronización, los datos permanecen en SQLite y se registra el fallo; el arranque siguiente vuelve a reconciliar. La acción manual de sincronización está restringida al rol Profesor.
+# Fuentes de conocimiento del asistente FIA
+
+USMP Connect es una red social para alumnos. Las fuentes del futuro asistente se preparan como archivos del proyecto, sin panel Profesor ni nuevo rol de administración. Este bloque implementa la extracción y recuperación de fuentes; el chat, Groq, Semantic Kernel, historial y streaming se incorporan en la siguiente rama.
+
+## Preparar documentos
+
+Colocar archivos `.pdf`, `.md` o `.txt` directamente en `UsmpConnect/Data/Conocimiento/` y reiniciar o volver a desplegar la aplicación. Se incluyen en la publicación Docker. Usar únicamente información que todos los alumnos puedan consultar; los apuntes y otros archivos subidos por usuarios no se indexan automáticamente.
+
+Límites: 32 documentos; 5 MB, 200.000 caracteres y 250 fragmentos por documento; 1.000.000 de caracteres por corpus. PdfPig extrae texto de PDF con número de página; no realiza OCR. Un archivo ilegible se omite y se informa en las advertencias del resultado. Los cambios de fuentes se recogen al reiniciar el proceso.
+
+La guía incluida es material de demostración sobre USMP Connect. No incorpora reglamentos, fórmulas de evaluación ni horarios universitarios sin verificar.
+
+## Configurar Qdrant Cloud
+
+Crear un cluster del equipo con Cloud Inference habilitado y una API key con permisos de lectura/escritura y creación de colección e índices. Configurar los valores en user-secrets para desarrollo o variables de entorno para Render, sin subir claves a Git:
+
+```text
+Qdrant__Endpoint=https://TU-CLUSTER.cloud.qdrant.io:6333
+Qdrant__ApiKey=<secreto configurado fuera del repositorio>
+Qdrant__CollectionName=usmp_fia_e5_v1
+```
+
+El servicio utiliza `intfloat/multilingual-e5-small` mediante inferencia de Qdrant Cloud para documentos y consultas, vector de 384 dimensiones y distancia coseno. Crea la colección si no existe; si una colección existente es incompatible, conserva sus datos y utiliza el respaldo local. No basta con un servidor Qdrant local sin servicio de inferencia para este flujo.
+
+La primera consulta sincroniza las fuentes con UUID estables. Se crean índices keyword sobre `corpus` y `model`, necesarios para los filtros. Las consultas solo devuelven fragmentos del corpus actual y recuperan el texto desde las fuentes locales conocidas. No se borran puntos de versiones previas automáticamente; pueden ocupar espacio en la colección dedicada aunque no aparezcan en resultados. No reutilizar esta colección para otros proyectos.
+
+Sin configuración o ante un fallo remoto, la búsqueda usa coincidencias por palabras y devuelve `modo: local`; no se presenta como búsqueda vectorial. Después de un fallo se esperan 30 segundos antes de reintentar. La conexión real solo queda comprobada cuando una consulta devuelve `modo: qdrant`.
+
+## Demostración del bloque
+
+1. Iniciar sesión con una cuenta de alumno.
+2. Abrir `/Conocimiento/Buscar?consulta=publicar%20apuntes`.
+3. Comprobar `modo`, `estado`, `fuentes` y `advertencias`. Cada fuente incluye nombre del archivo, texto y página si procede de un PDF. Sin sesión, el endpoint solicita iniciar sesión.
+4. Con Qdrant configurado, repetir la consulta y verificar `modo: qdrant`. El endpoint es de diagnóstico: la interfaz para alumnos será el chat.
+
+La restricción temática y el tratamiento de preguntas mixtas se implementarán en el asistente: atender la parte sobre USMP Connect y la facultad, no inventar respuestas fuera de sus fuentes ni exponer datos privados.
+
+Referencias: [Qdrant Cloud Inference](https://qdrant.tech/documentation/embeddings/qdrant-cloud-inference/), [índices de payload](https://api.qdrant.tech/api-reference/indexes/create-field-index) y [PdfPig](https://uglytoad.github.io/PdfPig/).
