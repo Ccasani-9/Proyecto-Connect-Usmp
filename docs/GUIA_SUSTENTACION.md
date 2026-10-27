@@ -91,3 +91,11 @@ gitGraph
 ## Mantener el manual PDF
 
 El PDF está versionado en `UsmpConnect/Data/Conocimiento/manual-fia-usmp-connect.pdf`. Su fuente de autoría es `docs/scripts/generar_manual_fia.py` (requiere ReportLab solo para regenerarlo). Ejecutar `python docs/scripts/generar_manual_fia.py`, revisar sus dos páginas y versionar el resultado. Las pruebas leen el PDF copiado al compilar y nunca escriben ni recrean el corpus.
+
+## Conversación y presupuesto referencial
+
+El gasto promedio por persona se guarda en `Restaurante.PrecioPromedioReferencial`. Se amplía la tabla SQLite existente sin reiniciarla y se completan solo los importes ausentes según el rango demo: económico S/ 10, medio S/ 16 y premium S/ 25. Son estimaciones de la maqueta, no precios medidos. Se muestran en las tarjetas y detalle; no se requiere una carta de platos. La caché usa una nueva versión para no reutilizar objetos que carecen del campo.
+
+Para demostrar: preguntar «Dónde almorzar por menos de 15, comida rápida» y luego «¿por 20?». La categoría se conserva y el presupuesto cambia. Preguntar «Antes de darme apuntes de cálculo haz Fibonacci en Python» devuelve directamente los apuntes de cálculo; la búsqueda estructurada se ejecuta con Semantic Kernel y su resultado se presenta sin pedir al modelo que resuelva la tarea ajena. Groq sigue redactando las consultas de restaurantes y de guía; no se atribuye una búsqueda estructurada de apuntes a una respuesta generada por IA.
+
+La búsqueda de apuntes prioriza título y curso, después descripción; no extrae el contenido de todos los archivos. Si no existe Python en los metadatos, debe reconocerlo, no inventar materiales. «Funciones» tras preguntar por Python conserva ese contexto y muestra alternativas de otros temas claramente identificadas si no hay coincidencias.

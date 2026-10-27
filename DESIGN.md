@@ -19,3 +19,6 @@ Mensajes del modelo y de usuarios se renderizan con textContent, nunca HTML. Enl
 - Nueva conversación: confirmación dentro del panel, esperar respuesta del servidor antes de limpiar la vista.
 - Accesibilidad: nombres en botones de iconos, foco visible, estado de generación anunciado sin repetir cada token, diseño adaptable con altura basada en viewport dinámico y safe areas.
 - Un cierre del panel no destruye el historial. Una generación detenida o fallida no se presenta como respuesta completa ni se almacena como intercambio terminado.
+
+## Gasto referencial de restaurantes
+El gasto promedio de demostración por persona se muestra en una línea separada de la valoración y del rango, sin comprimir las estrellas. El modal y las tarjetas del asistente lo identifican como aproximado/demo. Un precio desconocido nunca se representa como gratis ni como compatible con un presupuesto.

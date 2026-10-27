@@ -53,6 +53,7 @@ public static class DbInitializer
 
         var creada = await db.Database.EnsureCreatedAsync();
         await AsegurarColumnasSentimientoAsync(db);
+        await AsegurarPrecioReferencialAsync(db);
 
         if (!creada)
         {
@@ -175,6 +176,7 @@ public static class DbInitializer
                 logger.LogWarning(ex, "Error al sincronizar datos complementarios de Cátedra");
             }
 
+            await CompletarPreciosDemoAsync(db);
             await ClasificarResenasPendientesAsync(sp, db, logger);
             return;
         }
@@ -197,8 +199,37 @@ public static class DbInitializer
             db.ChangeTracker.Clear();
         }
 
+        await CompletarPreciosDemoAsync(db);
         await ClasificarResenasPendientesAsync(sp, db, logger);
     }
+
+    private static async Task AsegurarPrecioReferencialAsync(ApplicationDbContext db)
+    {
+        var conn = db.Database.GetDbConnection();
+        var abrir = conn.State != ConnectionState.Open;
+        if (abrir) await conn.OpenAsync();
+        var existe = false;
+        try
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "PRAGMA table_info(Restaurantes);";
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+                existe |= string.Equals(reader.GetString(1), nameof(Restaurante.PrecioPromedioReferencial), StringComparison.OrdinalIgnoreCase);
+        }
+        finally { if (abrir) await conn.CloseAsync(); }
+        if (!existe)
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE Restaurantes ADD COLUMN PrecioPromedioReferencial REAL NULL;");
+    }
+
+    private static Task<int> CompletarPreciosDemoAsync(ApplicationDbContext db) =>
+        // Estimaciones de demostración por rango, no promedios medidos ni precios reales.
+        // Se conservan los importes que el equipo ya haya establecido por local.
+        db.Database.ExecuteSqlRawAsync("""
+            UPDATE Restaurantes SET PrecioPromedioReferencial = CASE Rango
+                WHEN 0 THEN 10 WHEN 1 THEN 16 WHEN 2 THEN 25 ELSE NULL END
+            WHERE PrecioPromedioReferencial IS NULL;
+            """);
 
     private static async Task AsegurarColumnasSentimientoAsync(ApplicationDbContext db)
     {
