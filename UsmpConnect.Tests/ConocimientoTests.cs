@@ -4,79 +4,12 @@ using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.AspNetCore.Hosting;
-using UglyToad.PdfPig.Content;
-using UglyToad.PdfPig.Core;
-using UglyToad.PdfPig.Fonts.Standard14Fonts;
-using UglyToad.PdfPig.Writer;
 using UsmpConnect.Services.Conocimiento;
 
 namespace UsmpConnect.Tests;
 
 public class ConocimientoTests
 {
-    private static byte[] ConstruirPdfManualFia()
-    {
-        using var builder = new PdfDocumentBuilder();
-        var fontTitulo = builder.AddStandard14Font(Standard14Font.HelveticaBold);
-        var fontTexto = builder.AddStandard14Font(Standard14Font.Helvetica);
-
-        var p1 = builder.AddPage(PageSize.A4);
-        p1.AddText("Manual Operativo de USMP Connect - Pagina 1: Calculadora de Promedios y Horario", 12, new PdfPoint(45, 780), fontTitulo);
-        var lineasP1 = new[]
-        {
-            "1. Calculadora de Promedios FIA:",
-            "En la pantalla de Inicio encontraras la Calculadora de Promedios integrada para cursos de la FIA.",
-            "Permite ingresar el Promedio de Practicas (PP), el Examen Parcial (EP) y el Examen Final (EF).",
-            "Verifica que los tres pesos porcentuales sumen exactamente 100% antes de calcular el resultado.",
-            "La nota minima aprobatoria referencial en la calculadora de demostracion es 10.5 sobre 20.",
-            "Si dejas vacia la casilla del Examen Final (EF), la herramienta calcula automaticamente que nota",
-            "necesitas obtener en el examen final para alcanzar el promedio aprobatorio de 10.5, o te avisa si",
-            "ya aprobaste el curso con tus notas previas o si requieres consultar el examen sustitutorio.",
-            "",
-            "2. Mi Horario y Mi Calendario Academico:",
-            "En el modulo Mi Horario puedes revisar tus bloques semanales de teoria, practica y laboratorio",
-            "con el aula o pabellon asignado dentro del campus de La Molina.",
-            "En Mi Calendario se consolidan las entregas academicas, examenes parciales, finales y eventos",
-            "universitarios cercanos para organizar tu semana de estudio."
-        };
-        var y1 = 748;
-        foreach (var linea in lineasP1)
-        {
-            if (linea.Length > 0)
-                p1.AddText(linea, 10, new PdfPoint(45, y1), fontTexto);
-            y1 -= 20;
-        }
-
-        var p2 = builder.AddPage(PageSize.A4);
-        p2.AddText("Manual Operativo de USMP Connect - Pagina 2: Restaurantes, Resenas ML y Comunidad", 12, new PdfPoint(45, 780), fontTitulo);
-        var lineasP2 = new[]
-        {
-            "3. Mapa del Cuadrante FIA y Gestion de Resenas Estudiantiles:",
-            "El modulo Restaurantes Cercanos abarca el cuadrante universitario alrededor del campus FIA:",
-            "Av. La Fontana, Av. Flora Tristan, Av. Javier Prado Este y Av. Los Ingenieros.",
-            "Cada local muestra su rango de precios, horario, distancia y ruta caminando desde la puerta FIA.",
-            "Al abrir el detalle de un restaurante puedes publicar una resena con puntuacion de 1 a 5 estrellas.",
-            "Tambien puedes editar o eliminar tu propia resena directamente desde la ventana del restaurante",
-            "usando los botones Editar y Eliminar junto a tu comentario, o mediante los endpoints REST.",
-            "Cada vez que creas o editas una resena, el modelo ML.NET clasifica automaticamente el sentimiento",
-            "del comentario (Positivo o Negativo con su porcentaje de confianza), recalcula el promedio del",
-            "local, invalida la cache en Redis y actualiza las recomendaciones personalizadas para alumnos.",
-            "",
-            "4. Convivencia y Seguridad en la Plataforma:",
-            "Nunca compartas contrasenas, codigos completos de documento de identidad ni datos privados.",
-            "Las publicaciones de Marketplace y Objetos Perdidos son responsabilidad de cada estudiante autor."
-        };
-        var y2 = 748;
-        foreach (var linea in lineasP2)
-        {
-            if (linea.Length > 0)
-                p2.AddText(linea, 10, new PdfPoint(45, y2), fontTexto);
-            y2 -= 20;
-        }
-
-        return builder.Build();
-    }
-
     [Fact]
     public async Task Extractor_ConservaTextoYRechazaArchivoInvalido()
     {
@@ -89,26 +22,18 @@ public class ConocimientoTests
         await Assert.ThrowsAsync<InvalidDataException>(() => extractor.ExtraerAsync(invalido, "programa.exe"));
     }
 
-    private static string AsegurarPdfManualFia()
+    private static string RutaPdfManualFia()
     {
-        var rutaCorpusPdf = Path.GetFullPath(Path.Combine(
-            AppContext.BaseDirectory, "..", "..", "..", "..", "UsmpConnect", "Data", "Conocimiento", "manual-fia-usmp-connect.pdf"));
-        if (!File.Exists(rutaCorpusPdf))
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(rutaCorpusPdf)!);
-            File.WriteAllBytes(rutaCorpusPdf, ConstruirPdfManualFia());
-        }
-
-        var rutaBinPdf = Path.Combine(AppContext.BaseDirectory, "Data", "Conocimiento", "manual-fia-usmp-connect.pdf");
-        Directory.CreateDirectory(Path.GetDirectoryName(rutaBinPdf)!);
-        File.Copy(rutaCorpusPdf, rutaBinPdf, overwrite: true);
-        return rutaCorpusPdf;
+        // El contenido versionado se copia al compilar, igual que en publicación.
+        var ruta = Path.Combine(AppContext.BaseDirectory, "Data", "Conocimiento", "manual-fia-usmp-connect.pdf");
+        Assert.True(File.Exists(ruta), "Falta el manual PDF versionado en el contenido de salida.");
+        return ruta;
     }
 
     [Fact]
     public async Task PdfPig_ExtraePaginasRealesDelManualPdfEnCorpus()
     {
-        var rutaCorpusPdf = AsegurarPdfManualFia();
+        var rutaCorpusPdf = RutaPdfManualFia();
 
         var extractor = new DocumentoTextoExtractor();
         await using var stream = File.OpenRead(rutaCorpusPdf);
@@ -117,10 +42,12 @@ public class ConocimientoTests
         Assert.Equal(2, paginas.Count);
         Assert.Equal(1, paginas[0].Numero);
         Assert.Contains("Calculadora de Promedios", paginas[0].Texto);
-        Assert.Contains("10.5", paginas[0].Texto);
+        Assert.Contains("calculadorafiausmp.com", paginas[0].Texto);
+        Assert.DoesNotContain("Calculadora de Promedios integrada", paginas[0].Texto);
         Assert.Equal(2, paginas[1].Numero);
         Assert.Contains("Editar y Eliminar", paginas[1].Texto);
         Assert.Contains("ML.NET", paginas[1].Texto);
+        Assert.Contains("no reentrenan", paginas[1].Texto);
     }
 
     [Fact]
@@ -159,7 +86,7 @@ public class ConocimientoTests
     [Fact]
     public async Task Consulta_RequiereSesionYPermiteAlumnoConRespaldoLocal()
     {
-        AsegurarPdfManualFia();
+        RutaPdfManualFia();
         await using var factory = new ConocimientoFactory();
         using var client = factory.CreateSessionClient();
         var sinSesion = await client.GetAsync("/Conocimiento/Buscar?consulta=apuntes");
