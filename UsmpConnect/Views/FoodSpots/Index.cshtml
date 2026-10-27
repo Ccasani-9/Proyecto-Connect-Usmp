@@ -1,4 +1,4 @@
-﻿@using UsmpConnect.Models
+@using UsmpConnect.Models
 @using UsmpConnect.Services
 @model UsmpConnect.ViewModels.FoodSpotsIndexVM
 @{
@@ -287,7 +287,10 @@
         </div>
         <p class="text-muted mb-0">Encuentra opciones para almorzar, tomar un café o comer cerca a la facultad.</p>
     </div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span id="badge-fuente-catalogo" class="badge bg-light text-secondary border px-3 py-2" style="font-size: .84rem; font-weight: 600;" data-fuente-catalogo="@Model.FuenteDatos" title="Origen de datos del catálogo en esta consulta">
+            <i class="bi @(Model.FuenteDatos.Contains("Redis", StringComparison.OrdinalIgnoreCase) ? "bi-lightning-charge-fill text-warning" : "bi-hdd-stack-fill text-primary") me-1"></i>Origen: @Model.FuenteDatos
+        </span>
         <span class="badge bg-light text-secondary border px-3 py-2" style="font-size: .84rem; font-weight: 600;">
             <i class="bi bi-shop me-1 text-danger"></i>@Model.Restaurantes.Count locales
         </span>
@@ -1030,88 +1033,216 @@ else
         }
 
         // Cargar modal con reseñas reales y datos del local
-        async function abrirModalDetalle(id) {
+        const usuarioActualId = @Json.Serialize(User.Identity?.IsAuthenticated == true ? User.GetUserId() : "");
+
+        function formatearEtiquetaSentimiento(r) {
+            if (!r.sentimiento) return '';
+            const pct = (typeof r.probabilidadSentimiento === 'number')
+                ? ` · ${Math.round(r.probabilidadSentimiento * 100)}%`
+                : '';
+            const estilo = r.sentimiento === 'Positivo'
+                ? 'background:#f0fdf4;color:#15803d;border-color:#bbf7d0 !important;'
+                : 'background:#fef2f2;color:#b91c1c;border-color:#fecaca !important;';
+            return `<span class="badge rounded-pill border px-2 py-1" title="Clasificación automática de sentimiento con ML.NET" style="font-size: 0.7rem; font-weight: 600; ${estilo}">${usmpEscaparHtml(r.sentimiento + pct)}</span>`;
+        }
+
+        function actualizarTarjetaEnGrilla(restauranteId, promedio, totalResenas) {
+            const item = restos.find(x => x.Id === restauranteId);
+            if (item) {
+                item.CalificacionPromedio = promedio;
+                item.TotalResenas = totalResenas;
+            }
+            const card = document.getElementById(`card-rest-${restauranteId}`);
+            if (card) {
+                const topBadge = card.querySelector('.badge.bg-white.text-dark');
+                if (topBadge) topBadge.innerHTML = `<i class="bi bi-star-fill text-warning me-1"></i>${promedio.toFixed(1)}`;
+                const avgSmall = card.querySelector('.food-card-body small.fw-bold');
+                if (avgSmall) avgSmall.textContent = promedio.toFixed(1);
+                const countSmall = card.querySelector('.food-card-body small.text-muted');
+                if (countSmall) countSmall.textContent = `(${totalResenas} ${totalResenas === 1 ? 'reseña' : 'reseñas'})`;
+            }
+            const badgeFuente = document.getElementById('badge-fuente-catalogo');
+            if (badgeFuente) {
+                badgeFuente.setAttribute('data-fuente-catalogo', 'SQLite');
+                badgeFuente.innerHTML = `<i class="bi bi-hdd-stack-fill text-primary me-1"></i>Origen: SQLite`;
+            }
+        }
+
+        function mostrarEdicionResena(resenaId, mostrar) {
+            const form = document.getElementById(`form-editar-resena-${resenaId}`);
+            const texto = document.getElementById(`texto-resena-${resenaId}`);
+            if (form) form.classList.toggle('d-none', !mostrar);
+            if (texto) texto.classList.toggle('d-none', mostrar);
+        }
+
+        async function guardarEdicionResena(resenaId, restauranteId) {
+            const select = document.getElementById(`edit-puntuacion-${resenaId}`);
+            const input = document.getElementById(`edit-comentario-${resenaId}`);
+            if (!select || !input) return;
+            const puntuacion = parseInt(select.value, 10);
+            const comentario = input.value.trim();
+            if (comentario.length < 5 || comentario.length > 500) {
+                usmpToast('El comentario debe tener entre 5 y 500 caracteres.', 'error');
+                return;
+            }
             try {
-                const res = await fetch(`/Restaurantes/Detalle/${id}`);
-                if (!res.ok) return;
-                const d = await res.json();
-
-                document.getElementById('modalRestauranteLabel').textContent = d.nombre;
-                document.getElementById('modalDistancia').textContent = `${d.distanciaTexto} · ${d.direccion}`;
-                document.getElementById('modalImg').src = d.fotoUrl;
-                document.getElementById('modalCategoria').textContent = d.categoria;
-                document.getElementById('modalRangoPrecios').textContent = d.rangoPrecios;
-                document.getElementById('modalPromedio').textContent = d.calificacionPromedio.toFixed(1);
-                document.getElementById('modalTotalResenas').textContent = `(${d.totalResenas} reseñas)`;
-                document.getElementById('modalDesc').textContent = d.descripcion;
-                document.getElementById('modalDireccion').textContent = d.direccion;
-                document.getElementById('modalHorario').textContent = d.horarioAtencion;
-                document.getElementById('formRestauranteId').value = d.id;
-
-                // Enlaces de Google Maps / Campus FIA
-                const esCampus = d.esCampus || (d.nombre && d.nombre.toLowerCase().includes("cafetería")) || (d.distanciaTexto && d.distanciaTexto.toLowerCase().includes("dentro del campus"));
-                const btnRuta = document.getElementById('modalBtnRuta');
-                const btnGmaps = document.getElementById('modalBtnGmaps');
-                const campusNotice = document.getElementById('modalCampusNotice');
-
-                if (esCampus) {
-                    if (campusNotice) campusNotice.classList.remove('d-none');
-                    if (btnRuta) btnRuta.classList.add('d-none');
-                    if (btnGmaps) btnGmaps.classList.add('d-none');
-                } else {
-                    if (campusNotice) campusNotice.classList.add('d-none');
-                    if (btnRuta) {
-                        btnRuta.classList.remove('d-none');
-                        btnRuta.href = `https://www.google.com/maps/dir/?api=1&origin=-12.07203,-76.94205&destination=${d.latitud},${d.longitud}&travelmode=walking`;
-                    }
-                    if (btnGmaps) {
-                        btnGmaps.classList.remove('d-none');
-                        btnGmaps.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.nombre + ' ' + d.direccion)}`;
-                    }
+                const res = await fetch(`/api/resenas/${resenaId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ puntuacion, comentario })
+                });
+                if (!res.ok) {
+                    usmpToast('No se pudo actualizar la reseña.', 'error');
+                    return;
                 }
+                await cargarDatosModal(restauranteId);
+                usmpToast('Reseña actualizada y reclasificada con ML.NET');
+            } catch {
+                usmpToast('Error de red al actualizar la reseña.', 'error');
+            }
+        }
 
-                // WhatsApp si existe
-                if (d.telefonoWhatsApp) {
-                    document.getElementById('modalBtnWaContainer').innerHTML = `
-                        <a href="https://wa.me/51${d.telefonoWhatsApp}?text=Hola,%20soy%20estudiante%20de%20la%20USMP%20FIA,%20deseo%20hacer%20una%20consulta." target="_blank" rel="noopener noreferrer" class="btn btn-wa-custom w-100 d-flex align-items-center justify-content-center gap-2 py-2" title="Contactar por WhatsApp">
-                            <i class="bi bi-whatsapp"></i><span>WhatsApp</span>
-                        </a>
-                    `;
-                } else {
-                    document.getElementById('modalBtnWaContainer').innerHTML = '';
+        async function eliminarResenaPropia(resenaId, restauranteId) {
+            try {
+                const res = await fetch(`/api/resenas/${resenaId}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    usmpToast('No se pudo eliminar la reseña.', 'error');
+                    return;
                 }
+                await cargarDatosModal(restauranteId);
+                usmpToast('Reseña eliminada correctamente');
+            } catch {
+                usmpToast('Error de red al eliminar la reseña.', 'error');
+            }
+        }
 
-                // Reseñas de estudiantes
-                const listaResenas = document.getElementById('modalResenasLista');
-                if (d.resenas && d.resenas.length > 0) {
-                    listaResenas.innerHTML = d.resenas.map(r => `
-                        <div class="review-card">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
+        async function cargarDatosModal(id) {
+            const res = await fetch(`/Restaurantes/Detalle/${id}`, { cache: 'no-store' });
+            if (!res.ok) return false;
+            const d = await res.json();
+
+            document.getElementById('modalRestauranteLabel').textContent = d.nombre;
+            document.getElementById('modalDistancia').textContent = `${d.distanciaTexto} · ${d.direccion}`;
+            document.getElementById('modalImg').src = d.fotoUrl;
+            document.getElementById('modalCategoria').textContent = d.categoria;
+            document.getElementById('modalRangoPrecios').textContent = d.rangoPrecios;
+            document.getElementById('modalPromedio').textContent = d.calificacionPromedio.toFixed(1);
+            document.getElementById('modalTotalResenas').textContent = `(${d.totalResenas} reseñas)`;
+            document.getElementById('modalDesc').textContent = d.descripcion;
+            document.getElementById('modalDireccion').textContent = d.direccion;
+            document.getElementById('modalHorario').textContent = d.horarioAtencion;
+            document.getElementById('formRestauranteId').value = d.id;
+
+            actualizarTarjetaEnGrilla(d.id, d.calificacionPromedio, d.totalResenas);
+
+            // Enlaces de Google Maps / Campus FIA
+            const esCampus = d.esCampus || (d.nombre && d.nombre.toLowerCase().includes("cafetería")) || (d.distanciaTexto && d.distanciaTexto.toLowerCase().includes("dentro del campus"));
+            const btnRuta = document.getElementById('modalBtnRuta');
+            const btnGmaps = document.getElementById('modalBtnGmaps');
+            const campusNotice = document.getElementById('modalCampusNotice');
+
+            if (esCampus) {
+                if (campusNotice) campusNotice.classList.remove('d-none');
+                if (btnRuta) btnRuta.classList.add('d-none');
+                if (btnGmaps) btnGmaps.classList.add('d-none');
+            } else {
+                if (campusNotice) campusNotice.classList.add('d-none');
+                if (btnRuta) {
+                    btnRuta.classList.remove('d-none');
+                    btnRuta.href = `https://www.google.com/maps/dir/?api=1&origin=-12.07203,-76.94205&destination=${d.latitud},${d.longitud}&travelmode=walking`;
+                }
+                if (btnGmaps) {
+                    btnGmaps.classList.remove('d-none');
+                    btnGmaps.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.nombre + ' ' + d.direccion)}`;
+                }
+            }
+
+            // WhatsApp si existe
+            if (d.telefonoWhatsApp) {
+                document.getElementById('modalBtnWaContainer').innerHTML = `
+                    <a href="https://wa.me/51${d.telefonoWhatsApp}?text=Hola,%20soy%20estudiante%20de%20la%20USMP%20FIA,%20deseo%20hacer%20una%20consulta." target="_blank" rel="noopener noreferrer" class="btn btn-wa-custom w-100 d-flex align-items-center justify-content-center gap-2 py-2" title="Contactar por WhatsApp">
+                        <i class="bi bi-whatsapp"></i><span>WhatsApp</span>
+                    </a>
+                `;
+            } else {
+                document.getElementById('modalBtnWaContainer').innerHTML = '';
+            }
+
+            // Reseñas de estudiantes
+            const listaResenas = document.getElementById('modalResenasLista');
+            if (d.resenas && d.resenas.length > 0) {
+                listaResenas.innerHTML = d.resenas.map(r => {
+                    const esPropia = Boolean(usuarioActualId && r.usuarioId && r.usuarioId === usuarioActualId);
+                    const accionesPropia = esPropia ? `
+                        <div class="d-inline-flex align-items-center gap-2 ms-1">
+                            <button type="button" class="btn btn-link btn-sm p-0 text-secondary text-decoration-none" style="font-size:0.75rem;" onclick="mostrarEdicionResena(${r.id}, true)" title="Editar mi reseña (PUT /api/resenas/${r.id})">
+                                <i class="bi bi-pencil-square"></i> Editar
+                            </button>
+                            <button type="button" class="btn btn-link btn-sm p-0 text-danger text-decoration-none" style="font-size:0.75rem;" onclick="eliminarResenaPropia(${r.id}, ${d.id})" title="Eliminar mi reseña (DELETE /api/resenas/${r.id})">
+                                <i class="bi bi-trash3"></i> Eliminar
+                            </button>
+                        </div>
+                    ` : '';
+                    const formularioEdicion = esPropia ? `
+                        <div id="form-editar-resena-${r.id}" class="d-none mt-2 pt-2 border-top">
+                            <div class="row g-2 mb-2">
+                                <div class="col-sm-4">
+                                    <select id="edit-puntuacion-${r.id}" class="form-select form-select-sm">
+                                        ${[5, 4, 3, 2, 1].map(pts => `<option value="${pts}" ${r.puntuacion === pts ? 'selected' : ''}>${'⭐'.repeat(pts)} (${pts})</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="col-sm-8">
+                                    <input type="text" id="edit-comentario-${r.id}" class="form-control form-control-sm" value="${usmpEscaparHtml(r.comentario)}" minlength="5" maxlength="500" />
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-sm btn-light border" onclick="mostrarEdicionResena(${r.id}, false)">Cancelar</button>
+                                <button type="button" class="btn btn-sm btn-guinda" onclick="guardarEdicionResena(${r.id}, ${d.id})">Guardar cambios</button>
+                            </div>
+                        </div>
+                    ` : '';
+                    return `
+                        <div class="review-card" id="resena-card-${r.id}">
+                            <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-1">
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="avatar avatar-sm avatar-soft" style="width: 32px; height: 32px; border-radius: 50%; font-size: 0.78rem; font-weight: 700; background: var(--guinda-50, #fdf2f4); color: #7a152d; display: inline-flex; align-items: center; justify-content: center;">${usmpEscaparHtml(r.iniciales)}</span>
                                     <span class="fw-semibold small text-dark">${usmpEscaparHtml(r.autor)}</span>
+                                    ${esPropia ? '<span class="badge bg-secondary-subtle text-secondary" style="font-size:0.65rem;">Tú</span>' : ''}
                                 </div>
-                                <div class="d-flex align-items-center gap-2">${r.sentimiento ? `<span class="badge rounded-pill border px-2 py-1" style="font-size: 0.7rem; font-weight: 600; ${r.sentimiento === 'Positivo' ? 'background:#f0fdf4;color:#15803d;border-color:#bbf7d0 !important;' : 'background:#fef2f2;color:#b91c1c;border-color:#fecaca !important;'}">${usmpEscaparHtml(r.sentimiento)}</span>` : ''}<span class="text-muted small" style="font-size: 0.78rem;">${usmpEscaparHtml(r.fechaRelativa)}</span></div>
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    ${formatearEtiquetaSentimiento(r)}
+                                    <span class="text-muted small" style="font-size: 0.78rem;">${usmpEscaparHtml(r.fechaRelativa)}</span>
+                                    ${accionesPropia}
+                                </div>
                             </div>
                             <div class="stars-gold mb-1" style="font-size: 13px;">
                                 ${'★'.repeat(r.puntuacion)}${'☆'.repeat(5 - r.puntuacion)}
                             </div>
-                            <p class="small mb-0 text-secondary" style="line-height: 1.45;">${usmpEscaparHtml(r.comentario)}</p>
-                        </div>
-                    `).join('');
-                } else {
-                    listaResenas.innerHTML = `
-                        <div class="text-center py-4 px-3 rounded" style="background: #f8fafc; border: 1px dashed #cbd5e1;">
-                            <i class="bi bi-chat-square-text text-muted fs-3 mb-2 d-block"></i>
-                            <p class="small text-muted mb-2">Aún no hay reseñas registradas para este local.</p>
-                            <button class="btn btn-sm btn-outline-guinda rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#formResenaCollapse">
-                                <i class="bi bi-pencil-fill me-1"></i>Sé el primero en calificar
-                            </button>
+                            <p id="texto-resena-${r.id}" class="small mb-0 text-secondary" style="line-height: 1.45;">${usmpEscaparHtml(r.comentario)}</p>
+                            ${formularioEdicion}
                         </div>
                     `;
-                }
+                }).join('');
+            } else {
+                listaResenas.innerHTML = `
+                    <div class="text-center py-4 px-3 rounded" style="background: #f8fafc; border: 1px dashed #cbd5e1;">
+                        <i class="bi bi-chat-square-text text-muted fs-3 mb-2 d-block"></i>
+                        <p class="small text-muted mb-2">Aún no hay reseñas registradas para este local.</p>
+                        <button class="btn btn-sm btn-outline-guinda rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#formResenaCollapse">
+                            <i class="bi bi-pencil-fill me-1"></i>Sé el primero en calificar
+                        </button>
+                    </div>
+                `;
+            }
+            return true;
+        }
 
-                const modal = new bootstrap.Modal(document.getElementById('modalRestaurante'));
+        async function abrirModalDetalle(id) {
+            try {
+                const ok = await cargarDatosModal(id);
+                if (!ok) return;
+                const modalEl = document.getElementById('modalRestaurante');
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
                 modal.show();
             } catch (err) {
                 console.error("Error al cargar detalle:", err);

@@ -36,6 +36,7 @@ public class SentimientoResenasTests
         Assert.Equal(ResultadoSentimiento.EtiquetaNegativo, neg.Etiqueta);
         Assert.True(neg.Probabilidad > 0.5);
 
+        await DemoFactory.LoginAsync(client, DemoUsers.Alessandro);
         var htmlTecnologia = await client.GetStringAsync("/Tecnologia");
         Assert.Contains("ML.NET · Análisis de Sentimiento", htmlTecnologia);
         Assert.Contains("data-ml-sentimiento-metricas", htmlTecnologia);
@@ -62,6 +63,13 @@ public class SentimientoResenasTests
 
         var detalle = await client.GetFromJsonAsync<RestauranteDetalleDto>("/api/restaurantes/1", JsonOpts);
         Assert.NotNull(detalle);
-        Assert.Contains(detalle.Resenas, r => r.Id == creada.Id && r.Sentimiento == ResultadoSentimiento.EtiquetaPositivo);
+        Assert.Contains(detalle.Resenas, r => r.Id == creada.Id
+            && r.Sentimiento == ResultadoSentimiento.EtiquetaPositivo
+            && !string.IsNullOrWhiteSpace(r.UsuarioId));
+
+        var htmlRestaurantes = await client.GetStringAsync("/Restaurantes");
+        Assert.Contains("data-fuente-catalogo=", htmlRestaurantes);
+        Assert.Contains("guardarEdicionResena", htmlRestaurantes);
+        Assert.Contains("eliminarResenaPropia", htmlRestaurantes);
     }
 }

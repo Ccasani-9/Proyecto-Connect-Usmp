@@ -101,9 +101,11 @@ public sealed class AgenteUsmpService(IConfiguration config, ApplicationDbContex
             funciones.Add(kernel.Plugins.GetFunction("CatalogoFia", "BuscarCursosYCatedra"));
         if (Incluye("marketplace", "calculadora", "en venta", "comprar"))
             funciones.Add(kernel.Plugins.GetFunction("CatalogoFia", "BuscarMarketplace"));
+        if (Incluye("como ", "guia", "manual", "regla", "resena", "horario", "calendario", "nota minima", "promedio", "aprobar", "sustitutorio", "objetos perdidos"))
+            funciones.Add(kernel.Plugins.GetFunction("ConocimientoFia", "BuscarEnConocimiento"));
         // Las preguntas de uso (por ejemplo "publicar apuntes") necesitan la guía,
         // no el listado de archivos. El modelo elige la herramienta adecuada.
-        if (funciones.Count > 0)
+        if (funciones.Count > 0 && !funciones.Any(f => f.Name == "BuscarEnConocimiento"))
             funciones.Add(kernel.Plugins.GetFunction("ConocimientoFia", "BuscarEnConocimiento"));
         return funciones;
     }
