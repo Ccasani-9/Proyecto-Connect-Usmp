@@ -127,7 +127,8 @@ public sealed class CatalogoRestaurantesService(
                 x.Comentario,
                 HoraPeru.Hace(x.FechaUtc),
                 x.Sentimiento,
-                x.ProbabilidadSentimiento
+                x.ProbabilidadSentimiento,
+                x.UsuarioId
             )).ToList();
 
         var platos = r.Platos

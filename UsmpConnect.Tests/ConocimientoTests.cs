@@ -22,6 +22,34 @@ public class ConocimientoTests
         await Assert.ThrowsAsync<InvalidDataException>(() => extractor.ExtraerAsync(invalido, "programa.exe"));
     }
 
+    private static string RutaPdfManualFia()
+    {
+        // El contenido versionado se copia al compilar, igual que en publicación.
+        var ruta = Path.Combine(AppContext.BaseDirectory, "Data", "Conocimiento", "manual-fia-usmp-connect.pdf");
+        Assert.True(File.Exists(ruta), "Falta el manual PDF versionado en el contenido de salida.");
+        return ruta;
+    }
+
+    [Fact]
+    public async Task PdfPig_ExtraePaginasRealesDelManualPdfEnCorpus()
+    {
+        var rutaCorpusPdf = RutaPdfManualFia();
+
+        var extractor = new DocumentoTextoExtractor();
+        await using var stream = File.OpenRead(rutaCorpusPdf);
+        var paginas = await extractor.ExtraerAsync(stream, "manual-fia-usmp-connect.pdf");
+
+        Assert.Equal(2, paginas.Count);
+        Assert.Equal(1, paginas[0].Numero);
+        Assert.Contains("Calculadora de Promedios", paginas[0].Texto);
+        Assert.Contains("calculadorafiausmp.com", paginas[0].Texto);
+        Assert.DoesNotContain("Calculadora de Promedios integrada", paginas[0].Texto);
+        Assert.Equal(2, paginas[1].Numero);
+        Assert.Contains("Editar y Eliminar", paginas[1].Texto);
+        Assert.Contains("ML.NET", paginas[1].Texto);
+        Assert.Contains("no reentrenan", paginas[1].Texto);
+    }
+
     [Fact]
     public async Task BusquedaLocal_DevuelveFuenteRealYSinInventarCoincidencias()
     {
@@ -58,6 +86,7 @@ public class ConocimientoTests
     [Fact]
     public async Task Consulta_RequiereSesionYPermiteAlumnoConRespaldoLocal()
     {
+        RutaPdfManualFia();
         await using var factory = new ConocimientoFactory();
         using var client = factory.CreateSessionClient();
         var sinSesion = await client.GetAsync("/Conocimiento/Buscar?consulta=apuntes");
@@ -69,6 +98,13 @@ public class ConocimientoTests
         Assert.Equal("local", json.RootElement.GetProperty("modo").GetString());
         Assert.NotEmpty(json.RootElement.GetProperty("fuentes").EnumerateArray());
         Assert.Contains(json.RootElement.GetProperty("fuentes").EnumerateArray(), f => f.GetProperty("fuente").GetString() == "guia-usmp-connect.md");
+
+        var respuestaPdf = await client.GetAsync("/Conocimiento/Buscar?consulta=calculadora%20de%20promedios%2010.5");
+        Assert.Equal(HttpStatusCode.OK, respuestaPdf.StatusCode);
+        using var jsonPdf = JsonDocument.Parse(await respuestaPdf.Content.ReadAsStringAsync());
+        Assert.Contains(jsonPdf.RootElement.GetProperty("fuentes").EnumerateArray(),
+            f => f.GetProperty("fuente").GetString() == "manual-fia-usmp-connect.pdf" && f.GetProperty("pagina").GetInt32() == 1);
+
         var vacia = await client.GetAsync("/Conocimiento/Buscar?consulta=x");
         Assert.Equal(HttpStatusCode.BadRequest, vacia.StatusCode);
     }
