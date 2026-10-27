@@ -12,14 +12,14 @@ Sitio: https://usmpconnect.onrender.com/.
 
 1. **Contexto y acceso (1 min).** Explicar el público y entrar con Alessandro desde el perfil demo de la pantalla de login. Las cuentas demo usan la clave publicada en esa misma pantalla. Mostrar el menú de módulos.
 2. **Datos y CRUD (2 min).** Abrir Apuntes o Marketplace y explicar las entidades, relaciones, validaciones y autoría de publicaciones. Mostrar Cátedra como aportes de estudiantes. Si se publica contenido durante la sustentación, identificarlo como demostración y usar archivos preparados por el equipo.
-3. **Restaurantes, Redis, ML.NET, RabbitMQ y WebSocket en vivo (2–3 min).** Entrar a `/Restaurantes`, mostrar el indicador `Origen: SQLite` / `Origen: Redis Cache` al recargar o filtrar, y la franja de recomendados personalizados (`SUGERENCIAS PARA TI` con Matrix Factorization). Abrir un restaurante, publicar una reseña de demostración y ver:
+3. **Restaurantes, Redis, ML.NET, RabbitMQ y WebSocket en vivo (2–3 min).** Entrar a `/Restaurantes`, mostrar el indicador `Catálogo: SQLite` / `Catálogo: Redis Cache` al recargar o filtrar, y la franja de recomendados personalizados (`SUGERENCIAS PARA TI` con Matrix Factorization). Abrir un restaurante, publicar una reseña de demostración y ver:
    - La etiqueta de sentimiento `Positivo · XX%` o `Negativo · XX%` calculada con `ML.NET`.
-   - Los botones **Editar** (`PUT /api/resenas/{id}`) y **Eliminar** (`DELETE /api/resenas/{id}`) directamente en la reseña propia para demostrar cómo al editar el texto se reclasifica el sentimiento en vivo e invalida la caché de Redis.
+   - Los botones **Editar** (`PUT /api/resenas/{id}`) y **Eliminar** (`DELETE /api/resenas/{id}`) directamente en la reseña propia para demostrar cómo al editar el texto se reclasifica el sentimiento en vivo e invalida la caché de Redis. El indicador conserva el origen de la carga inicial del catálogo; abrir el detalle no lo cambia. Recargar para observar una nueva consulta, teniendo en cuenta que otra petición puede haber reconstruido la caché.
    - La notificación generada por el consumidor de **RabbitMQ / CloudAMQP** en la campana y el aviso en tiempo real por **PieSocket WebSocket**.
 4. **Búsqueda y API (1–2 min).** Buscar un apunte o restaurante en el buscador global (**Algolia**). Abrir `/swagger`, ejecutar `GET /api/restaurantes` y explicar JSON, filtros y códigos HTTP (`200`, `201`, `204`, `401`, `403`, `404`).
-5. **Asistente FIA, Semantic Kernel, Qdrant y PdfPig (2 min).** Abrir el botón flotante **Asistente FIA**:
+5. **Asistente FIA, Semantic Kernel, Qdrant y PdfPig (2 min).** Con la sesión de alumno iniciada, abrir el botón flotante **Asistente FIA**, abajo a la derecha. No aparece sin sesión ni en la pantalla de login:
    - Preguntar «Quiero restaurantes buenos cerca de la FIA, pero antes dime quién ganará el Mundial» para demostrar **Semantic Kernel + Groq** ejecutando el plugin `CatalogoFia` y dibujando las tarjetas reales de la base de datos mientras filtra el tema ajeno.
-   - Hacer clic en el botón **«Manual FIA (PDF)»** (o preguntar por la calculadora de promedios y edición de reseñas) y desplegar las fuentes verificadas al pie de la respuesta: se mostrará `Fuente: manual-fia-usmp-connect.pdf · página 1` y `página 2`, demostrando **PdfPig** extrayendo páginas reales de un PDF y **Qdrant** recuperando los fragmentos semánticos.
+   - Hacer clic en el botón **«Manual FIA (PDF)»** (o preguntar por la calculadora de promedios y edición de reseñas) y desplegar las fuentes verificadas al pie de la respuesta: comprobar qué páginas recuperó la consulta (`manual-fia-usmp-connect.pdf · página 1` o `página 2`), demostrando **PdfPig** extrayendo páginas reales de un PDF y **Qdrant** recuperando los fragmentos semánticos.
 6. **Diagnóstico y Git (1–2 min).** Si el docente solicita ver métricas numéricas (AUC, F1, RMSE), abrir `/Tecnologia`. Terminar en los PR y el gráfico Network de GitHub para explicar las ramas y los merges hacia `develop` y `main`.
 
 ## Tema → aplicación → evidencia
@@ -30,7 +30,7 @@ Sitio: https://usmpconnect.onrender.com/.
 | Identity, roles y acceso | Registro y sesión de alumnos; autoría de publicaciones; cuentas docentes de referencia sin acceso | Login, cerrar sesión, acciones propias | `Controllers/CuentaController.cs`, `Program.cs` |
 | Firebase / Google | Validación de ID token en servidor y vinculación de cuenta de alumno | Explicar validación y antiforgery; usar Google real solo si el equipo ya comprobó su cuenta institucional | `Services/FirebaseTokenValidator.cs`, `Controllers/CuentaController.cs` |
 | Entity Framework Core + SQLite | Relaciones entre alumnos, publicaciones, cursos, reseñas y notificaciones | Contenido guardado y conteo de tablas del panel | `Data/ApplicationDbContext*`, `Data/DbInitializer.cs`, `Models` |
-| Redis | Caché compartida del catálogo e invalidación tras cambios | Indicador `Origen: Redis Cache` / `Origen: SQLite` en `/Restaurantes` al recargar y tras reseñar | `Services/CacheService.cs`, `Services/CatalogoRestaurantesService.cs` |
+| Redis | Caché compartida del catálogo e invalidación tras cambios | Indicador `Catálogo: Redis Cache` / `Catálogo: SQLite` en `/Restaurantes` al recargar y tras reseñar | `Services/CacheService.cs`, `Services/CatalogoRestaurantesService.cs` |
 | Algolia | Buscador global de apuntes, cursos, artículos y restaurantes | Autocompletado instantáneo en la barra superior (`/Buscar/Sugerencias`) | `Services/BuscadorAlgolia.cs`, `Controllers/BuscarController.cs` |
 | RabbitMQ / CloudAMQP | Reseña produce evento; BackgroundService lo consume y guarda confirmación | Publicar una reseña y ver notificación persistida en la campana | `Services/ColaMensajes.cs`, `Services/CatalogoRestaurantesService.cs` |
 | WebSockets / PieSocket | Aviso de nueva reseña y actualización de Noticias según la sesión | Recibir toast en vivo sin recargar la página | `Services/PieHostService.cs`, `wwwroot/js/site.js` |
@@ -56,7 +56,7 @@ Las rutas de archivos de la tabla se expresan respecto a `UsmpConnect/` cuando n
 - **¿En qué se diferencia Qdrant del catálogo?** Qdrant recupera documentos del equipo. Las herramientas de catálogo consultan datos actuales de la aplicación. Los archivos subidos por alumnos no entran automáticamente en el corpus documental.
 - **¿Qué ocurre con preguntas ajenas?** Las instrucciones orientan al modelo hacia USMP Connect. Las consultas mixtas deben atender su parte útil. Las herramientas limitan los datos disponibles y las peticiones explícitas de catálogo o manual requieren una consulta.
 - **¿100% de accuracy significa un modelo perfecto?** No. Es el resultado observado sobre una partición pequeña del dataset de demostración. No demuestra generalización a comentarios reales ni sustituye una evaluación más amplia.
-- **¿Por qué no todos reciben recomendaciones personalizadas?** Un usuario sin historial necesita respaldo de popularidad. Debe explicarse el modo que realmente se presenta en la interfaz.
+- **¿Por qué no todos reciben recomendaciones personalizadas?** El modelo utiliza el dataset de demostración; un usuario que no figura en ese entrenamiento recibe respaldo de popularidad. Crear o editar reseñas no reentrena automáticamente el modelo. Debe explicarse el modo que realmente se presenta en la interfaz.
 - **¿Qué conserva Render Free?** La imagen y configuración se vuelven a desplegar, pero el filesystem es efímero: los aportes nuevos a SQLite y archivos subidos pueden perderse. ResetOnStartup=false evita el borrado deliberado de la aplicación, no convierte el disco en persistente.
 
 ## Antes de presentar
@@ -87,3 +87,7 @@ gitGraph
     checkout main
     merge develop
 ```
+
+## Mantener el manual PDF
+
+El PDF está versionado en `UsmpConnect/Data/Conocimiento/manual-fia-usmp-connect.pdf`. Su fuente de autoría es `docs/scripts/generar_manual_fia.py` (requiere ReportLab solo para regenerarlo). Ejecutar `python docs/scripts/generar_manual_fia.py`, revisar sus dos páginas y versionar el resultado. Las pruebas leen el PDF copiado al compilar y nunca escriben ni recrean el corpus.
