@@ -475,6 +475,10 @@ else
                         </div>
                         <span class="badge bg-light text-secondary border">@r.RangoPrecios</span>
                     </div>
+                    @if (r.PrecioPromedioReferencial.HasValue)
+                    {
+                        <p class="small text-muted mb-2" title="Estimación de demostración según el rango del local; confirmar antes de consumir">S/ @r.PrecioPromedioReferencial.Value.ToString("0.00") aprox. por persona · demo</p>
+                    }
 
                     <p class="small text-muted mb-3 text-truncate-2" style="display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:36px; line-height:1.35;">
                         @r.Descripcion
@@ -696,6 +700,7 @@ else
             CategoriaKey = r.Categoria.ToString(),
             CategoriaNombre = r.Categoria.Nombre(),
             r.RangoPrecios,
+            r.PrecioPromedioReferencial,
             r.Latitud,
             r.Longitud,
             r.DistanciaTexto,
@@ -895,7 +900,8 @@ else
             document.getElementById("fmc-nombre").textContent = r.Nombre;
             document.getElementById("fmc-rating").textContent = (typeof r.CalificacionPromedio === 'number') ? r.CalificacionPromedio.toFixed(1) : "5.0";
             document.getElementById("fmc-reviews").textContent = (typeof r.TotalResenas === 'number') ? `(${r.TotalResenas} reseñas)` : "(Campus)";
-            document.getElementById("fmc-rango").textContent = r.RangoPrecios || "Económico";
+            document.getElementById("fmc-rango").textContent = r.PrecioPromedioReferencial
+                ? `S/ ${r.PrecioPromedioReferencial.toFixed(2)} aprox./persona (demo)` : (r.RangoPrecios || 'Sin precio registrado');
             document.getElementById("fmc-distancia").textContent = `${r.DistanciaTexto} · ${r.Direccion}`;
 
             const btnResenas = document.getElementById("fmc-btn-resenas");
@@ -1121,7 +1127,8 @@ else
             document.getElementById('modalDistancia').textContent = `${d.distanciaTexto} · ${d.direccion}`;
             document.getElementById('modalImg').src = d.fotoUrl;
             document.getElementById('modalCategoria').textContent = d.categoria;
-            document.getElementById('modalRangoPrecios').textContent = d.rangoPrecios;
+            document.getElementById('modalRangoPrecios').textContent = d.precioPromedioReferencial
+                ? `${d.rangoPrecios} · S/ ${d.precioPromedioReferencial.toFixed(2)} aprox./persona (demo)` : d.rangoPrecios;
             document.getElementById('modalPromedio').textContent = d.calificacionPromedio.toFixed(1);
             document.getElementById('modalTotalResenas').textContent = `(${d.totalResenas} reseñas)`;
             document.getElementById('modalDesc').textContent = d.descripcion;

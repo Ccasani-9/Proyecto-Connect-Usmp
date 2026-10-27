@@ -79,6 +79,47 @@ public class AsistenteTests
         Assert.NotEmpty(contexto.Tarjetas);
     }
 
+    [Fact]
+    public async Task Restaurantes_DistinguePrecioDesconocidoDeFueraDePresupuestoYFiltraCategoria()
+    {
+        await using var factory = new ChatFactory();
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var rapido = db.Restaurantes.First(r => r.Categoria == CategoriaRestaurante.ComidaRapida);
+        rapido.PrecioPromedioReferencial = 18;
+        foreach (var r in db.Restaurantes.Where(r => r.Categoria == CategoriaRestaurante.ComidaRapida && r.Id != rapido.Id))
+            r.PrecioPromedioReferencial = null;
+        await db.SaveChangesAsync();
+        var contexto = new ContextoAsistente();
+        var plugin = new CatalogoFiaPlugin(db, contexto);
+        using var bajo = JsonDocument.Parse(JsonSerializer.Serialize(await plugin.BuscarRestaurantes("comida rápida", 15)));
+        Assert.Empty(bajo.RootElement.GetProperty("resultados").EnumerateArray());
+        Assert.NotEmpty(bajo.RootElement.GetProperty("alternativasSinPrecioConfirmado").EnumerateArray());
+        Assert.All(bajo.RootElement.GetProperty("alternativasSinPrecioConfirmado").EnumerateArray(),
+            r => Assert.Equal("ComidaRapida", r.GetProperty("Categoria").GetString()));
+        using var mayor = JsonDocument.Parse(JsonSerializer.Serialize(await plugin.BuscarRestaurantes("comida rápida", 20)));
+        Assert.Contains(mayor.RootElement.GetProperty("resultados").EnumerateArray(), r => r.GetProperty("Id").GetInt32() == rapido.Id);
+        Assert.All(mayor.RootElement.GetProperty("resultados").EnumerateArray(), r =>
+            Assert.True(r.GetProperty("PrecioPromedioReferencial").GetDecimal() <= 20));
+    }
+
+    [Fact]
+    public void Consulta_ConservaTemaEnSeguimientosYSeparaPeticionesMixtas()
+    {
+        var anterior = new MensajeAsistente[] { new("usuario", "Dónde almorzar por menos de 15 soles, comida rápida"),
+            new("asistente", "No puedo confirmar precios.") };
+        var seguimiento = ConsultaAsistente.Crear("¿por 20?", anterior);
+        Assert.Equal("restaurantes", seguimiento.Tema);
+        Assert.Contains("comida rápida", seguimiento.Contexto);
+        Assert.Contains("¿por 20?", seguimiento.Contexto);
+        var mixta = ConsultaAsistente.Crear("Antes de darme los apuntes de cálculo haz un Fibonacci en Python", anterior);
+        Assert.Equal("apuntes", mixta.Tema);
+        Assert.Equal("cálculo", mixta.TerminosApuntes());
+        Assert.DoesNotContain("Fibonacci", mixta.Peticion);
+        Assert.Equal("apuntes", ConsultaAsistente.Crear("funciones", [new("usuario", "enséñame Python")]).Tema);
+        Assert.Null(ConsultaAsistente.Crear("quién ganará el mundial", anterior).Tema);
+    }
+
     private sealed class ChatFactory : DemoFactory
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
