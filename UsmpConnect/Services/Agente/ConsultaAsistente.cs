@@ -5,6 +5,33 @@ namespace UsmpConnect.Services.Agente;
 /// <summary>Recupera el tema de continuaciones cortas sin arrastrarlo a preguntas nuevas.</summary>
 public record ConsultaAsistente(string? Tema, string Contexto)
 {
+    public decimal? Presupuesto
+    {
+        get
+        {
+            var numeros = Regex.Matches(Contexto, @"(?:por|hasta|menos de|maximo|máximo|presupuesto(?: de)?)\s*(?:s[/\.]\s*)?(\d+(?:[.,]\d+)?)", RegexOptions.IgnoreCase);
+            return numeros.Count > 0 && decimal.TryParse(numeros[^1].Groups[1].Value.Replace(',', '.'),
+                System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var valor) ? valor : null;
+        }
+    }
+    public string? Categoria
+    {
+        get
+        {
+            var categorias = Regex.Matches(Contexto, @"comida r[aá]pida|chifa|saludable|cafeter[ií]a|men[uú] criollo|postres", RegexOptions.IgnoreCase);
+            return categorias.Count > 0 ? categorias[^1].Value : null;
+        }
+    }
+    public bool ParaAlmorzar => BuscadorAlgolia.Contiene(Contexto, "almorz");
+    public DayOfWeek DiaConsulta
+    {
+        get
+        {
+            var dias = Regex.Matches(Contexto, @"hoy|ma[nñ]ana", RegexOptions.IgnoreCase);
+            return dias.Count > 0 && !dias[^1].Value.Equals("hoy", StringComparison.OrdinalIgnoreCase)
+                ? HoraPeru.Ahora.AddDays(1).DayOfWeek : HoraPeru.Ahora.DayOfWeek;
+        }
+    }
     public string Peticion => Tema == "apuntes"
         ? "Busca en el catálogo de apuntes estos temas: " + TerminosApuntes() +
           ". Devuelve los materiales encontrados o alternativas reales. No des clases ni escribas código."
@@ -27,20 +54,23 @@ public record ConsultaAsistente(string? Tema, string Contexto)
     public static ConsultaAsistente Crear(string mensaje, IReadOnlyList<MensajeAsistente> historial)
     {
         var tema = DetectarTema(mensaje);
-        if (tema is not null) return new(tema, mensaje);
-        var palabras = Regex.Matches(mensaje, @"\p{L}+").Select(m => m.Value).ToArray();
-        var seguimiento = mensaje.Length < 100 &&
-            (Regex.IsMatch(mensaje, @"^\s*[¿?]*(y\s+)?(por|hasta|menos de|con|a)\s+(s[/\.]?\s*)?\d", RegexOptions.IgnoreCase)
-             || palabras.Length == 1 || Regex.IsMatch(mensaje, @"^\s*¿?(y |otros|otras|más|mas|esos|esas|de esos)", RegexOptions.IgnoreCase));
-        if (!seguimiento) return new(null, mensaje);
+        if (!EsContinuacion(mensaje)) return new(tema, mensaje);
         var usuarios = historial.Where(m => m.Rol == "usuario").TakeLast(6).ToList();
-        for (var i = usuarios.Count - 1; i >= 0; i--)
-        {
-            tema = DetectarTema(usuarios[i].Texto);
-            if (tema is not null)
-                return new(tema, string.Join("\n", usuarios.Skip(i).Select(m => m.Texto).Append(mensaje)));
-        }
-        return new(null, mensaje);
+        var inicio = usuarios.FindLastIndex(m => DetectarTema(m.Texto) is not null && !EsContinuacion(m.Texto));
+        if (inicio < 0) inicio = usuarios.FindLastIndex(m => DetectarTema(m.Texto) is not null);
+        if (inicio < 0) return new(tema, mensaje);
+        var anterior = DetectarTema(usuarios[inicio].Texto);
+        return tema is null || tema == anterior
+            ? new(anterior, string.Join("\n", usuarios.Skip(inicio).Select(m => m.Texto).Append(mensaje)))
+            : new(tema, mensaje);
+    }
+
+    private static bool EsContinuacion(string mensaje)
+    {
+        var palabras = Regex.Matches(mensaje, @"\p{L}+");
+        return mensaje.Length < 100 && (palabras.Count == 1 ||
+            Regex.IsMatch(mensaje, @"^\s*[¿?]*(y\s+)?(por|hasta|menos de|con|a)\s+(s[/\.]?\s*)?\d", RegexOptions.IgnoreCase) ||
+            Regex.IsMatch(mensaje, @"^\s*¿?(y |otros|otras|más|mas|esos|esas|de esos)", RegexOptions.IgnoreCase));
     }
 
     private static string? DetectarTema(string mensaje)
