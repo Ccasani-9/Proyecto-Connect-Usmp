@@ -12,15 +12,19 @@
 
 <div class="mb-4">
     <h2 class="fw-bold mb-1" style="color:#1e293b;">Iniciar sesión</h2>
-    <p class="text-muted small mb-0">Ingresa con tu correo institucional USMP para acceder al campus virtual.</p>
+    <p class="text-muted small mb-0">Entra a la comunidad con tu cuenta, Google personal o un perfil demo.</p>
 </div>
+@if (TempData["ErrorAcceso"] is string errorAcceso)
+{
+    <div class="alert alert-warning small" role="alert">@errorAcceso</div>
+}
 
 <form asp-action="Login" method="post" novalidate id="formLogin">
     <input type="hidden" asp-for="ReturnUrl" />
     <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small rounded-3"></div>
 
     <div class="mb-3">
-        <label asp-for="Email" class="form-label fw-semibold small text-secondary mb-1">Correo institucional</label>
+        <label asp-for="Email" class="form-label fw-semibold small text-secondary mb-1">Correo de tu cuenta</label>
         <div class="input-group">
             <span class="input-group-text bg-white border-end-0 text-muted ps-3"><i class="bi bi-envelope"></i></span>
             <input asp-for="Email" class="form-control border-start-0 ps-2" placeholder="nombre.apellido@usmp.pe" autocomplete="username" autofocus />
@@ -71,6 +75,7 @@
     <span>Continuar con Google</span>
 </button>
 
+<p class="small text-muted mb-3">Google permite usar tu cuenta personal en esta maqueta; no acredita pertenencia a la USMP.</p>
 <!-- Box de Cuentas Demo por Carrera -->
 <div class="demo-box p-3 rounded-3 mt-2" style="background:#f8fafc; border:1px solid #e2e8f0;">
     <div class="d-flex align-items-center justify-content-between mb-2">

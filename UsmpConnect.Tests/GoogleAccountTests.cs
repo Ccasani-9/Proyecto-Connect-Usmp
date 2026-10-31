@@ -48,7 +48,7 @@ public class GoogleAccountTests
     {
         await using var factory = new IdentityFactory(new(uid, email, "Nombre de Google", null));
         using var client = factory.CreateSessionClient();
-        Assert.Equal(role == Roles.Alumno ? HttpStatusCode.OK : HttpStatusCode.Forbidden, (await SignInAsync(client)).StatusCode);
+        Assert.Equal(role == Roles.Alumno ? HttpStatusCode.Conflict : HttpStatusCode.Forbidden, (await SignInAsync(client)).StatusCode);
         using var scope = factory.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var user = await users.FindByEmailAsync(email);
@@ -65,6 +65,7 @@ public class GoogleAccountTests
             var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var user = (await users.FindByEmailAsync("alessandro.morales@usmp.pe"))!;
             Assert.True((await users.RemoveFromRoleAsync(user, Roles.Alumno)).Succeeded);
+            Assert.True((await users.AddLoginAsync(user, new UserLoginInfo("Firebase", "anterior", "Google"))).Succeeded);
         }
         Assert.Equal(HttpStatusCode.OK, (await SignInAsync(client)).StatusCode);
         using var verify = factory.Services.CreateScope();
@@ -89,14 +90,14 @@ public class GoogleAccountTests
     }
 
     [Fact]
-    public async Task CorreoAjenoAlDominio_NoCreaCuenta()
+    public async Task GooglePersonal_CreaCuentaDeDemostracion()
     {
         await using var factory = new IdentityFactory(new("externo", "alumno@example.com", "Ana", null));
         using var client = factory.CreateSessionClient();
         var response = await SignInAsync(client);
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         using var scope = factory.Services.CreateScope();
-        Assert.False(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Users.Any(u => u.Email == "alumno@example.com"));
+        Assert.True(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Users.Any(u => u.Email == "alumno@example.com"));
     }
 
     [Fact]
