@@ -22,3 +22,6 @@ Mensajes del modelo y de usuarios se renderizan con textContent, nunca HTML. Enl
 
 ## Gasto referencial de restaurantes
 El gasto promedio de demostración por persona se muestra en una línea separada de la valoración y del rango, sin comprimir las estrellas. El modal y las tarjetas del asistente lo identifican como aproximado/demo. Un precio desconocido nunca se representa como gratis ni como compatible con un presupuesto.
+
+## Calendario y lectura del asistente
+Calendario reserva 100px al pie para separar acciones del lanzador flotante. Actividades semanales con días seleccionados y final obligatorio (máximo 366 días); se materializan como actividades independientes y eliminar afecta solo esa fecha. Emoji de paleta acotada integrado al título para mantener compatibilidad con Inicio sin migración. Formulario desplazable en pantallas bajas. El asistente presenta listas mediante nodos DOM con textContent y tarjetas verticales completas, sin HTML del modelo ni carruseles truncados.
