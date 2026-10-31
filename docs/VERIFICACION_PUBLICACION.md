@@ -38,3 +38,8 @@ Las comprobaciones remotas se hicieron con la cuenta demo de alumno. No se publi
 - No es una prueba de carga, disponibilidad continua ni persistencia. El alojamiento Free conserva las limitaciones descritas en RENDER_DEMO.md.
 
 La compilación y las pruebas enfocadas del código se documentan en el PR #24. Esta guía añade evidencia del sitio publicado y no cambia el comportamiento de la aplicación.
+
+
+## Preparación del 30/10/2026 — no sustituye la evidencia anterior
+
+Los PR #33–#35 y el bloque de diagnósticos se prepararon en ramas independientes desde develop. Las verificaciones locales no acreditan Redis, Algolia, CloudAMQP ni recepción PieSocket en Render. Sus recorridos completos quedan pendientes después de los merges y el despliegue. Seguir la lista de evidencia remota de GUIA_SUSTENTACION.md y anotar commit desplegado, hora y resultado antes de declarar éxito. Microsoft/Entra queda cancelado; Google personal es acceso a la maqueta.

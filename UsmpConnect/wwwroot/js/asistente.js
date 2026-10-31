@@ -32,6 +32,23 @@
     }
     function alFinal() { return mensajes.scrollHeight - mensajes.scrollTop - mensajes.clientHeight < 90; }
     function desplazar(seguir) { if (seguir) mensajes.scrollTop = mensajes.scrollHeight; }
+    // Formato seguro: solo nodos de texto, nunca HTML del modelo.
+    function presentarTexto(cuerpo, texto) {
+        cuerpo.replaceChildren();
+        let lista = null;
+        for (const linea of texto.split(/\n/)) {
+            const item = linea.match(/^\s*(?:\d+[.)]|[-•])\s+(.+)/);
+            if (item) {
+                if (!lista) { lista = document.createElement('ul'); cuerpo.append(lista); }
+                const li = document.createElement('li');
+                li.textContent = item[1]; lista.append(li);
+            } else {
+                lista = null;
+                if (!linea.trim()) continue;
+                const p = document.createElement('p'); p.textContent = linea; cuerpo.append(p);
+            }
+        }
+    }
     function agregar(rol, texto) {
         mensajes.querySelector('.fia-chat-bienvenida')?.remove();
         const articulo = document.createElement('article');
@@ -41,7 +58,8 @@
         autor.textContent = rol === 'usuario' ? 'Tú' : 'Asistente FIA';
         const cuerpo = document.createElement('div');
         cuerpo.className = 'fia-chat-texto';
-        cuerpo.textContent = texto;
+        if (rol === 'usuario') cuerpo.textContent = texto;
+        else presentarTexto(cuerpo, texto);
         articulo.append(autor, cuerpo);
         mensajes.append(articulo);
         return { articulo, cuerpo };
@@ -196,7 +214,8 @@
                 const dato = JSON.parse(linea);
                 const seguir = alFinal();
                 if (dato.tipo === 'texto') {
-                    fila.cuerpo.textContent += dato.texto;
+                    fila.cuerpo.dataset.respuesta = (fila.cuerpo.dataset.respuesta || '') + dato.texto;
+                    presentarTexto(fila.cuerpo, fila.cuerpo.dataset.respuesta);
                     estado.textContent = 'Respondiendo…';
                 } else if (dato.tipo === 'fin') {
                     completar(fila.articulo, dato.tarjetas, dato.fuentes);

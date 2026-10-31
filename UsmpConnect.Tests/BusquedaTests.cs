@@ -19,6 +19,7 @@ public class BusquedaTests
         using var client = factory.CreateSessionClient();
         var cursos = await client.GetFromJsonAsync<List<AlgoliaItem>>("/Buscar/Sugerencias?q=programacion");
         Assert.Contains(cursos!, i => i.Tipo == "Cursos y docentes" && i.Url.StartsWith("/Catedra/Curso/"));
+        Assert.False(factory.Services.GetRequiredService<EstadoIntegraciones>().Obtener("algolia")!.Correcta);
         string titulo;
         int id;
         using (var scope = factory.Services.CreateScope())
@@ -57,6 +58,32 @@ public class BusquedaTests
         Assert.Contains(transport.Operations, op => op.Action == "deleteObject" && op.Id == "apunte_999999");
         Assert.DoesNotContain(transport.Operations, op => op.Action == "deleteObject" && op.Id == "otro_sistema");
         Assert.Contains(transport.Operations, op => op.Action == "addObject" && op.Id.StartsWith("curso_"));
+    }
+
+    [Theory]
+    [InlineData("{\"hits\":\"invalid\"}")]
+    [InlineData("{\"hits\":[{\"objectID\":4}]}")]
+    public async Task RespuestaRemotaInvalida_UsaSQLiteYNoDeclaraExito(string respuesta)
+    {
+        await using var factory = new DemoFactory();
+        using var client = factory.CreateSessionClient();
+        using var scope = factory.Services.CreateScope();
+        using var http = new HttpClient(new RespuestaTransport(respuesta));
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Algolia:ApplicationId"] = "test", ["Algolia:SearchApiKey"] = "test"
+        }).Build();
+        var estados = new EstadoIntegraciones();
+        var service = new BuscadorAlgolia(config, NullLogger<BuscadorAlgolia>.Instance, http, estados);
+        var resultado = await service.BuscarAsync("programacion", scope.ServiceProvider.GetRequiredService<ApplicationDbContext>());
+        Assert.NotEmpty(resultado);
+        Assert.False(estados.Obtener("algolia")!.Correcta);
+    }
+
+    private sealed class RespuestaTransport(string respuesta) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(respuesta) });
     }
 
     private sealed class AlgoliaTransport : HttpMessageHandler

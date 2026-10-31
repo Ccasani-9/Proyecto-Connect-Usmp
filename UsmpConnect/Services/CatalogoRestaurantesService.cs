@@ -17,7 +17,7 @@ public sealed class CatalogoRestaurantesService(
     IRecomendacionRestaurantesService recomendador,
     ILogger<CatalogoRestaurantesService> logger)
 {
-    public const string CacheKey = "foodspots:catalogo:v1";
+    public const string CacheKey = "foodspots:catalogo:v2";
     // Evita que una carga en curso vuelva a guardar una copia vieja después de invalidar
     // dentro de este proceso. Redis sigue compartiendo la clave entre instancias.
     private static readonly SemaphoreSlim Gate = new(1, 1);
@@ -27,10 +27,11 @@ public sealed class CatalogoRestaurantesService(
         await Gate.WaitAsync(cancellationToken);
         try
         {
-            var items = await cache.GetAsync<List<RestauranteItemVM>>(CacheKey);
+            var lectura = await cache.LeerConOrigenAsync<List<RestauranteItemVM>>(CacheKey);
+            var items = lectura.Valor;
             if (items is not null)
             {
-                var fuente = cache.IsConnected ? "Redis Cache" : "Caché local";
+                var fuente = lectura.Origen;
                 logger.LogDebug("Catálogo de restaurantes: hit en {Fuente}", fuente);
                 return new(items, fuente);
             }
@@ -41,7 +42,8 @@ public sealed class CatalogoRestaurantesService(
                 r.Id, r.Nombre, r.Descripcion, r.Categoria.Nombre(), r.Categoria, r.Rango,
                 r.Direccion, r.DistanciaTexto, r.RangoPrecios, r.HorarioAtencion, r.TelefonoWhatsApp,
                 r.FotoUrl, r.Latitud, r.Longitud, r.CalificacionPromedio, r.TotalResenas,
-                r.Platos.Select(p => new PlatoItemVM(p.Id, p.Nombre, p.Precio, p.Descripcion, p.EsPopular)).ToList()
+                r.Platos.Select(p => new PlatoItemVM(p.Id, p.Nombre, p.Precio, p.Descripcion, p.EsPopular)).ToList(),
+                r.PrecioPromedioReferencial
             )).ToList();
             await cache.SetAsync(CacheKey, items, TimeSpan.FromMinutes(5));
             logger.LogInformation("Catálogo cargado desde SQLite: {Cantidad} restaurantes; {Estado}", items.Count, cache.Estado);
@@ -156,7 +158,8 @@ public sealed class CatalogoRestaurantesService(
             r.TotalResenas,
             esCampus,
             platos,
-            resenas);
+            resenas,
+            r.PrecioPromedioReferencial);
     }
 
     public async Task<ResenaDto?> CrearResenaAsync(

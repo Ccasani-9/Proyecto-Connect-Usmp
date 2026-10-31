@@ -20,7 +20,8 @@ public record RestauranteItemVM(
     double Longitud,
     double CalificacionPromedio,
     int TotalResenas,
-    List<PlatoItemVM> PlatosPopulares
+    List<PlatoItemVM> PlatosPopulares,
+    decimal? PrecioPromedioReferencial = null
 )
 {
     public bool EsCampus => (Direccion?.Contains("Campus FIA", StringComparison.OrdinalIgnoreCase) ?? false) ||
@@ -65,7 +66,8 @@ public record RestauranteDetalleDto(
     int TotalResenas,
     bool EsCampus,
     List<PlatoItemVM> Platos,
-    List<ResenaItemVM> Resenas
+    List<ResenaItemVM> Resenas,
+    decimal? PrecioPromedioReferencial = null
 );
 
 public record ResenaDto(
