@@ -10,7 +10,7 @@ public record ApunteAsistente(int Id, string Titulo, string Curso, string? Descr
 public record BusquedaApuntes(IReadOnlyList<ApunteAsistente> Resultados, IReadOnlyList<ApunteAsistente> OtrosMaterialesDisponibles);
 
 /// <summary>Proyecciones explícitas de contenido público: no expone perfiles ni datos de contacto al modelo.</summary>
-public sealed class CatalogoFiaPlugin(ApplicationDbContext db, ContextoAsistente contexto)
+public sealed class CatalogoFiaPlugin(ApplicationDbContext db, ContextoAsistente contexto, ConsultaAsistente? solicitud = null)
 {
     private static string Consulta(string texto) => (texto ?? "").Trim()[..Math.Min((texto ?? "").Trim().Length, 100)];
 
@@ -19,6 +19,8 @@ public sealed class CatalogoFiaPlugin(ApplicationDbContext db, ContextoAsistente
         string? categoria = null, CancellationToken cancellationToken = default)
     {
         texto = Consulta(texto);
+        precioMaximo = solicitud?.Presupuesto ?? precioMaximo;
+        categoria = solicitud?.Categoria ?? categoria;
         var categoriaBuscada = CategoriaDesdeTexto(categoria ?? texto);
         if (!string.IsNullOrWhiteSpace(categoria) && categoriaBuscada is null)
             return new { error = "Categoría desconocida. Usa MenuCriollo, ComidaRapida, Chifa, CafeteriaHuarique, PasteleriaPostres o Saludable." };
@@ -36,6 +38,8 @@ public sealed class CatalogoFiaPlugin(ApplicationDbContext db, ContextoAsistente
         }).ToListAsync(cancellationToken);
         var coincidentes = candidatos.Where(r => Coincide(texto, new[] { r.Nombre, r.Descripcion }.Concat(r.Platos.Select(p => p.Nombre)).ToArray()))
             .OrderByDescending(r => r.CalificacionPromedio).ThenByDescending(r => r.TotalResenas).ToList();
+        if (solicitud?.ParaAlmorzar == true)
+            coincidentes = coincidentes.Where(r => HorarioRestaurante.IncluyeAlmuerzo(r.HorarioAtencion, solicitud.DiaConsulta) != false).ToList();
         var resultados = coincidentes.Where(r => !precioMaximo.HasValue ||
             (r.PrecioPromedioReferencial.HasValue && r.PrecioPromedioReferencial <= precioMaximo.Value)).Take(4).ToList();
         var sinPrecio = coincidentes.Where(r => precioMaximo.HasValue && r.PrecioPromedioReferencial is null)
