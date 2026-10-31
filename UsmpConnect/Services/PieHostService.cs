@@ -14,6 +14,7 @@ public interface IPieHostService
 public class PieHostService : IPieHostService
 {
     private readonly HttpClient _http;
+    private readonly EstadoIntegraciones? _estados;
     private readonly ILogger<PieHostService> _logger;
     private readonly string? _apiKey;
     private readonly string? _apiSecret;
@@ -21,12 +22,13 @@ public class PieHostService : IPieHostService
     private readonly string? _wsUrl;
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(_apiKey) && !string.IsNullOrWhiteSpace(_apiSecret);
-    public string Estado => IsConfigured ? "PieHost WebSockets (Activo)" : "WebSockets Local (Fallback)";
+    public string Estado => IsConfigured ? "PieSocket configurado; recepción por comprobar" : "Sin WebSocket configurado";
     public string? WebSocketClientUrl => _wsUrl;
 
-    public PieHostService(IConfiguration config, ILogger<PieHostService> logger)
+    public PieHostService(IConfiguration config, ILogger<PieHostService> logger, EstadoIntegraciones? estados = null)
     {
         _logger = logger;
+        _estados = estados;
         _apiKey = config["PieHost:ApiKey"];
         _apiSecret = config["PieHost:ApiSecret"];
         _clusterId = config["PieHost:ClusterId"] ?? "free.blr2";
@@ -38,6 +40,7 @@ public class PieHostService : IPieHostService
     {
         if (!IsConfigured)
         {
+            _estados?.Registrar("piesocket", false, "Sin configuración de publicación WebSocket");
             _logger.LogInformation("PieHost no configurado. Evento {Evento} procesado localmente.", evento);
             return;
         }
@@ -58,20 +61,23 @@ public class PieHostService : IPieHostService
             };
 
             var url = $"https://{_clusterId}.piesocket.com/api/v3/publish";
-            var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+            using var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
-            var resp = await _http.PostAsync(url, content);
+            using var resp = await _http.PostAsync(url, content);
             if (resp.IsSuccessStatusCode)
             {
+                _estados?.Registrar("piesocket", true, "PieSocket aceptó la publicación; comprobar recepción en el navegador");
                 _logger.LogInformation("Evento {Evento} transmitido por WebSocket en PieHost.", evento);
             }
             else
             {
+                _estados?.Registrar("piesocket", false, "PieSocket rechazó la publicación");
                 _logger.LogWarning("PieHost publish respondió con status: {Code}", resp.StatusCode);
             }
         }
         catch (Exception ex)
         {
+            _estados?.Registrar("piesocket", false, "No se pudo completar la publicación remota");
             _logger.LogWarning(ex, "Error al emitir evento por PieHost.");
         }
     }

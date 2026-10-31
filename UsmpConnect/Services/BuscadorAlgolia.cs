@@ -40,7 +40,7 @@ public interface IBuscadorAlgolia
     string Estado { get; }
 }
 
-public sealed class BuscadorAlgolia(IConfiguration config, ILogger<BuscadorAlgolia> logger, HttpClient http) : IBuscadorAlgolia
+public sealed class BuscadorAlgolia(IConfiguration config, ILogger<BuscadorAlgolia> logger, HttpClient http, EstadoIntegraciones? estados = null) : IBuscadorAlgolia
 {
     private static readonly SemaphoreSlim SyncGate = new(1, 1);
     // Algolia indexa en segundo plano: recordar altas enviadas permite retirar una baja
@@ -89,11 +89,13 @@ public sealed class BuscadorAlgolia(IConfiguration config, ILogger<BuscadorAlgol
                 response.EnsureSuccessStatusCode();
             }
             logger.LogInformation("Algolia aceptó la sincronización de {Cantidad} registros y la retirada de {Bajas} obsoletos", items.Count, anteriores.Except(actuales).Count());
+            estados?.Registrar("algolia-indice", true, "El proveedor aceptó la sincronización del índice");
             Enviados[indice] = actuales;
             return true;
         }
         catch (Exception ex) when (ex is HttpRequestException or JsonException || ex is TaskCanceledException && !cancellationToken.IsCancellationRequested)
         {
+            estados?.Registrar("algolia-indice", false, "Sincronización remota fallida; datos conservados en SQLite");
             logger.LogWarning(ex, "No se pudo sincronizar Algolia; los datos siguen guardados en SQLite");
             return false;
         }
@@ -115,18 +117,27 @@ public sealed class BuscadorAlgolia(IConfiguration config, ILogger<BuscadorAlgol
                 using var response = await http.SendAsync(request, cancellationToken);
                 response.EnsureSuccessStatusCode();
                 using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
-                // Conserva el orden de relevancia de Algolia; nunca devuelve contenido borrado/vendido.
+                if (json.RootElement.ValueKind != JsonValueKind.Object ||
+                    !json.RootElement.TryGetProperty("hits", out var hits) || hits.ValueKind != JsonValueKind.Array)
+                    throw new JsonException("Respuesta de búsqueda sin hits válidos");
                 var actuales = catalogo.ToDictionary(i => i.ObjectID);
-                return json.RootElement.GetProperty("hits").EnumerateArray()
-                    .Select(h => h.GetProperty("objectID").GetString())
-                    .Where(id => id is not null && actuales.ContainsKey(id))
-                    .Distinct().Select(id => actuales[id!]).Take(12).ToList();
+                var ids = new List<string>();
+                foreach (var hit in hits.EnumerateArray())
+                {
+                    if (hit.ValueKind != JsonValueKind.Object || !hit.TryGetProperty("objectID", out var id) || id.ValueKind != JsonValueKind.String)
+                        throw new JsonException("Resultado de búsqueda inválido");
+                    ids.Add(id.GetString()!);
+                }
+                var resultado = ids.Where(actuales.ContainsKey).Distinct().Select(id => actuales[id]).Take(12).ToList();
+                estados?.Registrar("algolia", true, "Consulta remota completada en Algolia");
+                return resultado;
             }
             catch (Exception ex) when (ex is HttpRequestException or JsonException || ex is TaskCanceledException && !cancellationToken.IsCancellationRequested)
             {
                 logger.LogWarning(ex, "Algolia no respondió; se usa búsqueda local");
             }
         }
+        estados?.Registrar("algolia", false, "Consulta atendida por respaldo SQLite");
         return catalogo.Where(i => Contiene(i.Titulo, q) || Contiene(i.Descripcion, q) || Contiene(i.Categoria, q))
             .GroupBy(i => i.Tipo).SelectMany(g => g.Take(4)).Take(16).ToList();
     }

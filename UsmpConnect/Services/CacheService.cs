@@ -4,9 +4,13 @@ using StackExchange.Redis;
 
 namespace UsmpConnect.Services;
 
+public record LecturaCache<T>(T? Valor, string Origen);
+
 public interface IRedisCacheService
 {
     Task<T?> GetAsync<T>(string key);
+    async Task<LecturaCache<T>> LeerConOrigenAsync<T>(string key)
+        => new(await GetAsync<T>(key), IsConnected ? "Redis Cache" : "Caché local");
     Task SetAsync<T>(string key, T data, TimeSpan? expiry = null);
     Task RemoveAsync(string key);
     bool IsConnected { get; }
@@ -16,6 +20,7 @@ public interface IRedisCacheService
 public sealed class RedisCacheService : IRedisCacheService, IDisposable
 {
     private readonly IMemoryCache _memoryCache;
+    private readonly EstadoIntegraciones? _estados;
     private readonly ILogger<RedisCacheService> _logger;
     private readonly IConnectionMultiplexer? _redis;
     private readonly IDatabase? _db;
@@ -25,9 +30,10 @@ public sealed class RedisCacheService : IRedisCacheService, IDisposable
     public bool IsConnected => _redis?.IsConnected ?? false;
     public string Estado => IsConnected ? "Redis Cloud (Conectado)" : "Caché en Memoria (Fallback)";
 
-    public RedisCacheService(IConfiguration config, IMemoryCache memoryCache, ILogger<RedisCacheService> logger)
+    public RedisCacheService(IConfiguration config, IMemoryCache memoryCache, ILogger<RedisCacheService> logger, EstadoIntegraciones? estados = null)
     {
         _memoryCache = memoryCache;
+        _estados = estados;
         _logger = logger;
         var connStr = config["Redis:ConnectionString"];
         if (string.IsNullOrWhiteSpace(connStr)) return;
@@ -50,7 +56,9 @@ public sealed class RedisCacheService : IRedisCacheService, IDisposable
         }
     }
 
-    public async Task<T?> GetAsync<T>(string key)
+    public async Task<T?> GetAsync<T>(string key) => (await LeerConOrigenAsync<T>(key)).Valor;
+
+    public async Task<LecturaCache<T>> LeerConOrigenAsync<T>(string key)
     {
         var fullKey = $"usmp:{key}";
         await _gate.WaitAsync();
@@ -66,25 +74,35 @@ public sealed class RedisCacheService : IRedisCacheService, IDisposable
                         _invalidacionesPendientes.Remove(fullKey);
                     }
                     var val = await _db.StringGetAsync(fullKey);
-                    if (val.HasValue) return JsonSerializer.Deserialize<T>((string)val!);
+                    if (val.HasValue)
+                    {
+                        var valor = JsonSerializer.Deserialize<T>((string)val!);
+                        if (valor is null) throw new JsonException("Entrada nula en caché");
+                        _estados?.Registrar("redis", true, "Lectura del catálogo atendida por Redis remoto");
+                        return new(valor, "Redis Cache");
+                    }
                     // Otra instancia pudo invalidar o la clave pudo expirar.
                     // Una ausencia confirmada en Redis no debe revivir la copia local anterior.
                     _memoryCache.Remove(fullKey);
-                    return default;
+                    _estados?.Registrar("redis", false, "Redis respondió sin copia; catálogo se reconstruye desde SQLite");
+                    return new(default, "SQLite");
                 }
                 catch (JsonException ex)
                 {
                     _memoryCache.Remove(fullKey);
                     _invalidacionesPendientes.Add(fullKey);
+                    _estados?.Registrar("redis", false, "Entrada remota inválida; catálogo se reconstruye desde SQLite");
                     _logger.LogWarning(ex, "Entrada de caché inválida ({Key}); se recargará desde SQLite", fullKey);
-                    return default;
+                    return new(default, "SQLite");
                 }
                 catch (RedisException ex)
                 {
                     _logger.LogWarning(ex, "Error al leer de Redis ({Key}). Usando respaldo local.", fullKey);
                 }
             }
-            return _memoryCache.TryGetValue(fullKey, out T? localVal) ? localVal : default;
+            var encontrada = _memoryCache.TryGetValue(fullKey, out T? localVal) && localVal is not null;
+            _estados?.Registrar("redis", false, encontrada ? "Lectura mediante respaldo en memoria local" : "Sin copia en caché; catálogo se reconstruye desde SQLite");
+            return new(encontrada ? localVal : default, encontrada ? "Caché local" : "SQLite");
         }
         finally { _gate.Release(); }
     }
@@ -126,6 +144,7 @@ public sealed class RedisCacheService : IRedisCacheService, IDisposable
         try
         {
             _memoryCache.Remove(fullKey);
+            _estados?.Registrar("redis-invalidacion", false, "Copia local eliminada; invalidación remota no completada");
             if (_db is null) return;
             _invalidacionesPendientes.Add(fullKey);
             if (IsConnected)
@@ -134,6 +153,7 @@ public sealed class RedisCacheService : IRedisCacheService, IDisposable
                 {
                     await _db.KeyDeleteAsync(fullKey);
                     _invalidacionesPendientes.Remove(fullKey);
+                    _estados?.Registrar("redis-invalidacion", true, "Invalidación remota completada");
                 }
                 catch (RedisException ex)
                 {
