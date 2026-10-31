@@ -106,7 +106,7 @@ builder.Services.AddScoped<UsmpConnect.Services.Agente.IAsistenteService, UsmpCo
 builder.Services.AddSingleton<UsmpConnect.Services.Agente.ConversacionesActivas>();
 builder.Services.AddHttpClient<IFirebaseTokenValidator, FirebaseTokenValidator>(client =>
     client.Timeout = TimeSpan.FromSeconds(10));
-
+builder.Services.AddScoped<AccesoExternoService>();
 
 // Subidas de hasta 25 MB (Banco de Apuntes).
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(o => o.MultipartBodyLengthLimit = 26 * 1024 * 1024);
