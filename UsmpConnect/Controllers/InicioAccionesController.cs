@@ -21,19 +21,26 @@ public class HorarioController(ApplicationDbContext db) : Controller
 public class EventosController(ApplicationDbContext db) : Controller
 {
     [HttpPost]
-    public async Task<IActionResult> Crear(string titulo, DateOnly fecha, string? returnUrl)
+    public async Task<IActionResult> Crear(string titulo, DateOnly fecha, string? returnUrl,
+        string? emoji = null, bool semanal = false, DateOnly? hasta = null, int[]? dias = null)
     {
-        if (string.IsNullOrWhiteSpace(titulo) || titulo.Length > 120)
+        try
         {
-            TempData["ToastError"] = "Escribe un título (máx. 120 caracteres).";
-        }
-        else
-        {
-            db.Eventos.Add(new EventoAcademico { Titulo = titulo.Trim(), Fecha = fecha, Tipo = TipoEvento.Personal, UsuarioId = User.GetUserId() });
+            if (!ModelState.IsValid) throw new ArgumentException("Revisa las fechas y los días seleccionados.");
+            var prefijo = RepeticionActividad.Emojis.Contains(emoji) ? emoji + " " : "";
+            if (string.IsNullOrWhiteSpace(titulo) || prefijo.Length + titulo.Trim().Length > 120)
+                throw new ArgumentException("Escribe un título de hasta 110 caracteres para dejar espacio al emoji.");
+            var fechas = RepeticionActividad.Fechas(fecha, semanal, hasta, dias);
+            var userId = User.GetUserId();
+            db.Eventos.AddRange(fechas.Select(dia => new EventoAcademico
+            {
+                Titulo = prefijo + titulo.Trim(), Fecha = dia, Tipo = TipoEvento.Personal, UsuarioId = userId
+            }));
             await db.SaveChangesAsync();
-            TempData["Toast"] = $"Recordatorio agregado para el {fecha.ToString("d 'de' MMMM", HoraPeru.Cultura)}.";
+            TempData["Toast"] = fechas.Count == 1 ? "Actividad guardada." : $"Se guardaron {fechas.Count} actividades. Puedes eliminar cada fecha por separado.";
         }
-        return LocalRedirect(Url.IsLocalUrl(returnUrl) ? returnUrl! : "/");
+        catch (ArgumentException ex) { TempData["ToastError"] = ex.Message; }
+        return LocalRedirect(Url.IsLocalUrl(returnUrl) ? returnUrl! : "/Calendario");
     }
 
     [HttpPost]
