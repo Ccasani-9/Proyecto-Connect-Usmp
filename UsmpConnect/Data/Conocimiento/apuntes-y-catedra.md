@@ -1,0 +1,5 @@
+# Apuntes y Cátedra
+Material del equipo para explicar el producto. Los recursos demo incluyen ejemplos breves de Python, funciones, listas, cálculo, SQL, redes y algoritmos; no son documentos oficiales ni material autorizado por un docente real.
+Para buscar, usar el título, tema o curso. Abrir un recurso permite leer su archivo y la ficha. Para publicar, usar Subir Apunte o Guía y completar título, asignatura, profesor de referencia, tipo y descripción, además del archivo PDF/DOC/DOCX. El ciclo permite filtrar asignaturas; el tipo (resumen, examen, guía o apuntes) no es la extensión del archivo.
+El asistente busca títulos, descripciones y cursos. No significa que haya leído todos los PDF de estudiantes. El corpus documental del equipo y los archivos de los alumnos son conjuntos diferentes.
+Cátedra contiene consejos escritos por alumnos. Son opiniones y ejemplos, no evaluaciones oficiales ni promesas de lo que aparecerá en un examen. Revisar las recomendaciones a la luz del sílabo de cada curso.
