@@ -32,6 +32,12 @@
     }
     function alFinal() { return mensajes.scrollHeight - mensajes.scrollTop - mensajes.clientHeight < 90; }
     function desplazar(seguir) { if (seguir) mensajes.scrollTop = mensajes.scrollHeight; }
+    // Solo normaliza marcas de presentación; todo sigue entrando como textContent, nunca HTML.
+    function textoPlano(texto) {
+        return texto.replace(/\*\*|__/g, '').replace(/`/g, '').replace(/^#{1,6}\s+/gm, '')
+            .split('\n').filter(linea => !/^\s*\|?[\s:|-]+\|\s*$/.test(linea))
+            .map(linea => linea.trim().startsWith('|') ? linea.replace(/^\s*\||\|\s*$/g, '').replace(/\|/g, ' · ') : linea).join('\n');
+    }
     function agregar(rol, texto) {
         mensajes.querySelector('.fia-chat-bienvenida')?.remove();
         const articulo = document.createElement('article');
@@ -41,7 +47,7 @@
         autor.textContent = rol === 'usuario' ? 'Tú' : 'Asistente FIA';
         const cuerpo = document.createElement('div');
         cuerpo.className = 'fia-chat-texto';
-        cuerpo.textContent = texto;
+        cuerpo.textContent = rol === 'usuario' ? texto : textoPlano(texto);
         articulo.append(autor, cuerpo);
         mensajes.append(articulo);
         return { articulo, cuerpo };
@@ -191,12 +197,14 @@
             const lector = respuesta.body.getReader();
             const decoder = new TextDecoder();
             let pendiente = '';
+            let respuestaRecibida = '';
             function procesar(linea) {
                 if (!linea.trim()) return;
                 const dato = JSON.parse(linea);
                 const seguir = alFinal();
                 if (dato.tipo === 'texto') {
-                    fila.cuerpo.textContent += dato.texto;
+                    respuestaRecibida += dato.texto;
+                    fila.cuerpo.textContent = textoPlano(respuestaRecibida);
                     estado.textContent = 'Respondiendo…';
                 } else if (dato.tipo === 'fin') {
                     completar(fila.articulo, dato.tarjetas, dato.fuentes);
