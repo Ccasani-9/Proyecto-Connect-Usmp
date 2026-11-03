@@ -25,3 +25,5 @@ El gasto promedio de demostración por persona se muestra en una línea separada
 
 ## Calendario y lectura del asistente
 Calendario reserva 100px al pie para separar acciones del lanzador flotante. Actividades semanales con días seleccionados y final obligatorio (máximo 366 días); se materializan como actividades independientes y eliminar afecta solo esa fecha. Emoji de paleta acotada integrado al título para mantener compatibilidad con Inicio sin migración. Formulario desplazable en pantallas bajas. El asistente presenta listas mediante nodos DOM con textContent y tarjetas verticales completas, sin HTML del modelo ni carruseles truncados.
+
+El asistente admite negrita y código en línea mediante elementos strong/code creados con textContent (sin HTML del modelo). Un indicador fijo sobre el compositor permanece visible durante toda la petición y el streaming; desaparece en finalización, error o cancelación. Respeta movimiento reducido.

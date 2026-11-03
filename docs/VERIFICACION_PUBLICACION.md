@@ -43,3 +43,12 @@ La compilación y las pruebas enfocadas del código se documentan en el PR #24. 
 ## Preparación del 30/10/2026 — no sustituye la evidencia anterior
 
 Los PR #33–#35 y el bloque de diagnósticos se prepararon en ramas independientes desde develop. Las verificaciones locales no acreditan Redis, Algolia, CloudAMQP ni recepción PieSocket en Render. Sus recorridos completos quedan pendientes después de los merges y el despliegue. Seguir la lista de evidencia remota de GUIA_SUSTENTACION.md y anotar commit desplegado, hora y resultado antes de declarar éxito. Microsoft/Entra queda cancelado; Google personal es acceso a la maqueta.
+
+
+## Comprobación del 03/11/2026 (Lima)
+
+Sobre el sitio público: /health y /Cuenta/Login respondieron 200; el POST de acceso demo con antiforgery recién obtenido llegó a Inicio. /Calendario respondió 200 e incluye evRepeticion (PR #37 desplegado). No se reprodujo el 400 en este intento; no se considera resuelta su causa.
+
+Dos cargas de /Restaurantes y una búsqueda /Buscar/Sugerencias?q=pizza respondieron 200. El panel registró lectura remota Redis a las 10:06:23 y consulta remota Algolia a las 10:06:24. La aceptación previa de sincronización Algolia no prueba por sí sola indexación completa.
+
+Pendientes: publicación/consumo con ACK de RabbitMQ e invalidación Redis tras reseña, recepción PieSocket en otro navegador, popup Google personal y revisión visual de la nueva presentación del chat. La verificación HTTP del login demo no sustituye Google real. Persistencia de SQLite/archivos de Render gratuito sigue siendo una limitación; no se contrató almacenamiento ni se migraron datos. Edición/borrado de una serie completa de calendario queda como mejora opcional, no implementada en este bloque.

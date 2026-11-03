@@ -9,6 +9,7 @@
     const enviar = document.getElementById('fia-chat-enviar');
     const detener = document.getElementById('fia-chat-detener');
     const nueva = document.getElementById('fia-chat-nueva');
+    const indicador = document.getElementById('fia-chat-espera');
     const estado = document.getElementById('fia-chat-estado');
     const error = document.getElementById('fia-chat-error');
     const confirmacion = document.getElementById('fia-chat-confirmacion');
@@ -23,6 +24,8 @@
         error.hidden = !texto;
     }
     function ocupado(valor) {
+        indicador.hidden = !valor;
+        panel.setAttribute('aria-busy', String(valor));
         enviar.disabled = valor;
         nueva.disabled = valor;
         detener.hidden = !valor;
@@ -32,6 +35,19 @@
     }
     function alFinal() { return mensajes.scrollHeight - mensajes.scrollTop - mensajes.clientHeight < 90; }
     function desplazar(seguir) { if (seguir) mensajes.scrollTop = mensajes.scrollHeight; }
+    function textoConFormato(destino, texto) {
+        // Solo negritas y código en línea; el contenido siempre se inserta como texto.
+        const patron = /\*\*([^*]+)\*\*|`([^`]+)`/g;
+        let inicio = 0;
+        for (const match of texto.matchAll(patron)) {
+            destino.append(document.createTextNode(texto.slice(inicio, match.index)));
+            const nodo = document.createElement(match[1] !== undefined ? 'strong' : 'code');
+            nodo.textContent = match[1] ?? match[2];
+            destino.append(nodo);
+            inicio = match.index + match[0].length;
+        }
+        destino.append(document.createTextNode(texto.slice(inicio)));
+    }
     // Formato seguro: solo nodos de texto, nunca HTML del modelo.
     function presentarTexto(cuerpo, texto) {
         cuerpo.replaceChildren();
@@ -41,11 +57,11 @@
             if (item) {
                 if (!lista) { lista = document.createElement('ul'); cuerpo.append(lista); }
                 const li = document.createElement('li');
-                li.textContent = item[1]; lista.append(li);
+                textoConFormato(li, item[1]); lista.append(li);
             } else {
                 lista = null;
                 if (!linea.trim()) continue;
-                const p = document.createElement('p'); p.textContent = linea; cuerpo.append(p);
+                const p = document.createElement('p'); textoConFormato(p, linea.replace(/^#{1,6}\s+/, '')); cuerpo.append(p);
             }
         }
     }
