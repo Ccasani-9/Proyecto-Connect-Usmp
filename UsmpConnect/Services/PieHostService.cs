@@ -51,7 +51,7 @@ public class PieHostService : IPieHostService
             {
                 key = _apiKey,
                 secret = _apiSecret,
-                channelId = canal,
+                channel = canal,
                 message = JsonSerializer.Serialize(new
                 {
                     evento,
@@ -60,7 +60,7 @@ public class PieHostService : IPieHostService
                 })
             };
 
-            var url = $"https://{_clusterId}.piesocket.com/api/v3/publish";
+            var url = $"https://{_clusterId}.piesocket.com/api/publish";
             using var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
             using var resp = await _http.PostAsync(url, content);
@@ -71,7 +71,7 @@ public class PieHostService : IPieHostService
             }
             else
             {
-                _estados?.Registrar("piesocket", false, "PieSocket rechazó la publicación");
+                _estados?.Registrar("piesocket", false, $"PieSocket rechazó la publicación (HTTP {(int)resp.StatusCode})");
                 _logger.LogWarning("PieHost publish respondió con status: {Code}", resp.StatusCode);
             }
         }
