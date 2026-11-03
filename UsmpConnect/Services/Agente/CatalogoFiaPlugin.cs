@@ -10,20 +10,28 @@ public record ApunteAsistente(int Id, string Titulo, string Curso, string? Descr
 public record BusquedaApuntes(IReadOnlyList<ApunteAsistente> Resultados, IReadOnlyList<ApunteAsistente> OtrosMaterialesDisponibles);
 
 /// <summary>Proyecciones explícitas de contenido público: no expone perfiles ni datos de contacto al modelo.</summary>
-public sealed class CatalogoFiaPlugin(ApplicationDbContext db, ContextoAsistente contexto)
+public sealed class CatalogoFiaPlugin(ApplicationDbContext db, ContextoAsistente contexto, ConsultaAsistente? solicitud = null)
 {
     private static string Consulta(string texto) => (texto ?? "").Trim()[..Math.Min((texto ?? "").Trim().Length, 100)];
 
-    [KernelFunction, Description("Busca restaurantes por categoría, nombre o tipo de comida. Usa categoria='ComidaRapida' para comida rápida y texto vacío si no piden un plato/local concreto. precioMaximo filtra el gasto PROMEDIO REFERENCIAL por persona del local, NO precios de platos. Los importes son estimaciones demo, no precios garantizados. Devuelve resultados y, solo si no hay coincidencias, alternativas con precio desconocido claramente separadas.")]
+    [KernelFunction, Description("Busca restaurantes por categoría, nombre o tipo de comida. Usa CafeteriaHuarique para café/cafeterías, PasteleriaPostres para pastelerías/postres, ComidaRapida para comida rápida y texto vacío si no piden un plato/local concreto. precioMaximo filtra el gasto PROMEDIO REFERENCIAL por persona del local, NO precios de platos. Los importes son estimaciones demo, no precios garantizados. Devuelve resultados y, solo si no hay coincidencias, alternativas con precio desconocido claramente separadas.")]
     public async Task<object> BuscarRestaurantes(string texto = "", decimal? precioMaximo = null,
         string? categoria = null, CancellationToken cancellationToken = default)
     {
         texto = Consulta(texto);
+        // La categoría explícita del alumno prevalece sobre argumentos inferidos por el modelo.
+        if (solicitud?.CategoriaSolicitada is { } solicitada)
+        {
+            categoria = solicitada.ToString();
+            if (new[] { "comida rápida", "comida rapida", "ComidaRapida", "cafetería", "cafeteria", "cafeterías", "cafeterias", "café", "cafe", "CafeteriaHuarique", "chifa", "postres", "saludable" }
+                .Any(alias => string.Equals(texto, alias, StringComparison.OrdinalIgnoreCase))) texto = "";
+        }
+        precioMaximo = solicitud?.PresupuestoSolicitado ?? precioMaximo;
         var categoriaBuscada = CategoriaDesdeTexto(categoria ?? texto);
         if (!string.IsNullOrWhiteSpace(categoria) && categoriaBuscada is null)
             return new { error = "Categoría desconocida. Usa MenuCriollo, ComidaRapida, Chifa, CafeteriaHuarique, PasteleriaPostres o Saludable." };
         if (categoriaBuscada.HasValue && new[] { categoriaBuscada.Value.ToString(), categoriaBuscada.Value.Nombre(),
-            "comida rapida", "criollo", "cafeteria", "postres", "saludable" }
+            "comida rapida", "criollo", "cafeteria", "café", "cafe", "cafeterías", "cafeterias", "postres", "saludable" }
             .Any(alias => texto.Length == alias.Length && BuscadorAlgolia.Contiene(texto, alias))) texto = "";
         if (precioMaximo is <= 0) return new { error = "El presupuesto debe ser mayor que cero." };
         var query = db.Restaurantes.AsNoTracking();
@@ -55,7 +63,7 @@ public sealed class CatalogoFiaPlugin(ApplicationDbContext db, ContextoAsistente
                 .Select(r => r.PrecioPromedioReferencial).DefaultIfEmpty().Min() };
     }
 
-    private static CategoriaRestaurante? CategoriaDesdeTexto(string? texto)
+    internal static CategoriaRestaurante? CategoriaDesdeTexto(string? texto)
     {
         texto = (texto ?? "").Trim();
         foreach (var categoria in Enum.GetValues<CategoriaRestaurante>())
@@ -63,7 +71,7 @@ public sealed class CatalogoFiaPlugin(ApplicationDbContext db, ContextoAsistente
                 return categoria;
         if (BuscadorAlgolia.Contiene(texto, "comida rapida")) return CategoriaRestaurante.ComidaRapida;
         if (BuscadorAlgolia.Contiene(texto, "criollo")) return CategoriaRestaurante.MenuCriollo;
-        if (BuscadorAlgolia.Contiene(texto, "cafeteria")) return CategoriaRestaurante.CafeteriaHuarique;
+        if (System.Text.RegularExpressions.Regex.IsMatch(texto, @"\b(caf[eé]s?|cafeter[ií]as?)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase)) return CategoriaRestaurante.CafeteriaHuarique;
         if (BuscadorAlgolia.Contiene(texto, "postres")) return CategoriaRestaurante.PasteleriaPostres;
         if (BuscadorAlgolia.Contiene(texto, "saludable")) return CategoriaRestaurante.Saludable;
         return null;
