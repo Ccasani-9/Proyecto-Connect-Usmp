@@ -48,7 +48,7 @@ public class GoogleAccountTests
     {
         await using var factory = new IdentityFactory(new(uid, email, "Nombre de Google", null));
         using var client = factory.CreateSessionClient();
-        Assert.Equal(role == Roles.Alumno ? HttpStatusCode.OK : HttpStatusCode.Forbidden, (await SignInAsync(client)).StatusCode);
+        Assert.Equal(role == Roles.Alumno ? HttpStatusCode.Conflict : HttpStatusCode.Forbidden, (await SignInAsync(client)).StatusCode);
         using var scope = factory.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var user = await users.FindByEmailAsync(email);
@@ -65,6 +65,7 @@ public class GoogleAccountTests
             var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var user = (await users.FindByEmailAsync("alessandro.morales@usmp.pe"))!;
             Assert.True((await users.RemoveFromRoleAsync(user, Roles.Alumno)).Succeeded);
+            Assert.True((await users.AddLoginAsync(user, new UserLoginInfo("Firebase", "anterior", "Google"))).Succeeded);
         }
         Assert.Equal(HttpStatusCode.OK, (await SignInAsync(client)).StatusCode);
         using var verify = factory.Services.CreateScope();
@@ -89,14 +90,31 @@ public class GoogleAccountTests
     }
 
     [Fact]
-    public async Task CorreoAjenoAlDominio_NoCreaCuenta()
+    public async Task GmailPersonal_CreaCuentaYUsaLaFotoDeGoogleEnCadaInicio()
     {
-        await using var factory = new IdentityFactory(new("externo", "alumno@example.com", "Ana", null));
-        using var client = factory.CreateSessionClient();
-        var response = await SignInAsync(client);
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-        using var scope = factory.Services.CreateScope();
-        Assert.False(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Users.Any(u => u.Email == "alumno@example.com"));
+        const string email = "alumno.demo@gmail.com";
+        const string foto = "https://lh3.googleusercontent.com/avatar-demo";
+        await using var factory = new IdentityFactory(new("externo", email, "Ana", foto));
+        using (var client = factory.CreateSessionClient())
+        {
+            Assert.Equal(HttpStatusCode.OK, (await SignInAsync(client)).StatusCode);
+            Assert.Contains($"src=\"{foto}\"", await client.GetStringAsync("/"));
+        }
+        using (var scope = factory.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var user = await users.FindByEmailAsync(email);
+            Assert.NotNull(user);
+            Assert.Equal(foto, user.FotoUrl);
+            user.FotoUrl = "https://lh3.googleusercontent.com/avatar-anterior";
+            Assert.True((await users.UpdateAsync(user)).Succeeded);
+        }
+        using var siguienteSesion = factory.CreateSessionClient();
+        Assert.Equal(HttpStatusCode.OK, (await SignInAsync(siguienteSesion)).StatusCode);
+        Assert.Contains($"src=\"{foto}\"", await siguienteSesion.GetStringAsync("/"));
+        using var verificacion = factory.Services.CreateScope();
+        var db = verificacion.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.Equal(foto, Assert.Single(db.Users.Where(u => u.Email == email)).FotoUrl);
     }
 
     [Fact]
