@@ -3,10 +3,11 @@ using Microsoft.Extensions.DependencyInjection;
 using UsmpConnect.Data;
 using UsmpConnect.Data.Seed;
 using UsmpConnect.Services;
+using Xunit.Abstractions;
 
 namespace UsmpConnect.Tests;
 
-public class RecomendacionesRestaurantesTests
+public class RecomendacionesRestaurantesTests(ITestOutputHelper salida)
 {
     [Fact]
     public async Task Recomendador_EntrenaGuardaModeloRecomiendaPersonalizadoYUsaPopularidadEnFrio()
@@ -15,10 +16,12 @@ public class RecomendacionesRestaurantesTests
         using var client = factory.CreateSessionClient();
 
         var recomendador = factory.Services.GetRequiredService<IRecomendacionRestaurantesService>();
+        Dictionary<int, string> nombres;
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             await recomendador.SincronizarConBaseDatosAsync(db);
+            nombres = db.Restaurantes.ToDictionary(local => local.Id, local => local.Nombre);
         }
 
         Assert.True(recomendador.EstaListo);
@@ -27,7 +30,9 @@ public class RecomendacionesRestaurantesTests
         Assert.True(recomendador.UltimasMetricas.EjemplosEntrenamiento > 0);
         Assert.True(recomendador.UltimasMetricas.EjemplosPrueba > 0);
 
-        var candidatos = Enumerable.Range(1, 14).ToList();
+        Assert.Equal(400, recomendador.UltimasMetricas.EjemplosTotales);
+        Assert.Equal(nombres.Count, recomendador.UltimasMetricas.Restaurantes);
+        var candidatos = nombres.Keys;
 
         var recAlessandro = await recomendador.RecomendarAsync(DemoUsers.Alessandro, candidatos, topK: 3);
         Assert.Equal(3, recAlessandro.Count);
@@ -36,7 +41,10 @@ public class RecomendacionesRestaurantesTests
         var recMaria = await recomendador.RecomendarAsync(DemoUsers.Maria, candidatos, topK: 3);
         Assert.Equal(3, recMaria.Count);
         Assert.All(recMaria, r => Assert.False(r.DeFrio));
-        Assert.NotEqual(recAlessandro.Select(x => x.RestauranteId), recMaria.Select(x => x.RestauranteId));
+        var coincidentes = recAlessandro.Select(x => x.RestauranteId).Intersect(recMaria.Select(x => x.RestauranteId));
+        salida.WriteLine($"Alessandro: {string.Join(", ", recAlessandro.Select(x => $"{nombres[x.RestauranteId]} ({x.Score:F2})"))}");
+        salida.WriteLine($"María: {string.Join(", ", recMaria.Select(x => $"{nombres[x.RestauranteId]} ({x.Score:F2})"))}");
+        Assert.InRange(coincidentes.Count(), 0, 1);
 
         var recFrio = await recomendador.RecomendarAsync("usuario.nuevo.sin.historial@usmp.pe", candidatos, topK: 3);
         Assert.Equal(3, recFrio.Count);

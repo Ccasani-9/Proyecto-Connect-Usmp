@@ -349,6 +349,8 @@ public sealed class RecomendacionRestaurantesService : IRecomendacionRestaurante
                     NumberOfIterations = _config.GetValue("Recomendacion:NumberOfIterations", 30),
                     ApproximationRank = _config.GetValue("Recomendacion:ApproximationRank", 8),
                     LearningRate = _config.GetValue("Recomendacion:LearningRate", 0.05f),
+                    Lambda = _config.GetValue("Recomendacion:Lambda", 0.1f),
+                    NumberOfThreads = 1,
                     Quiet = true
                 }));
     }

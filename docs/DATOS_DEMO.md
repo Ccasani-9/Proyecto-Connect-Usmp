@@ -17,9 +17,10 @@ En bases nuevas se generan importes referenciales variados por rango: económico
 ## Modelos ML.NET
 
 - Sentimiento: 120 comentarios etiquetados de demostración; incluye negaciones y experiencias mixtas.
-- Recomendación: 200 interacciones sintéticas usuario-restaurante, sin duplicar pares. No son preferencias observadas de personas reales.
+- Recomendación: 400 valoraciones sintéticas entre usuarios y los 52 restaurantes. Se conservan las 200 iniciales y se añaden 20 por cada uno de los diez perfiles de alumnos. Los historiales simulan gustos distintos, por ejemplo cafeterías y chifas para Alessandro y menús criollos para María. Las categorías orientan la creación de la muestra. El recomendador sigue aprendiendo de pares usuario-restaurante con puntuaciones. El archivo de entrenamiento se mantiene separado de las reseñas públicas.
 - Se conservan particiones de evaluación y un usuario desconocido para mostrar el respaldo por popularidad. Las métricas proceden de datos pequeños y sintéticos; no acreditan generalización a producción.
-- Los nombres de modelo por defecto cambian a `sentimiento-resenas-demo-v2.zip` y `recomendacion-restaurantes-demo-v2.zip` para entrenar con los CSV ampliados. Si el entorno sobrescribe ModelPath, revisar ese valor antes de presentar; no basta cambiar el CSV para afirmar que el modelo guardado ya lo utiliza.
+- Para mostrar la personalización, abre «Sugerencias para ti» con Alessandro y luego con María. En la prueba de integración con los 52 locales, los tres primeros de Alessandro fueron Shimaya Ramen, Isushi La Fontana y Chifa Moneda China. Los de María fueron Don Tito La Molina, Puerto Central y Cevichería Punta del Este.
+- El modelo de sentimiento usa `sentimiento-resenas-demo-v2.zip` y el recomendador usa `recomendacion-restaurantes-demo-v3.zip`. La ruta nueva hace que el recomendador se entrene con el CSV ampliado cuando no existe un modelo guardado en esa ruta. Si Render sobrescribe `Recomendacion__ModelPath`, actualiza esa variable antes de presentar.
 - Las nuevas reseñas no reentrenan por sí mismas el recomendador.
 
 ## Guías del asistente
