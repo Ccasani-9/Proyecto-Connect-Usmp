@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using UsmpConnect.Data.Seed;
@@ -176,6 +176,7 @@ public static class DbInitializer
                 logger.LogWarning(ex, "Error al sincronizar datos complementarios de Cátedra");
             }
 
+            await AmpliacionDemo.AplicarAsync(db);
             await CompletarPreciosDemoAsync(db);
             await ClasificarResenasPendientesAsync(sp, db, logger);
             return;
@@ -199,6 +200,7 @@ public static class DbInitializer
             db.ChangeTracker.Clear();
         }
 
+        await AmpliacionDemo.AplicarAsync(db);
         await CompletarPreciosDemoAsync(db);
         await ClasificarResenasPendientesAsync(sp, db, logger);
     }

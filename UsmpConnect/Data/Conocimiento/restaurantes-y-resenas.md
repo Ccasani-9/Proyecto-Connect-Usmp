@@ -1,0 +1,6 @@
+# Restaurantes y reseñas
+Los locales tienen categoría, dirección, horario publicado, gasto promedio referencial por persona y reseñas. El gasto es una estimación de demostración, no una cotización del local ni el precio de todos los platos. Puede variar por local. No se garantiza que el negocio esté abierto ahora: comprobar el horario y confirmar antes de consumir.
+Una búsqueda de comida rápida por 15 soles combina categoría y gasto referencial. Por 20 cambia ese límite y conserva el tema cuando es una continuación. Almorzar implica preferir un horario diurno; un negocio solo nocturno no debe presentarse como una opción de almuerzo disponible.
+Para crear una reseña, abrir el local y entrar con una cuenta. Puntuación válida: de 1 a 5. Editar y Eliminar aparecen en comentarios propios; eliminar pide confirmación. El servidor verifica autoría.
+ML.NET clasifica el sentimiento al crear o editar el comentario. Una etiqueta negativa no significa que sea ofensivo ni que deba eliminarse. Las valoraciones del local se recalculan y se invalida la caché. La nueva reseña no reentrena automáticamente el modelo de recomendaciones.
+La notificación se guarda después de procesar el evento; el aviso en vivo es una función distinta que depende de la conexión WebSocket.
