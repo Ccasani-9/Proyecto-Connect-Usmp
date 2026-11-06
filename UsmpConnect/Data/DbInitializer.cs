@@ -177,6 +177,7 @@ public static class DbInitializer
             }
 
             await CompletarPreciosDemoAsync(db);
+            await AplicarValoracionesMapaDemoAsync(sp, db);
             await ClasificarResenasPendientesAsync(sp, db, logger);
             return;
         }
@@ -200,7 +201,14 @@ public static class DbInitializer
         }
 
         await CompletarPreciosDemoAsync(db);
+        await AplicarValoracionesMapaDemoAsync(sp, db);
         await ClasificarResenasPendientesAsync(sp, db, logger);
+    }
+
+    private static async Task AplicarValoracionesMapaDemoAsync(IServiceProvider servicios, ApplicationDbContext db)
+    {
+        if (await ValoracionesMapaDemo.AplicarAsync(db))
+            await servicios.GetRequiredService<CatalogoRestaurantesService>().InvalidarAsync();
     }
 
     private static async Task AsegurarPrecioReferencialAsync(ApplicationDbContext db)
