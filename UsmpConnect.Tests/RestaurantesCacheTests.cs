@@ -1,5 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -160,6 +161,7 @@ public class RestaurantesCacheTests
     {
         using var scope = factory.Services.CreateScope();
         var controller = ActivatorUtilities.CreateInstance<FoodSpotsController>(scope.ServiceProvider);
+        controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
         return Assert.IsType<FoodSpotsIndexVM>(Assert.IsType<ViewResult>(await controller.Index(categoria, q)).Model);
     }
 
