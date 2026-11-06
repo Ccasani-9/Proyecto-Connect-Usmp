@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using UsmpConnect.Models;
+using UsmpConnect.Services;
 
 namespace UsmpConnect.ViewModels;
 
@@ -111,8 +112,14 @@ public class FoodSpotsIndexVM
     public string? Busqueda { get; set; }
     public double? ValoracionMinima { get; set; }
     public decimal? GastoMaximo { get; set; }
+    public int? MinutosMaximos { get; set; }
+    public bool RutasDisponibles { get; set; }
+    public ResultadoRutasAPie? ResultadoRutas { get; set; }
+    public int TotalCandidatosRuta { get; set; }
+    public bool RutasAplicadas => ResultadoRutas is { MinutosPorLocal.Count: > 0 };
+    public int? MinutosAPie(int id) => ResultadoRutas?.MinutosPorLocal.TryGetValue(id, out var minutos) == true ? minutos : null;
     public bool TieneFiltros => CategoriaActual.HasValue || !string.IsNullOrWhiteSpace(Busqueda)
-        || ValoracionMinima.HasValue || GastoMaximo.HasValue;
+        || ValoracionMinima.HasValue || GastoMaximo.HasValue || MinutosMaximos.HasValue;
     public int TotalLugares => Restaurantes.Count;
     public string FuenteDatos { get; set; } = "SQLite"; // "Redis Cache (Hit)" o "SQLite"
     public string GoogleMapsApiKey { get; set; } = string.Empty;

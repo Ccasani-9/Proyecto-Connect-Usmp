@@ -12,6 +12,9 @@ public static class ConfiguracionServiciosNube
         services.AddSingleton<IAnalisisSentimientoService, AnalisisSentimientoService>();
         services.AddSingleton<IRecomendacionRestaurantesService, RecomendacionRestaurantesService>();
         services.AddScoped<CatalogoRestaurantesService>();
+        services.AddSingleton<RutasAPieService>();
+        services.AddHttpClient(RutasAPieService.Cliente, client => client.Timeout = TimeSpan.FromSeconds(6))
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.AddSingleton<IColaMensajes, CloudAmqpColaMensajes>();
         services.AddHostedService<ConsumidorNotificacionesService>();
         services.AddHttpClient<IBuscadorAlgolia, BuscadorAlgolia>(client => client.Timeout = TimeSpan.FromSeconds(5));

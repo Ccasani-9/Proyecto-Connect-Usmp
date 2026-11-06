@@ -55,13 +55,14 @@ public sealed class CatalogoRestaurantesService(
     public async Task<(List<RestauranteItemVM> Recomendados, bool Personalizada)> ObtenerRecomendadosAsync(
         string? usuarioClave,
         int topK = 3,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IReadOnlyList<RestauranteItemVM>? candidatos = null)
     {
-        var datos = await ObtenerAsync(cancellationToken);
-        if (datos.Restaurantes.Count == 0)
+        var locales = candidatos ?? (await ObtenerAsync(cancellationToken)).Restaurantes;
+        if (locales.Count == 0)
             return ([], false);
 
-        var porId = datos.Restaurantes.ToDictionary(r => r.Id);
+        var porId = locales.ToDictionary(r => r.Id);
         var recs = await recomendador.RecomendarAsync(
             usuarioClave,
             porId.Keys,
@@ -80,7 +81,7 @@ public sealed class CatalogoRestaurantesService(
         }
 
         // Respaldo por calificación promedio si el recomendador está deshabilitado
-        var populares = datos.Restaurantes
+        var populares = locales
             .OrderByDescending(r => r.CalificacionPromedio)
             .ThenByDescending(r => r.TotalResenas)
             .Take(Math.Max(1, topK))
