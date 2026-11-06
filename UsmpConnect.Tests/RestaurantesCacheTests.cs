@@ -14,6 +14,40 @@ namespace UsmpConnect.Tests;
 public class RestaurantesCacheTests
 {
     [Fact]
+    public async Task FiltrosDeValoracionYGasto_DevuelvenLosMismosLocalesEnListaYMapa()
+    {
+        await using var factory = new DemoFactory();
+        using var client = factory.CreateSessionClient();
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var locales = db.Restaurantes.OrderBy(r => r.Id).Take(5).ToArray();
+        for (var i = 0; i < locales.Length; i++)
+        {
+            locales[i].Nombre = $"FiltroPrueba {i}";
+            locales[i].Categoria = CategoriaRestaurante.CafeteriaHuarique;
+            locales[i].TotalResenas = 1;
+            locales[i].CalificacionPromedio = 4.5;
+            locales[i].PrecioPromedioReferencial = 15;
+        }
+        locales[1].CalificacionPromedio = 4.4;
+        locales[2].PrecioPromedioReferencial = 15.01m;
+        locales[3].PrecioPromedioReferencial = null;
+        locales[4].TotalResenas = 0;
+        await db.SaveChangesAsync();
+        await scope.ServiceProvider.GetRequiredService<CatalogoRestaurantesService>().InvalidarAsync();
+
+        var pagina = await client.GetStringAsync("/Restaurantes?categoria=CafeteriaHuarique&q=FiltroPrueba&valoracionMinima=4.5&gastoMaximo=15");
+        Assert.Contains($"id=\"card-rest-{locales[0].Id}\"", pagina);
+        foreach (var local in locales.Skip(1))
+            Assert.DoesNotContain($"id=\"card-rest-{local.Id}\"", pagina);
+
+        var datosMapa = System.Text.RegularExpressions.Regex.Match(pagina, @"const restos = (\[[^\r\n]*\]);");
+        Assert.True(datosMapa.Success);
+        using var marcadores = System.Text.Json.JsonDocument.Parse(datosMapa.Groups[1].Value);
+        Assert.Equal(locales[0].Id, Assert.Single(marcadores.RootElement.EnumerateArray()).GetProperty("Id").GetInt32());
+    }
+
+    [Fact]
     public async Task PrecargaHabilitada_SeEjecutaDuranteElArranque()
     {
         await using var factory = new WarmupFactory();

@@ -90,12 +90,17 @@ public sealed class CatalogoRestaurantesService(
     }
 
     public async Task<(List<RestauranteItemVM> Restaurantes, string Fuente)> FiltrarAsync(
-        CategoriaRestaurante? categoria, string? q, CancellationToken cancellationToken = default)
+        CategoriaRestaurante? categoria, string? q, CancellationToken cancellationToken = default,
+        double? valoracionMinima = null, decimal? gastoMaximo = null)
     {
         var datos = await ObtenerAsync(cancellationToken);
         IEnumerable<RestauranteItemVM> restaurantes = datos.Restaurantes;
         if (categoria.HasValue)
             restaurantes = restaurantes.Where(r => r.Categoria == categoria.Value);
+        if (valoracionMinima.HasValue)
+            restaurantes = restaurantes.Where(r => r.TotalResenas > 0 && r.CalificacionPromedio >= valoracionMinima.Value);
+        if (gastoMaximo.HasValue)
+            restaurantes = restaurantes.Where(r => r.PrecioPromedioReferencial is > 0 && r.PrecioPromedioReferencial <= gastoMaximo.Value);
         if (!string.IsNullOrWhiteSpace(q))
         {
             var term = q.Trim();

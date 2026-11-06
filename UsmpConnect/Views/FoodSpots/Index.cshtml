@@ -1,8 +1,16 @@
+@using System.Globalization
 @using UsmpConnect.Models
 @using UsmpConnect.Services
 @model UsmpConnect.ViewModels.FoodSpotsIndexVM
 @{
     ViewData["Title"] = "Restaurantes Cercanos";
+    var valoraciones = new[]
+    {
+        new { minimo = 4.5, color = "#166534", etiqueta = "4.5 a 5.0" },
+        new { minimo = 3.5, color = "#a16207", etiqueta = "3.5 a 4.4" },
+        new { minimo = 0.0, color = "#b45349", etiqueta = "Menos de 3.5" }
+    };
+    const string colorSinResenas = "#64748b";
 }
 
 @section Styles {
@@ -345,6 +353,18 @@
             <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver a los resultados
         </button>
     </div>
+    <div class="d-flex flex-wrap align-items-center gap-2 small text-muted mb-2" aria-label="Leyenda de valoración de locales">
+        <span class="fw-semibold">Valoración promedio</span>
+        @foreach (var nivel in valoraciones)
+        {
+            <span class="d-inline-flex align-items-center gap-1 me-2">
+                <i class="bi bi-geo-alt-fill" style="color: @nivel.color;" aria-hidden="true"></i>@nivel.etiqueta
+            </span>
+        }
+        <span class="d-inline-flex align-items-center gap-1">
+            <i class="bi bi-geo-alt-fill" style="color: @colorSinResenas;" aria-hidden="true"></i>Sin reseñas
+        </span>
+    </div>
     <div class="position-relative overflow-hidden" style="border-radius: 1rem; border: 1px solid var(--border, #e5e7eb); box-shadow: 0 4px 12px rgba(0,0,0,.04);">
         <div id="mapa-fia" style="height: 440px; width: 100%; border: none;"></div>
 
@@ -380,41 +400,60 @@
     </div>
 </div>
 
-<!-- Filtros y Búsqueda -->
+<!-- Filtros y búsqueda -->
 <div class="card-u p mb-4">
-    <div class="row g-2 align-items-center">
-        <div class="col-lg-5 d-flex align-items-center gap-2">
-            <form method="get" class="search-box flex-grow-1" style="min-width: 0;">
-                <i class="bi bi-search"></i>
-                <input type="text" name="q" value="@Model.Busqueda" class="form-control" placeholder="Buscar por nombre, chifa, café, pasta..." />
-                @if (Model.CategoriaActual.HasValue)
+    <form asp-controller="FoodSpots" asp-action="Index" method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-12 col-xl-4">
+            <label class="form-label small fw-semibold" for="buscar-local">Buscar local</label>
+            <div class="search-box">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input id="buscar-local" type="search" name="q" value="@Model.Busqueda" class="form-control" placeholder="Nombre, tipo de comida o dirección" />
+            </div>
+        </div>
+        <div class="col-6 col-xl-2">
+            <label class="form-label small fw-semibold" for="valoracion-minima">Valoración mínima</label>
+            <select id="valoracion-minima" name="valoracionMinima" class="form-select">
+                <option value="">Cualquiera</option>
+                @foreach (var minimo in new[] { 3.5, 4.0, 4.5 })
                 {
-                    <input type="hidden" name="categoria" value="@Model.CategoriaActual" />
+                    var valor = minimo.ToString("0.0", CultureInfo.InvariantCulture);
+                    <option value="@valor" selected="@(Model.ValoracionMinima == minimo)">@valor estrellas o más</option>
                 }
-            </form>
-            @if (!string.IsNullOrWhiteSpace(Model.Busqueda) || Model.CategoriaActual.HasValue)
+            </select>
+        </div>
+        <div class="col-6 col-xl-3">
+            <label class="form-label small fw-semibold" for="gasto-maximo">Gasto máximo por persona (S/)</label>
+            <input id="gasto-maximo" name="gastoMaximo" type="number" min="0.01" step="0.01" value="@(Model.GastoMaximo?.ToString(CultureInfo.InvariantCulture))"
+                   class="form-control" placeholder="Sin límite" aria-describedby="ayuda-gasto-maximo" />
+        </div>
+        <div class="col-12 col-xl-auto d-flex flex-wrap gap-2">
+            <button class="btn btn-guinda" type="submit">Aplicar filtros</button>
+            @if (Model.TieneFiltros)
             {
-                <a asp-controller="FoodSpots" asp-action="Index" class="btn btn-sm btn-soft text-nowrap flex-shrink-0">
-                    <i class="bi bi-x-lg me-1" aria-hidden="true"></i>Limpiar búsqueda
+                <a asp-controller="FoodSpots" asp-action="Index" class="btn btn-soft">
+                    <i class="bi bi-x-lg me-1" aria-hidden="true"></i>Limpiar filtros
                 </a>
             }
         </div>
-        <div class="col-lg-7">
-            <div class="chips d-flex flex-wrap gap-1">
-                <a href="@Url.Action("Index", new { q = Model.Busqueda })" class="chip @(Model.CategoriaActual == null ? "active" : "")">Todos (@Model.Restaurantes.Count)</a>
-                @foreach (CategoriaRestaurante cat in Enum.GetValues(typeof(CategoriaRestaurante)))
-                {
-                    var activa = Model.CategoriaActual == cat;
-                    <a href="@Url.Action("Index", new { categoria = cat, q = Model.Busqueda })" class="chip @(activa ? "active" : "")">
-                        @cat.Nombre()
-                    </a>
-                }
-            </div>
-        </div>
+        @if (Model.CategoriaActual.HasValue)
+        {
+            <input type="hidden" name="categoria" value="@Model.CategoriaActual" />
+        }
+        <small id="ayuda-gasto-maximo" class="col-12 text-muted">El gasto es referencial. Si indicas un máximo, verás locales con un gasto registrado dentro de ese límite.</small>
+    </form>
+    <div class="chips d-flex flex-wrap gap-1" aria-label="Categorías de restaurantes">
+        <a href="@Url.Action("Index", new { q = Model.Busqueda, valoracionMinima = Model.ValoracionMinima, gastoMaximo = Model.GastoMaximo })"
+           class="chip @(Model.CategoriaActual == null ? "active" : "")">Todas las categorías</a>
+        @foreach (CategoriaRestaurante cat in Enum.GetValues(typeof(CategoriaRestaurante)))
+        {
+            var activa = Model.CategoriaActual == cat;
+            <a href="@Url.Action("Index", new { categoria = cat, q = Model.Busqueda, valoracionMinima = Model.ValoracionMinima, gastoMaximo = Model.GastoMaximo })"
+               class="chip @(activa ? "active" : "")">@cat.Nombre()</a>
+        }
     </div>
 </div>
 
-@if (Model.Recomendados.Count > 0 && Model.CategoriaActual == null && string.IsNullOrWhiteSpace(Model.Busqueda))
+@if (Model.Recomendados.Count > 0 && !Model.TieneFiltros)
 {
     <div class="card-u p mb-4" data-recomendaciones-restaurantes>
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
@@ -451,7 +490,7 @@
     <div class="card-u p text-center py-5">
         <i class="bi bi-shop fs-1 text-muted mb-2"></i>
         <h4>No se encontraron locales</h4>
-        <p class="text-muted">Intenta buscar con otro término o selecciona otra categoría.</p>
+        <p class="text-muted">Prueba otro nombre, una valoración mínima menor o un gasto máximo mayor.</p>
         <a href="/Restaurantes" class="btn btn-sm btn-guinda">Ver todos los locales</a>
     </div>
 }
@@ -699,20 +738,18 @@ else
         const marcadores = {};
         let enfoqueMapa = null;
 
-        // Paleta de colores temáticos por categoría de local
-        const categoriaColores = {
-            "MenuCriollo": "#ea580c",        // Naranja peruano
-            "ComidaRapida": "#f59e0b",       // Ámbar
-            "Chifa": "#dc2626",              // Rojo oriental
-            "CafeteriaHuarique": "#78350f",   // Café tostado
-            "PasteleriaPostres": "#db2777",   // Rosa pastelería
-            "Saludable": "#16a34a"           // Verde fresco
-        };
+        const nivelesValoracion = @Json.Serialize(valoraciones);
+        const sinResenas = @Json.Serialize(colorSinResenas);
+
+        function colorValoracion(promedio, totalResenas) {
+            if (!totalResenas) return sinResenas;
+            const valor = Number(promedio.toFixed(1));
+            return nivelesValoracion.find(nivel => valor >= nivel.minimo)?.color ?? sinResenas;
+        }
 
         const restos = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Restaurantes.Select(r => new {
             r.Id,
             r.Nombre,
-            CategoriaKey = r.Categoria.ToString(),
             CategoriaNombre = r.Categoria.Nombre(),
             r.RangoPrecios,
             r.PrecioPromedioReferencial,
@@ -805,8 +842,8 @@ else
                                         Id: 0,
                                         Nombre: place.name,
                                         CategoriaNombre: "Restaurante",
-                                        CalificacionPromedio: place.rating || 4.5,
-                                        TotalResenas: place.user_ratings_total || 1,
+                                        CalificacionPromedio: place.rating || 0,
+                                        TotalResenas: place.user_ratings_total || 0,
                                         RangoPrecios: place.price_level ? "$".repeat(place.price_level) : "Económico",
                                         DistanciaTexto: "Cercano a la facultad",
                                         Direccion: place.formatted_address || "Zona universitaria",
@@ -880,7 +917,7 @@ else
 
             // Marcadores para cada uno de los restaurantes
             restos.forEach(r => {
-                const colorMarker = categoriaColores[r.CategoriaKey] || "#ea580c";
+                const colorMarker = colorValoracion(r.CalificacionPromedio, r.TotalResenas);
 
                 const marker = new google.maps.Marker({
                     position: { lat: r.Latitud, lng: r.Longitud },
@@ -919,8 +956,8 @@ else
             document.getElementById("fmc-img").src = r.FotoUrl;
             document.getElementById("fmc-cat").textContent = r.CategoriaNombre;
             document.getElementById("fmc-nombre").textContent = r.Nombre;
-            document.getElementById("fmc-rating").textContent = (typeof r.CalificacionPromedio === 'number') ? r.CalificacionPromedio.toFixed(1) : "5.0";
-            document.getElementById("fmc-reviews").textContent = (typeof r.TotalResenas === 'number') ? `(${r.TotalResenas} reseñas)` : "(Campus)";
+            document.getElementById("fmc-rating").textContent = r.TotalResenas === 0 ? "Sin reseñas" : r.CalificacionPromedio.toFixed(1);
+            document.getElementById("fmc-reviews").textContent = r.TotalResenas > 0 ? `(${r.TotalResenas} ${r.TotalResenas === 1 ? "reseña" : "reseñas"})` : "";
             document.getElementById("fmc-rango").textContent = r.PrecioPromedioReferencial
                 ? `S/ ${r.PrecioPromedioReferencial.toFixed(2)} aprox./persona (demo)` : (r.RangoPrecios || 'Sin precio registrado');
             document.getElementById("fmc-distancia").textContent = `${r.DistanciaTexto} · ${r.Direccion}`;
@@ -1056,7 +1093,8 @@ else
         function salirDeEnfoqueMapa() {
             if (!enfoqueMapa) return;
             for (const [marker, visible] of enfoqueMapa.visibilidad) marker.setVisible(visible);
-            enfoqueMapa.marker.setIcon(enfoqueMapa.icono);
+            const iconoActual = enfoqueMapa.marker.getIcon();
+            enfoqueMapa.marker.setIcon({ ...iconoActual, scale: enfoqueMapa.escala });
             enfoqueMapa.marker.setZIndex(enfoqueMapa.orden);
             map.setZoom(enfoqueMapa.zoom);
             map.setCenter(enfoqueMapa.centro);
@@ -1077,10 +1115,11 @@ else
             if (!map || !r || !marker) return;
             salirDeEnfoqueMapa();
             const visibilidad = Object.values(marcadores).map(m => [m, m.getVisible()]);
-            enfoqueMapa = { marker, visibilidad, icono: marker.getIcon(), orden: marker.getZIndex(),
+            const icono = marker.getIcon();
+            enfoqueMapa = { marker, visibilidad, escala: icono.scale, orden: marker.getZIndex(),
                 zoom: map.getZoom(), centro: map.getCenter() };
             for (const [m] of visibilidad) m.setVisible(m === marker);
-            marker.setIcon({ ...enfoqueMapa.icono, scale: 8 });
+            marker.setIcon({ ...icono, scale: 8 });
             marker.setZIndex(1500);
             document.getElementById('enfoque-mapa-nombre').textContent = r.Nombre;
             document.getElementById('enfoque-mapa').classList.remove('d-none');
@@ -1112,6 +1151,11 @@ else
             if (item) {
                 item.CalificacionPromedio = promedio;
                 item.TotalResenas = totalResenas;
+                const marker = marcadores[restauranteId];
+                if (marker) {
+                    const fillColor = colorValoracion(promedio, totalResenas);
+                    marker.setIcon({ ...marker.getIcon(), fillColor });
+                }
             }
             const card = document.getElementById(`card-rest-${restauranteId}`);
             if (card) {
