@@ -426,6 +426,14 @@
             <input id="gasto-maximo" name="gastoMaximo" type="number" min="0.01" step="0.01" value="@(Model.GastoMaximo?.ToString(CultureInfo.InvariantCulture))"
                    class="form-control" placeholder="Sin límite" aria-describedby="ayuda-gasto-maximo" />
         </div>
+        @if (Model.RutasDisponibles)
+        {
+            <div class="col-6 col-xl-3">
+                <label class="form-label small fw-semibold" for="minutos-maximos">Minutos a pie desde la FIA</label>
+                <input id="minutos-maximos" name="minutosMaximos" type="number" min="1" max="60" step="1" value="@Model.MinutosMaximos"
+                       class="form-control" placeholder="Sin límite" aria-describedby="ayuda-rutas-a-pie" />
+            </div>
+        }
         <div class="col-12 col-xl-auto d-flex flex-wrap gap-2">
             <button class="btn btn-guinda" type="submit">Aplicar filtros</button>
             @if (Model.TieneFiltros)
@@ -440,20 +448,40 @@
             <input type="hidden" name="categoria" value="@Model.CategoriaActual" />
         }
         <small id="ayuda-gasto-maximo" class="col-12 text-muted">El gasto es referencial. Si indicas un máximo, verás locales con un gasto registrado dentro de ese límite.</small>
+        @if (Model.RutasDisponibles)
+        {
+            <small id="ayuda-rutas-a-pie" class="col-12 text-muted">Calcula la ida desde el campus para hasta @RutasAPieService.MaximoDestinos locales cercanos que coincidan con tus filtros. <a asp-action="CondicionesRutas">Condiciones y privacidad de las rutas</a></small>
+        }
     </form>
     <div class="chips d-flex flex-wrap gap-1" aria-label="Categorías de restaurantes">
-        <a href="@Url.Action("Index", new { q = Model.Busqueda, valoracionMinima = Model.ValoracionMinima, gastoMaximo = Model.GastoMaximo })"
+        <a href="@Url.Action("Index", new { q = Model.Busqueda, valoracionMinima = Model.ValoracionMinima, gastoMaximo = Model.GastoMaximo, minutosMaximos = Model.MinutosMaximos })"
            class="chip @(Model.CategoriaActual == null ? "active" : "")">Todas las categorías</a>
         @foreach (CategoriaRestaurante cat in Enum.GetValues(typeof(CategoriaRestaurante)))
         {
             var activa = Model.CategoriaActual == cat;
-            <a href="@Url.Action("Index", new { categoria = cat, q = Model.Busqueda, valoracionMinima = Model.ValoracionMinima, gastoMaximo = Model.GastoMaximo })"
+            <a href="@Url.Action("Index", new { categoria = cat, q = Model.Busqueda, valoracionMinima = Model.ValoracionMinima, gastoMaximo = Model.GastoMaximo, minutosMaximos = Model.MinutosMaximos })"
                class="chip @(activa ? "active" : "")">@cat.Nombre()</a>
         }
     </div>
 </div>
 
-@if (Model.Recomendados.Count > 0 && !Model.TieneFiltros)
+@if (Model.ResultadoRutas is { } resultadoRutas)
+{
+    <div class="card-u p mb-3 small" role="status">
+        @if (Model.RutasAplicadas)
+        {
+            <strong>@Model.Restaurantes.Count locales a hasta @Model.MinutosMaximos min a pie desde la FIA</strong>
+            <div class="text-muted">Se consultaron @resultadoRutas.Consultados de @Model.TotalCandidatosRuta locales compatibles. Se obtuvieron tiempos para @resultadoRutas.MinutosPorLocal.Count.</div>
+            <div class="text-muted">Las rutas a pie están en versión beta y podrían omitir veredas o caminos peatonales.</div>
+        }
+        else
+        {
+            <span>@(resultadoRutas.Aviso ?? "No hay tiempos a pie verificados para estos locales. Se mantienen los demás filtros.")</span>
+        }
+    </div>
+}
+
+@if (Model.Recomendados.Count > 0 && (!Model.TieneFiltros || Model.RutasAplicadas))
 {
     <div class="card-u p mb-4" data-recomendaciones-restaurantes>
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
@@ -462,7 +490,7 @@
                     @(Model.RecomendacionPersonalizada ? "SUGERENCIAS PARA TI" : "OPCIONES POPULARES")
                 </span>
                 <h2 class="h6 fw-bold mb-0">
-                    @(Model.RecomendacionPersonalizada ? "Locales recomendados según tus preferencias" : "Los más valorados por la comunidad FIA")
+                    @(Model.RutasAplicadas ? "Sugerencias dentro de tu tiempo y tus filtros" : Model.RecomendacionPersonalizada ? "Locales recomendados según tus preferencias" : "Los más valorados por la comunidad FIA")
                 </h2>
             </div>
         </div>
@@ -475,6 +503,10 @@
                         <div class="overflow-hidden flex-grow-1">
                             <div class="fw-bold text-truncate small">@rec.Nombre</div>
                             <div class="text-muted text-truncate" style="font-size:0.75rem;">@rec.Categoria.Nombre() · @rec.RangoPrecios</div>
+                            @if (Model.MinutosAPie(rec.Id) is int minutos)
+                            {
+                                <small class="text-muted">@minutos min a pie · <span translate="no" style="color:#5e5e5e">Google Maps</span></small>
+                            }
                             <div class="text-warning fw-bold" style="font-size:0.75rem;"><i class="bi bi-star-fill me-1"></i>@rec.CalificacionPromedio.ToString("0.0") <span class="text-muted fw-normal">(@rec.TotalResenas)</span></div>
                         </div>
                     </div>
@@ -490,7 +522,7 @@
     <div class="card-u p text-center py-5">
         <i class="bi bi-shop fs-1 text-muted mb-2"></i>
         <h4>No se encontraron locales</h4>
-        <p class="text-muted">Prueba otro nombre, una valoración mínima menor o un gasto máximo mayor.</p>
+        <p class="text-muted">@(Model.RutasAplicadas ? "Prueba con más minutos a pie o amplía tus otros filtros." : "Prueba otro nombre, una valoración mínima menor o un gasto máximo mayor.")</p>
         <a href="/Restaurantes" class="btn btn-sm btn-guinda">Ver todos los locales</a>
     </div>
 }
@@ -499,6 +531,7 @@ else
     <div class="food-grid" id="food-grid-container">
         @foreach (var r in Model.Restaurantes)
         {
+            var minutosRuta = Model.MinutosAPie(r.Id);
             var walkingUrl = $"https://www.google.com/maps/dir/?api=1&origin=-12.07203,-76.94205&destination={r.Latitud.ToString(System.Globalization.CultureInfo.InvariantCulture)},{r.Longitud.ToString(System.Globalization.CultureInfo.InvariantCulture)}&travelmode=walking";
 
             <div class="food-card" id="card-rest-@r.Id" data-lat="@r.Latitud.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-lng="@r.Longitud.ToString(System.Globalization.CultureInfo.InvariantCulture)">
@@ -544,7 +577,14 @@ else
                         </div>
                         <div class="d-flex align-items-center gap-2 mb-1" title="@r.DistanciaTexto">
                             <i class="bi bi-geo-alt-fill text-danger flex-shrink-0" style="font-size: 0.85rem;"></i>
-                            <span class="small text-muted fw-medium text-truncate">@r.DistanciaTexto</span>
+                            @if (minutosRuta.HasValue)
+                            {
+                                <span class="small text-muted">@minutosRuta min a pie desde la FIA · <span translate="no" style="color:#5e5e5e">Google Maps</span></span>
+                            }
+                            else
+                            {
+                                <span class="small text-muted fw-medium text-truncate">@r.DistanciaTexto</span>
+                            }
                         </div>
                         <div class="d-flex align-items-start gap-2" title="@r.HorarioAtencion">
                             <i class="bi bi-clock-fill text-success flex-shrink-0 mt-1" style="font-size: 0.85rem;"></i>
@@ -756,6 +796,7 @@ else
             r.Latitud,
             r.Longitud,
             r.DistanciaTexto,
+            MinutosAPie = Model.MinutosAPie(r.Id),
             r.HorarioAtencion,
             r.Direccion,
             r.CalificacionPromedio,
@@ -960,7 +1001,8 @@ else
             document.getElementById("fmc-reviews").textContent = r.TotalResenas > 0 ? `(${r.TotalResenas} ${r.TotalResenas === 1 ? "reseña" : "reseñas"})` : "";
             document.getElementById("fmc-rango").textContent = r.PrecioPromedioReferencial
                 ? `S/ ${r.PrecioPromedioReferencial.toFixed(2)} aprox./persona (demo)` : (r.RangoPrecios || 'Sin precio registrado');
-            document.getElementById("fmc-distancia").textContent = `${r.DistanciaTexto} · ${r.Direccion}`;
+            const distancia = r.MinutosAPie != null ? `${r.MinutosAPie} min a pie desde la FIA` : r.DistanciaTexto;
+            document.getElementById("fmc-distancia").textContent = `${distancia} · ${r.Direccion}`;
 
             const btnResenas = document.getElementById("fmc-btn-resenas");
             const btnRuta = document.getElementById("fmc-btn-ruta");
