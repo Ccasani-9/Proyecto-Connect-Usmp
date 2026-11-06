@@ -7,6 +7,13 @@
 
 @section Styles {
     <style>
+        .calendar-page { padding-bottom: 100px; }
+        .calendar-page .row > * { min-width: 0; }
+        .calendar-page .page-head > .d-flex { flex-wrap: wrap; }
+        .emoji-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+        .emoji-picker label { cursor: pointer; padding: 7px 10px; border: 1px solid var(--border); border-radius: 9px; font-size: 1.2rem; }
+        .emoji-picker input:checked + label { background: var(--guinda-50); border-color: var(--guinda); }
+        .emoji-picker input:focus-visible + label { outline: 3px solid var(--info); }
         .cal-container {
             background: #fff;
             border-radius: 14px;
@@ -179,6 +186,7 @@
     </style>
 }
 
+<div class="calendar-page">
 <div class="card-u page-head">
     <div>
         <h1>Mi Calendario Académico</h1>
@@ -249,9 +257,10 @@
     </div>
 </div>
 
+</div>
 <!-- Modal: Nueva Actividad / Recordatorio -->
 <div class="modal fade" id="modalEvento" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <form class="modal-content" asp-controller="Eventos" asp-action="Crear" method="post">
             <input type="hidden" name="returnUrl" value="/Calendario" />
             <div class="modal-header">
@@ -261,12 +270,39 @@
             <div class="modal-body">
                 <div class="mb-3">
                     <label class="form-label" for="evTitulo">Título de la actividad</label>
-                    <input class="form-control" id="evTitulo" name="titulo" maxlength="120" required placeholder="Ej. Entrega Parcial de Proyecto, Práctica Calificada..." />
+                    <input class="form-control" id="evTitulo" name="titulo" maxlength="110" required placeholder="Ej. Entrega Parcial de Proyecto, Práctica Calificada..." />
                 </div>
                 <div class="mb-4">
                     <label class="form-label" for="evFecha">Fecha programada</label>
                     <input class="form-control" id="evFecha" name="fecha" type="date" required value="@fechaHoyIso" />
                 </div>
+                <fieldset class="mb-3">
+                    <legend class="form-label fs-6">Emoji</legend>
+                    <div class="emoji-picker">
+                        @foreach (var icono in RepeticionActividad.Emojis)
+                        {
+                            var indice = Array.IndexOf(RepeticionActividad.Emojis, icono);
+                            <input class="visually-hidden" type="radio" name="emoji" id="emoji-@indice" value="@icono" checked="@(indice == 0)" />
+                            <label for="emoji-@indice"><span aria-hidden="true">@icono</span><span class="visually-hidden">Icono @icono</span></label>
+                        }
+                    </div>
+                </fieldset>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" name="semanal" value="true" id="evSemanal" />
+                    <label class="form-check-label" for="evSemanal">Repetir cada semana</label>
+                </div>
+                <fieldset id="evRepeticion" class="mb-4" hidden disabled>
+                    <legend class="form-label fs-6">Repetir los días</legend>
+                    <div class="d-flex flex-wrap gap-3 mb-3">
+                        @foreach (var dia in new[] { (1, "Lun"), (2, "Mar"), (3, "Mié"), (4, "Jue"), (5, "Vie"), (6, "Sáb"), (0, "Dom") })
+                        {
+                            <label class="form-check"><input class="form-check-input" type="checkbox" name="dias" value="@dia.Item1" /> @dia.Item2</label>
+                        }
+                    </div>
+                    <label class="form-label" for="evHasta">Termina el</label>
+                    <input class="form-control" type="date" name="hasta" id="evHasta" required />
+                    <p class="small text-muted mt-2 mb-0">Hasta un año. Cada fecha se guarda y se elimina por separado.</p>
+                </fieldset>
                 <button class="btn-guinda w-100" type="submit">Guardar en mi calendario</button>
             </div>
         </form>
@@ -276,6 +312,23 @@
 @section Scripts {
     <script>
         (() => {
+            const semanal = document.getElementById('evSemanal');
+            const repeticion = document.getElementById('evRepeticion');
+            const fechaInicio = document.getElementById('evFecha');
+            const hasta = document.getElementById('evHasta');
+            function limitesRepeticion() {
+                hasta.min = fechaInicio.value;
+                const fecha = new Date(fechaInicio.value + 'T12:00:00');
+                if (Number.isNaN(fecha.getTime())) return;
+                fecha.setDate(fecha.getDate() + 366);
+                hasta.max = `${fecha.getFullYear()}-${String(fecha.getMonth()+1).padStart(2,'0')}-${String(fecha.getDate()).padStart(2,'0')}`;
+            }
+            semanal.addEventListener('change', () => {
+                repeticion.hidden = !semanal.checked;
+                repeticion.disabled = !semanal.checked;
+                limitesRepeticion();
+            });
+            fechaInicio.addEventListener('change', limitesRepeticion);
             const hoyIso = '@fechaHoyIso';
             const clases = @Json.Serialize(Model.Clases);
             const eventos = @Json.Serialize(Model.Eventos);

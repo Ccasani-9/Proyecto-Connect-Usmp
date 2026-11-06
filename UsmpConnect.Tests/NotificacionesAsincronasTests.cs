@@ -36,6 +36,10 @@ public class NotificacionesAsincronasTests
         Assert.Equal("nueva_resena", spyPieHost.UltimoEvento);
         Assert.DoesNotContain("UsuarioId", spyPieHost.UltimosDatos);
         Assert.DoesNotContain("MensajeNotificacion", spyPieHost.UltimosDatos);
+        var estados = factory.Services.GetRequiredService<EstadoIntegraciones>();
+        Assert.False(estados.Obtener("rabbit-publicacion")!.Correcta);
+        Assert.Null(estados.Obtener("rabbit-consumo")); // La cola local no se presenta como consumo remoto.
+        Assert.True(estados.Obtener("notificacion")!.Correcta);
 
         using (var scope = factory.Services.CreateScope())
         {

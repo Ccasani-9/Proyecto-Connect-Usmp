@@ -27,10 +27,11 @@ public sealed class CatalogoRestaurantesService(
         await Gate.WaitAsync(cancellationToken);
         try
         {
-            var items = await cache.GetAsync<List<RestauranteItemVM>>(CacheKey);
+            var lectura = await cache.LeerConOrigenAsync<List<RestauranteItemVM>>(CacheKey);
+            var items = lectura.Valor;
             if (items is not null)
             {
-                var fuente = cache.IsConnected ? "Redis Cache" : "Caché local";
+                var fuente = lectura.Origen;
                 logger.LogDebug("Catálogo de restaurantes: hit en {Fuente}", fuente);
                 return new(items, fuente);
             }

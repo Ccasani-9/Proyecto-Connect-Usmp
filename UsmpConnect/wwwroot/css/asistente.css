@@ -61,3 +61,33 @@
     .fia-chat-cabecera, .fia-chat-form { padding: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .fia-chat *, .fia-chat-abrir { scroll-behavior: auto !important; transition: none !important; } }
+
+/* Respuestas legibles y resultados completos en el ancho del panel. */
+.fia-chat { width: min(460px, calc(100vw - 32px)); }
+.fia-chat-cabecera, .fia-chat-herramientas, .fia-chat-form { flex-shrink: 0; }
+.fia-chat-asistente { background: var(--card); border: 1px solid var(--border); padding: 16px; }
+.fia-chat-texto { font-size: .9rem; line-height: 1.65; }
+.fia-chat-texto p { margin: 0 0 12px; }
+.fia-chat-texto p:last-child { margin-bottom: 0; }
+.fia-chat-texto ul { margin: 8px 0 14px; padding-left: 21px; }
+.fia-chat-texto li { padding-left: 3px; margin-bottom: 12px; }
+.fia-chat-tarjetas { display: grid; grid-template-columns: minmax(0, 1fr); overflow: visible; gap: 10px; }
+.fia-chat-tarjeta { min-width: 0; border-left: 3px solid var(--guinda); text-decoration: none; transition: background .15s; }
+.fia-chat-tarjeta:hover { background: var(--guinda-50); }
+.fia-chat-tarjeta strong { line-height: 1.4; }
+.fia-chat-tarjeta span { line-height: 1.5; }
+.fia-chat-abrir { bottom: calc(24px + env(safe-area-inset-bottom)); }
+@media (max-width: 575px) {
+    .fia-chat { width: calc(100% - 16px); }
+    .fia-chat-abrir { bottom: calc(12px + env(safe-area-inset-bottom)); }
+}
+
+.fia-chat-espera { flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--guinda-50); color: var(--guinda); font-size: .82rem; font-weight: 600; border-top: 1px solid var(--border); }
+.fia-chat-puntos { display: flex; gap: 4px; }
+.fia-chat-puntos i { width: 5px; height: 5px; background: currentColor; border-radius: 50%; animation: fia-pulso 1.2s infinite ease-in-out; }
+.fia-chat-puntos i:nth-child(2) { animation-delay: .15s; }
+.fia-chat-puntos i:nth-child(3) { animation-delay: .3s; }
+.fia-chat-texto strong { font-weight: 700; }
+.fia-chat-texto code { background: var(--bg); border-radius: 4px; padding: 1px 4px; color: var(--guinda); }
+@keyframes fia-pulso { 0%, 80%, 100% { opacity: .35; } 40% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .fia-chat-puntos i { animation: none; } }

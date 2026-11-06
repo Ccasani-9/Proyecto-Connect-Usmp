@@ -5,6 +5,19 @@ namespace UsmpConnect.Services.Agente;
 /// <summary>Recupera el tema de continuaciones cortas sin arrastrarlo a preguntas nuevas.</summary>
 public record ConsultaAsistente(string? Tema, string Contexto)
 {
+    public UsmpConnect.Models.CategoriaRestaurante? CategoriaSolicitada => Contexto.Split('\n')
+        .Reverse().Select(CatalogoFiaPlugin.CategoriaDesdeTexto).FirstOrDefault(c => c.HasValue);
+
+    public decimal? PresupuestoSolicitado
+    {
+        get
+        {
+            var coincidencias = Regex.Matches(Contexto, @"(?:menos de|hasta|por|presupuesto(?: de)?|con)\s*(?:s[/\.]?\s*)?(\d+(?:[.,]\d{1,2})?)", RegexOptions.IgnoreCase);
+            return coincidencias.Count > 0 && decimal.TryParse(coincidencias[^1].Groups[1].Value.Replace(',', '.'),
+                System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var valor) ? valor : null;
+        }
+    }
+
     public string Peticion => Tema == "apuntes"
         ? "Busca en el catálogo de apuntes estos temas: " + TerminosApuntes() +
           ". Devuelve los materiales encontrados o alternativas reales. No des clases ni escribas código."
@@ -50,7 +63,7 @@ public record ConsultaAsistente(string? Tema, string Contexto)
         if (Incluye("publicar", "subir", "editar", "eliminar", "como funciona", "manual", "reglamento", "horario", "calendario", "nota minima", "promedio")) return "guia";
         // Una petición mixta de apuntes y un ejercicio conserva la búsqueda válida.
         if (Incluye("apunte", "resumen", "material", "python", "programacion", "calculo", "integrales")) return "apuntes";
-        if (Incluye("restaurante", "huarique", "almorz", "comer", "comida", "chifa", "pizza", "hamburgues", "ceviche", "cafeteria")) return "restaurantes";
+        if (Incluye("restaurante", "huarique", "almorz", "comer", "comida", "chifa", "pizza", "hamburgues", "ceviche", "cafeteria", "cafe", "pasteleria", "postres")) return "restaurantes";
         if (Incluye("marketplace", "en venta", "comprar", "vender")) return "marketplace";
         if (Incluye("curso", "catedra", "docente", "profesor")) return "catedra";
         if (Incluye("guia", "como ", "regla", "resena", "aprobar", "sustitutorio", "objetos perdidos", "calculadora")) return "guia";

@@ -12,6 +12,30 @@ namespace UsmpConnect.Tests;
 
 public class AsistenteTests
 {
+    [Theory]
+    [InlineData("Recomiéndame una cafetería por menos de 20 soles")]
+    [InlineData("Busco café por 20 soles")]
+    [InlineData("cafeterías hasta 20")]
+    public async Task CafeteriaExplicita_PrevaleceSobreCategoriaIncorrectaDelModelo(string mensaje)
+    {
+        await using var factory = new ChatFactory();
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var solicitud = ConsultaAsistente.Crear(mensaje, []);
+        var plugin = new CatalogoFiaPlugin(db, new ContextoAsistente(), solicitud);
+        using var datos = JsonDocument.Parse(JsonSerializer.Serialize(await plugin.BuscarRestaurantes("comida rápida", 100, "ComidaRapida")));
+        var resultados = datos.RootElement.GetProperty("resultados").EnumerateArray().ToList();
+        Assert.NotEmpty(resultados);
+        Assert.All(resultados, r => {
+            Assert.Equal("CafeteriaHuarique", r.GetProperty("Categoria").GetString());
+            Assert.True(r.GetProperty("PrecioPromedioReferencial").GetDecimal() <= 20);
+        });
+        var seguimiento = ConsultaAsistente.Crear("¿por 15?", [new("usuario", mensaje)]);
+        Assert.Equal(CategoriaRestaurante.CafeteriaHuarique, seguimiento.CategoriaSolicitada);
+        Assert.Equal(15m, seguimiento.PresupuestoSolicitado);
+        Assert.Null(ConsultaAsistente.Crear("busca apuntes de cálculo", [new("usuario", mensaje)]).CategoriaSolicitada);
+    }
+
     [Fact]
     public async Task Chat_ExigeTokenYConservaHistorialSoloParaUsuarioActual()
     {

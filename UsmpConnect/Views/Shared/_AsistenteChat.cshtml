@@ -25,6 +25,10 @@
             <button type="button" class="btn btn-sm btn-soft" data-fia-pregunta="¿Cómo funciona la calculadora de promedios y cómo edito mi reseña de un restaurante?">Manual FIA (PDF)</button>
         </div>
     </div>
+    <div id="fia-chat-espera" class="fia-chat-espera" role="status" aria-live="polite" hidden>
+        <span class="fia-chat-puntos" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>El asistente está respondiendo…</span>
+    </div>
     <form id="fia-chat-form" class="fia-chat-form" novalidate>
         @Html.AntiForgeryToken()
         <label for="fia-chat-mensaje" class="form-label">¿Qué necesitas encontrar?</label>
