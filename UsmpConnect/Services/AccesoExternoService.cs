@@ -37,6 +37,12 @@ public sealed class AccesoExternoService(UserManager<ApplicationUser> usuarios, 
         if (roles.Count > 0 && !roles.Contains(Roles.Alumno)) return new(null, 403, "USMP Connect es una comunidad para alumnos.");
         if (roles.Count == 0 && !(await usuarios.AddToRoleAsync(usuario, Roles.Alumno)).Succeeded)
             return new(null, 400, "No pudimos completar tu cuenta.");
+        if (!string.IsNullOrEmpty(foto) && !string.Equals(usuario.FotoUrl, foto, StringComparison.Ordinal))
+        {
+            usuario.FotoUrl = foto;
+            if (!(await usuarios.UpdateAsync(usuario)).Succeeded)
+                return new(null, 400, "No pudimos guardar tu foto de perfil. Intenta nuevamente.");
+        }
         return new(usuario, 200);
     }
 }
