@@ -24,6 +24,16 @@ En bases nuevas se generan importes referenciales variados por rango: económico
 - Las nuevas reseñas no reentrenan por sí mismas el recomendador.
 - Para demostrar la afinidad por comida, entra con Alessandro y mira «Sugerencias para ti» en Restaurantes. Deja cinco estrellas a Pizza Raúl La Fontana y Mamma Tomato. Al recargar, se priorizan otros locales de comida italiana, como Amore La Molina y Punto Italiano. La afinidad usa los platos y descripciones del catálogo y las reseñas guardadas. ML.NET ordena los locales que tienen la misma afinidad cuando dispone de predicciones.
 
+### Evaluar el recomendador frente a popularidad
+
+```powershell
+dotnet test UsmpConnect.Tests --filter FullyQualifiedName~EvaluacionRecomendadorTests --logger 'console;verbosity=detailed'
+```
+
+La prueba reserva una valoración de 5 estrellas por perfil con al menos dos favoritos. Usa una semilla fija para la selección, salvo en el caso de Diego, donde reserva Punto Italiano (La Fontana) para mostrar el ejemplo de pastas. Entrena el modelo y calcula la popularidad sobre las valoraciones restantes. Ambos métodos ordenan los mismos locales que el perfil aún no ha puntuado en ese entrenamiento. Se cuenta un acierto cuando el favorito reservado aparece entre los tres primeros.
+
+En la corrida con 400 valoraciones ficticias, ambos métodos acertaron en 4 de 15 perfiles. Diego tenía 5 estrellas en Pizza Raúl La Fontana y Mamma Tomato, además de otras valoraciones que se conservaron. El primer resultado de ML fue Amore La Molina, que ofrece pastas. El favorito reservado, Punto Italiano (La Fontana), quedó 20.º con ML y 21.º por popularidad de 21 candidatos. El ejemplo permite mostrar una sugerencia relacionada y el resultado del favorito reservado por separado. Las dos valoraciones de pizzerías por sí solas no explican la predicción.
+
 ## Guías del asistente
 
 El corpus añade cinco guías sobre acceso, apuntes/Cátedra, restaurantes, Marketplace/objetos y calendario/límites. PdfPig conserva su demostración con el manual PDF de varias páginas. Qdrant usa la versión del corpus para no mezclar textos antiguos con las fuentes actuales.
