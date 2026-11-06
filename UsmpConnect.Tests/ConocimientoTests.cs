@@ -46,8 +46,9 @@ public class ConocimientoTests
         Assert.DoesNotContain("Calculadora de Promedios integrada", paginas[0].Texto);
         Assert.Equal(2, paginas[1].Numero);
         Assert.Contains("Editar y Eliminar", paginas[1].Texto);
-        Assert.Contains("ML.NET", paginas[1].Texto);
-        Assert.Contains("no reentrenan", paginas[1].Texto);
+        Assert.DoesNotContain("ML.NET", paginas[1].Texto);
+        Assert.Contains("actualiza el promedio del restaurante", paginas[1].Texto);
+        Assert.DoesNotContain("Qdrant", paginas[1].Texto);
     }
 
     [Fact]

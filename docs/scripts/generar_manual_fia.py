@@ -30,28 +30,22 @@ paginas = [
         ("3. Abrir el Asistente FIA",
          "Primero inicia sesión como alumno. En Inicio y los módulos con el menú común aparece el botón "
          "flotante Asistente FIA abajo a la derecha. Haz clic para abrirlo. No aparece en la pantalla de login "
-         "ni al navegar sin sesión. Permite consultar contenido de la plataforma y muestra sus fuentes; "
+         "ni al navegar sin sesión. Permite consultar contenido de la plataforma; "
          "no realiza modificaciones en tu nombre.")
     ]),
     ("Restaurantes, reseñas y comunidad", [
         ("4. Crear, editar y eliminar reseñas",
          "Abre el detalle de un restaurante e inicia sesión para publicar una reseña de 1 a 5 estrellas. "
-         "Los botones Editar y Eliminar aparecen junto a tus propias reseñas. Antes de eliminar, confirma la acción. "
-         "La autoría se valida también en el servidor."),
-        ("Sentimiento y recomendaciones",
-         "Al crear o editar una reseña, ML.NET clasifica el comentario como Positivo o Negativo con la "
-         "probabilidad de la clase predicha. Se recalcula el promedio del restaurante y se invalida la caché del catálogo. "
-         "Estas acciones no reentrenan el modelo de recomendaciones: utiliza el dataset de demostración. "
-         "Una reseña nueva no cambia automáticamente las predicciones personalizadas del modelo."),
-        ("5. Catálogo y caché",
-         "El indicador de la cabecera registra el origen del catálogo al cargar la página: Redis Cache, "
-         "SQLite o Caché local. Abrir un detalle consulta SQLite y no cambia el origen registrado del catálogo. "
-         "Para observar la reconstrucción tras invalidar la caché, recarga el catálogo. Una carga posterior puede "
-         "mostrar Redis si otra consulta o la precarga ya lo reconstruyó."),
-        ("6. Convivencia y fuentes",
+         "Los botones Editar y Eliminar aparecen junto a tus propias reseñas. Antes de eliminar, confirma la acción."),
+        ("Cambios en tu reseña",
+         "En Editar puedes cambiar el comentario o la puntuación. Guarda los cambios para que se actualice tu reseña. "
+         "Si cambiaste la puntuación, también se actualiza el promedio del restaurante."),
+        ("5. Encontrar un lugar para comer",
+         "En Restaurantes cercanos puedes revisar el tipo de comida, la ubicación y el horario publicado. "
+         "El gasto aproximado es por persona. Confirma el horario y los precios con el local."),
+        ("6. Convivencia",
          "No compartas contraseñas ni datos privados. Las publicaciones pertenecen a sus estudiantes autores. "
-         "Este manual describe una maqueta universitaria de USMP Connect, no un reglamento oficial de la facultad. "
-         "El asistente puede recuperar sus páginas mediante PdfPig y Qdrant, con respaldo de búsqueda local.")
+         "Este manual describe una maqueta universitaria de USMP Connect, no un reglamento oficial de la facultad.")
     ])
 ]
 

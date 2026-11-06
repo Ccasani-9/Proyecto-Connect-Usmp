@@ -6,7 +6,7 @@ Red social de la facultad dirigida a alumnos. Español de Perú; importes en sol
 `UsmpConnect/wwwroot/css/site.css` define guinda `#6b1020`, guinda oscuro `#560b19`, fondo `#f4f5f7`, tarjetas blancas, borde `#e7e8ec`, texto `#17171c` y estados semánticos. Tipografía Inter con pesos para jerarquía. Reutilizar variables CSS, Bootstrap, `card-u`, `btn-guinda` y `btn-soft`; no agregar fuentes o paletas independientes por pantalla.
 
 ## Asistente FIA
-Panel flotante no modal con región etiquetada, botón de abrir/cerrar, Escape y retorno de foco. Hereda los tokens del sitio a través de `asistente.css`, sin modificar otras pantallas. Su rasgo distintivo son las tarjetas de contenido de la facultad y las fuentes desplegables, generadas desde resultados de servidor.
+Panel flotante no modal con región etiquetada, botón de abrir/cerrar, Escape y retorno de foco. Hereda los tokens del sitio a través de `asistente.css`, sin modificar otras pantallas. Su rasgo distintivo son las tarjetas de contenido de la facultad generadas desde resultados del servidor. Las guías de ayuda se usan para redactar respuestas, y el chat entrega solo texto y tarjetas.
 
 `_AsistenteChat.cshtml` es el único propietario del widget. `asistente.js` gestiona sus estados: bienvenida, carga de historial, generación, respuesta completa, error y detención. `asistente.css` es una extensión acotada del tema, con scrollbar visible y espacio estable para el compositor.
 

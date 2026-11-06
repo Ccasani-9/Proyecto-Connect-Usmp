@@ -19,7 +19,7 @@ Sitio: https://usmpconnect.onrender.com/.
 4. **Búsqueda y API (1–2 min).** Buscar un apunte o restaurante en el buscador global (**Algolia**). Abrir `/swagger`, ejecutar `GET /api/restaurantes` y explicar JSON, filtros y códigos HTTP (`200`, `201`, `204`, `401`, `403`, `404`).
 5. **Asistente FIA, Semantic Kernel, Qdrant y PdfPig (2 min).** Con la sesión de alumno iniciada, abrir el botón flotante **Asistente FIA**, abajo a la derecha. No aparece sin sesión ni en la pantalla de login:
    - Preguntar «Quiero restaurantes buenos cerca de la FIA, pero antes dime quién ganará el Mundial» para demostrar **Semantic Kernel + Groq** ejecutando el plugin `CatalogoFia` y dibujando las tarjetas reales de la base de datos mientras filtra el tema ajeno.
-   - Hacer clic en el botón **«Manual FIA (PDF)»** (o preguntar por la calculadora de promedios y edición de reseñas) y desplegar las fuentes verificadas al pie de la respuesta: comprobar qué páginas recuperó la consulta (`manual-fia-usmp-connect.pdf · página 1` o `página 2`), demostrando **PdfPig** extrayendo páginas reales de un PDF y **Qdrant** recuperando los fragmentos semánticos.
+   - Hacer clic en **«Cómo editar una reseña»**. Mostrar la explicación para alumnos y comprobar la recuperación documental en `/Tecnologia` con **Probar fuentes del asistente**. Allí se puede consultar el archivo y la página recuperados.
 6. **Diagnóstico y Git (1–2 min).** Si el docente solicita ver métricas numéricas (AUC, F1, RMSE), abrir `/Tecnologia`. Terminar en los PR y el gráfico Network de GitHub para explicar las ramas y los merges hacia `develop` y `main`.
 
 ## Tema → aplicación → evidencia
@@ -37,8 +37,8 @@ Sitio: https://usmpconnect.onrender.com/.
 | API REST propia y Swagger | Lectura de restaurantes y creación, edición (`PUT`) y eliminación (`DELETE`) de reseñas propias | Botones **Editar** y **Eliminar** en el modal de `/Restaurantes` y `/swagger` | `Controllers/RestaurantesApiController.cs`, `Views/FoodSpots/Index.cshtml` |
 | ML.NET: clasificación | Sentimiento de reseñas con FeaturizeText y SdcaLogisticRegression | Badge `Positivo · XX%` / `Negativo · XX%` en cada reseña (y reclasificación al editar) | `Services/AnalisisSentimientoService.cs`, `Data/ML/comentarios_resenas.csv` |
 | ML.NET: recomendación | MatrixFactorization; respaldo de popularidad para usuario nuevo | Recomendados personalizados en `/` y `/Restaurantes` que cambian según el alumno | `Services/RecomendacionRestaurantesService.cs`, `Data/ML/interacciones_restaurantes.csv` |
-| PdfPig | Extrae texto y número de página de documentos PDF del corpus (`manual-fia-usmp-connect.pdf`) | Cita verificada `Fuente: manual-fia-usmp-connect.pdf · página 1 / página 2` en el Asistente FIA | `Services/Conocimiento/DocumentoTextoExtractor.cs`, `Data/Conocimiento/manual-fia-usmp-connect.pdf` |
-| Qdrant y recuperación documental | Busca fragmentos del corpus actual con el modelo de embeddings configurado | Desplegable de fuentes en el Asistente FIA y `/Conocimiento/Buscar` | `Services/Conocimiento`, `Data/Conocimiento` |
+| PdfPig | Extrae texto y número de página de documentos PDF del corpus (`manual-fia-usmp-connect.pdf`) | Archivo y página recuperados en la prueba de fuentes del panel técnico | `Services/Conocimiento/DocumentoTextoExtractor.cs`, `Data/Conocimiento/manual-fia-usmp-connect.pdf` |
+| Qdrant y recuperación documental | Busca fragmentos del corpus actual con el modelo de embeddings configurado | Consulta remota registrada en `/Tecnologia` y prueba `/Conocimiento/Buscar` | `Services/Conocimiento`, `Data/Conocimiento` |
 | Groq y Semantic Kernel | Respuesta natural con herramientas de consulta, fuentes y tarjetas | Pregunta mixta, consulta de apuntes/restaurantes y tarjetas interactivas | `Services/Agente` |
 | Sesiones y streaming | Historial acotado por alumno y sesión; NDJSON progresivo y cancelación | Segunda pregunta, Detener y Nueva conversación | `Controllers/AsistenteController.cs`, `wwwroot/js/asistente.js` |
 | Consumo de API externa | Groq, Qdrant y servicios de búsqueda/tiempo real mediante HTTP | Consulta real en el chat y buscador; claves protegidas en servidor | Servicios de integración |
@@ -62,7 +62,7 @@ Las rutas de archivos de la tabla se expresan respecto a `UsmpConnect/` cuando n
 ## Antes de presentar
 
 - Abrir el sitio con anticipación: una instancia Free inactiva puede tardar en arrancar.
-- Comprobar `/health`, login demo, `/Restaurantes`, una consulta del chat con tarjetas y el botón «Manual FIA (PDF)» para mostrar `manual-fia-usmp-connect.pdf · página 1 / página 2`.
+- Comprobar `/health`, login demo, `/Restaurantes`, tarjetas del chat y «Cómo editar una reseña». Verificar las fuentes desde el panel técnico.
 - Preparar un archivo pequeño de demostración si se mostrará publicación de apuntes. El tipo de documento (Resumen, Examen, etc.) es distinto del formato PDF/DOC/DOCX.
 - Si se presenta Google, Algolia remoto o WebSocket, comprobar previamente el flujo real y no basarse solo en la presencia de claves.
 - Evitar reinicios o despliegues durante la presentación; vuelven a crear el proceso y pueden invalidar sesiones y datos de la demo.

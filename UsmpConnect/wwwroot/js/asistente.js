@@ -80,7 +80,7 @@
         mensajes.append(articulo);
         return { articulo, cuerpo };
     }
-    function completar(articulo, tarjetas = [], fuentes = []) {
+    function completar(articulo, tarjetas = []) {
         if (tarjetas.length) {
             const lista = document.createElement('div');
             lista.className = 'fia-chat-tarjetas';
@@ -100,16 +100,6 @@
                 lista.append(enlace);
             }
             articulo.append(lista);
-        }
-        for (const fuente of fuentes.slice(0, 5)) {
-            const detalle = document.createElement('details');
-            detalle.className = 'fia-chat-fuente';
-            const titulo = document.createElement('summary');
-            titulo.textContent = `Fuente: ${fuente.fuente}${fuente.pagina ? ` · página ${fuente.pagina}` : ''}`;
-            const texto = document.createElement('p');
-            texto.textContent = fuente.texto;
-            detalle.append(titulo, texto);
-            articulo.append(detalle);
         }
     }
     async function respuestaValida(respuesta) {
@@ -132,7 +122,7 @@
             if (datos.mensajes.length) mensajes.replaceChildren();
             for (const mensaje of datos.mensajes) {
                 const fila = agregar(mensaje.rol, mensaje.texto);
-                completar(fila.articulo, mensaje.tarjetas || [], mensaje.fuentes || []);
+                completar(fila.articulo, mensaje.tarjetas || []);
             }
             cargado = true;
             if (!datos.configurado) mostrarError('El asistente todavía no está disponible. Puedes utilizar el buscador de la plataforma.');
@@ -234,7 +224,7 @@
                     presentarTexto(fila.cuerpo, fila.cuerpo.dataset.respuesta);
                     estado.textContent = 'Respondiendo…';
                 } else if (dato.tipo === 'fin') {
-                    completar(fila.articulo, dato.tarjetas, dato.fuentes);
+                    completar(fila.articulo, dato.tarjetas);
                     termino = true;
                 } else if (dato.tipo === 'error') throw new Error(dato.error);
                 desplazar(seguir);

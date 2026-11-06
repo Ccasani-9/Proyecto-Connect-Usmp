@@ -41,9 +41,6 @@
 .fia-chat-tarjeta small { color: var(--muted); font-size: .72rem; margin-bottom: 5px; }
 .fia-chat-tarjeta strong { margin-bottom: 6px; font-size: .9rem; }
 .fia-chat-tarjeta span { color: var(--text); font-size: .8rem; }
-.fia-chat-fuente { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 10px; font-size: .78rem; }
-.fia-chat-fuente summary { color: var(--guinda); cursor: pointer; }
-.fia-chat-fuente p { white-space: pre-wrap; color: var(--muted); margin-top: 8px; }
 .fia-chat-form { border-top: 1px solid var(--border); padding: 12px 14px; }
 .fia-chat-form label { font-size: .85rem; font-weight: 600; }
 .fia-chat-form textarea { resize: none; min-height: 70px; max-height: 120px; }
