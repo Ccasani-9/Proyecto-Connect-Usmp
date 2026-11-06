@@ -14,9 +14,13 @@ public class FoodSpotsController(
     IConfiguration config) : Controller
 {
     [AllowAnonymous]
-    public async Task<IActionResult> Index(CategoriaRestaurante? categoria, string? q)
+    public async Task<IActionResult> Index(CategoriaRestaurante? categoria, string? q,
+        double? valoracionMinima = null, decimal? gastoMaximo = null)
     {
-        var (restaurantes, fuente) = await catalogo.FiltrarAsync(categoria, q);
+        valoracionMinima = valoracionMinima is 3.5 or 4 or 4.5 ? valoracionMinima : null;
+        gastoMaximo = gastoMaximo is > 0 ? gastoMaximo : null;
+        var (restaurantes, fuente) = await catalogo.FiltrarAsync(categoria, q,
+            valoracionMinima: valoracionMinima, gastoMaximo: gastoMaximo);
         var usuarioClave = !string.IsNullOrWhiteSpace(User?.Identity?.Name)
             ? User.Identity!.Name
             : User?.GetUserId();
@@ -29,6 +33,8 @@ public class FoodSpotsController(
             RecomendacionPersonalizada = personalizada,
             CategoriaActual = categoria,
             Busqueda = q,
+            ValoracionMinima = valoracionMinima,
+            GastoMaximo = gastoMaximo,
             FuenteDatos = fuente,
             GoogleMapsApiKey = config["GoogleMaps:ApiKey"] ?? ""
         };

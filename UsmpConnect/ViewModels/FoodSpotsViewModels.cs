@@ -109,6 +109,10 @@ public class FoodSpotsIndexVM
     public bool RecomendacionPersonalizada { get; set; }
     public CategoriaRestaurante? CategoriaActual { get; set; }
     public string? Busqueda { get; set; }
+    public double? ValoracionMinima { get; set; }
+    public decimal? GastoMaximo { get; set; }
+    public bool TieneFiltros => CategoriaActual.HasValue || !string.IsNullOrWhiteSpace(Busqueda)
+        || ValoracionMinima.HasValue || GastoMaximo.HasValue;
     public int TotalLugares => Restaurantes.Count;
     public string FuenteDatos { get; set; } = "SQLite"; // "Redis Cache (Hit)" o "SQLite"
     public string GoogleMapsApiKey { get; set; } = string.Empty;
