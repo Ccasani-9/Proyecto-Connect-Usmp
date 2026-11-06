@@ -298,11 +298,11 @@
 </div>
 
 <!-- Mapa Interactivo Oficial Google Maps -->
-<div class="card-u p mb-4">
+<div class="card-u p mb-4" id="seccion-mapa-fia" style="scroll-margin-top: calc(var(--topbar-h) + 12px);">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2 flex-wrap">
             <i class="bi bi-geo-alt-fill text-danger fs-5"></i>
-            <h2 class="h5 fw-bold mb-0">Mapa Interactivo Alrededor de la FIA</h2>
+            <h2 id="titulo-mapa-fia" tabindex="-1" class="h5 fw-bold mb-0">Mapa Interactivo Alrededor de la FIA</h2>
             <small class="text-muted">(Cuadrante: Flora Tristán · Javier Prado · La Fontana · Los Ingenieros)</small>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -336,6 +336,14 @@
                 <i class="bi bi-crosshair me-1 text-danger"></i>Campus FIA
             </button>
         </div>
+    </div>
+    <div id="enfoque-mapa" class="d-none d-flex flex-wrap align-items-center justify-content-between gap-2 border rounded-3 bg-light p-2 mb-2">
+        <div role="status" class="small px-1">
+            <i class="bi bi-geo-alt-fill text-danger me-1" aria-hidden="true"></i>Local seleccionado: <strong id="enfoque-mapa-nombre"></strong>
+        </div>
+        <button id="volver-resultados-mapa" type="button" class="btn btn-sm btn-soft" onclick="volverAResultadosMapa()">
+            <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver a los resultados
+        </button>
     </div>
     <div class="position-relative overflow-hidden" style="border-radius: 1rem; border: 1px solid var(--border, #e5e7eb); box-shadow: 0 4px 12px rgba(0,0,0,.04);">
         <div id="mapa-fia" style="height: 440px; width: 100%; border: none;"></div>
@@ -689,6 +697,7 @@ else
         let userMarker = null;
         const fiaCoords = { lat: -12.07203, lng: -76.94205 };
         const marcadores = {};
+        let enfoqueMapa = null;
 
         // Paleta de colores temáticos por categoría de local
         const categoriaColores = {
@@ -761,6 +770,11 @@ else
 
             // Interceptar clics en el mapa o en cualquier POI de comida de Google Maps
             map.addListener("click", (e) => {
+                if (enfoqueMapa) {
+                    if (e.placeId) e.stop();
+                    else cerrarFloatingCard();
+                    return;
+                }
                 if (e.placeId) {
                     e.stop(); // Previene el globo recortado nativo de Google
 
@@ -779,7 +793,7 @@ else
                             placeId: e.placeId,
                             fields: ["name", "formatted_address", "geometry", "rating", "user_ratings_total", "photos", "types", "price_level"]
                         }, (place, status) => {
-                            if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+                            if (!enfoqueMapa && status === google.maps.places.PlacesServiceStatus.OK && place) {
                                 const tipos = place.types || [];
                                 const esComida = tipos.some(t => ["restaurant", "food", "cafe", "bakery", "meal_takeaway", "bar", "meal_delivery"].includes(t));
                                 if (esComida) {
@@ -847,6 +861,7 @@ else
             });
 
             fiaMarker.addListener("click", () => {
+                salirDeEnfoqueMapa();
                 mostrarCardFlotante({
                     Id: 0,
                     Nombre: "Facultad de Ingeniería y Arquitectura (Campus)",
@@ -948,6 +963,7 @@ else
         // Ajustar la cámara al panorama completo del cuadrante recortado
         function verCuadranteCompleto() {
             if (map) {
+                salirDeEnfoqueMapa();
                 map.fitBounds(boundsCuadranteFIA);
             }
         }
@@ -955,6 +971,7 @@ else
         // Centrar mapa de vuelta en la puerta principal de la FIA
         function centrarEnFia() {
             if (map) {
+                salirDeEnfoqueMapa();
                 map.setZoom(16.5);
                 map.panTo(fiaCoords);
             }
@@ -969,6 +986,7 @@ else
 
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
+                    salirDeEnfoqueMapa();
                     const userPos = {
                         lat: pos.coords.latitude,
                         lng: pos.coords.longitude
@@ -1005,6 +1023,7 @@ else
 
         // Filtro por zona dentro del cuadrante recortado (sin radio circular)
         function filtrarPorZona(zona, btn) {
+            salirDeEnfoqueMapa();
             document.querySelectorAll('.dist-filter-btn').forEach(b => b.classList.remove('active'));
             if (btn) btn.classList.add('active');
 
@@ -1034,14 +1053,44 @@ else
             }
         }
 
-        // Enfocar un restaurante en el mapa al hacer clic en "Ver en mapa"
+        function salirDeEnfoqueMapa() {
+            if (!enfoqueMapa) return;
+            for (const [marker, visible] of enfoqueMapa.visibilidad) marker.setVisible(visible);
+            enfoqueMapa.marker.setIcon(enfoqueMapa.icono);
+            enfoqueMapa.marker.setZIndex(enfoqueMapa.orden);
+            map.setZoom(enfoqueMapa.zoom);
+            map.setCenter(enfoqueMapa.centro);
+            enfoqueMapa = null;
+            document.getElementById('enfoque-mapa').classList.add('d-none');
+            cerrarFloatingCard();
+        }
+
+        function volverAResultadosMapa() {
+            salirDeEnfoqueMapa();
+            document.getElementById('titulo-mapa-fia').focus({ preventScroll: true });
+        }
+
+        // Enfocar temporalmente el local sin cambiar los filtros del catálogo.
         function irARestauranteEnMapa(id) {
             const r = restos.find(x => x.Id === id);
             const marker = marcadores[id];
-            if (map && r && marker) {
-                document.getElementById('mapa-fia').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                mostrarCardFlotante(r, marker);
-            }
+            if (!map || !r || !marker) return;
+            salirDeEnfoqueMapa();
+            const visibilidad = Object.values(marcadores).map(m => [m, m.getVisible()]);
+            enfoqueMapa = { marker, visibilidad, icono: marker.getIcon(), orden: marker.getZIndex(),
+                zoom: map.getZoom(), centro: map.getCenter() };
+            for (const [m] of visibilidad) m.setVisible(m === marker);
+            marker.setIcon({ ...enfoqueMapa.icono, scale: 8 });
+            marker.setZIndex(1500);
+            document.getElementById('enfoque-mapa-nombre').textContent = r.Nombre;
+            document.getElementById('enfoque-mapa').classList.remove('d-none');
+            mostrarCardFlotante(r, marker);
+            map.setZoom(18);
+            map.setCenter(marker.getPosition());
+            map.panBy(0, 50);
+            const movimientoReducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            document.getElementById('seccion-mapa-fia').scrollIntoView({ behavior: movimientoReducido ? 'instant' : 'smooth', block: 'start' });
+            document.getElementById('volver-resultados-mapa').focus({ preventScroll: true });
         }
 
         // Cargar modal con reseñas reales y datos del local
