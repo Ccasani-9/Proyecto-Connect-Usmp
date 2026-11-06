@@ -22,6 +22,7 @@ En bases nuevas se generan importes referenciales variados por rango: económico
 - Para mostrar la personalización, abre «Sugerencias para ti» con Alessandro y luego con María. En la prueba de integración con los 52 locales, los tres primeros de Alessandro fueron Shimaya Ramen, Isushi La Fontana y Chifa Moneda China. Los de María fueron Don Tito La Molina, Puerto Central y Cevichería Punta del Este.
 - El modelo de sentimiento usa `sentimiento-resenas-demo-v2.zip` y el recomendador usa `recomendacion-restaurantes-demo-v3.zip`. La ruta nueva hace que el recomendador se entrene con el CSV ampliado cuando no existe un modelo guardado en esa ruta. Si Render sobrescribe `Recomendacion__ModelPath`, actualiza esa variable antes de presentar.
 - Las nuevas reseñas no reentrenan por sí mismas el recomendador.
+- Para demostrar la afinidad por comida, entra con Alessandro y mira «Sugerencias para ti» en Restaurantes. Deja cinco estrellas a Pizza Raúl La Fontana y Mamma Tomato. Al recargar, se priorizan otros locales de comida italiana, como Amore La Molina y Punto Italiano. La afinidad usa los platos y descripciones del catálogo y las reseñas guardadas. ML.NET ordena los locales que tienen la misma afinidad cuando dispone de predicciones.
 
 ## Guías del asistente
 

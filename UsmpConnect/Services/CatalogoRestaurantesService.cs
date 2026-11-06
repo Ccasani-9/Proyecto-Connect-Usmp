@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using UsmpConnect.Data;
 using UsmpConnect.Models;
@@ -21,6 +22,25 @@ public sealed class CatalogoRestaurantesService(
     // Evita que una carga en curso vuelva a guardar una copia vieja después de invalidar
     // dentro de este proceso. Redis sigue compartiendo la clave entre instancias.
     private static readonly SemaphoreSlim Gate = new(1, 1);
+    private static readonly Regex[] FamiliasDeComida =
+    [
+        Familia("pizzas?|pizzer[ií]as?|pastas?|lasa(?:ñ|gn|gñ)as?|trattorias?|ravioles?|fetuccinis?"),
+        Familia("ceviches?|cebiches?|mariscos?|chicharr[oó]n de pescado|tr[ií]os? marinos?"),
+        Familia("sushis?|makis?|ramen|nikkei|sashimi|nigiris?"),
+        Familia("chifas?|chaufa|aeropuerto|want[aá]n|tallar[ií]n saltado"),
+        Familia("pollos? a la brasa|broaster|poller[ií]as?"),
+        Familia("hamburguesas?|salchipapas?|sandwich(?:es)?|s[aá]nguches?"),
+        Familia("caf[eé]s?|cafeter[ií]as?|espresso|lattes?|capuchinos?"),
+        Familia("pasteles?|pasteler[ií]as?|tortas?|postres?|helados?|brownies?"),
+        Familia("men[uú]s? criollos?|men[uú]s? caseros?|lomo saltado|aj[ií] de gallina|seco de res"),
+        Familia("bowls?|ensaladas?|quinua|quinoa|vegetarian[oa]s?")
+    ];
+
+    private static Regex Familia(string platos) => new($@"\b(?:{platos})\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    private static string TextoDeComida(RestauranteItemVM local) => string.Join(" ",
+        new[] { local.Nombre, local.Descripcion }.Concat(local.PlatosPopulares.Select(p => $"{p.Nombre} {p.Descripcion}")));
 
     public async Task<CatalogoRestaurantes> ObtenerAsync(CancellationToken cancellationToken = default)
     {
@@ -56,9 +76,31 @@ public sealed class CatalogoRestaurantesService(
         string? usuarioClave,
         int topK = 3,
         CancellationToken cancellationToken = default,
-        IReadOnlyList<RestauranteItemVM>? candidatos = null)
+        IReadOnlyList<RestauranteItemVM>? candidatos = null,
+        string? usuarioId = null)
     {
         var locales = candidatos ?? (await ObtenerAsync(cancellationToken)).Restaurantes;
+        Dictionary<Regex, double> preferencias = [];
+        if (!string.IsNullOrWhiteSpace(usuarioId))
+        {
+            var resenas = await db.ResenasRestaurantes.AsNoTracking().Where(r => r.UsuarioId == usuarioId)
+                .Select(r => new { r.RestauranteId, r.Puntuacion }).ToListAsync(cancellationToken);
+            if (resenas.Count > 0)
+            {
+                var historial = resenas.GroupBy(r => r.RestauranteId)
+                    .ToDictionary(g => g.Key, g => g.Average(r => r.Puntuacion));
+                var catalogoCompleto = candidatos is null ? locales : (await ObtenerAsync(cancellationToken)).Restaurantes;
+                var favoritos = catalogoCompleto.Where(r => historial.GetValueOrDefault(r.Id) >= 4);
+                foreach (var favorito in favoritos)
+                {
+                    var texto = TextoDeComida(favorito);
+                    foreach (var familia in FamiliasDeComida.Where(f => f.IsMatch(texto)))
+                        preferencias[familia] = preferencias.GetValueOrDefault(familia) + historial[favorito.Id] - 3;
+                }
+
+                locales = locales.Where(r => !historial.ContainsKey(r.Id)).ToList();
+            }
+        }
         if (locales.Count == 0)
             return ([], false);
 
@@ -66,14 +108,34 @@ public sealed class CatalogoRestaurantesService(
         var recs = await recomendador.RecomendarAsync(
             usuarioClave,
             porId.Keys,
-            topK,
+            preferencias.Count > 0 ? locales.Count : topK,
             cancellationToken);
+
+        if (preferencias.Count > 0)
+        {
+            var afinidades = locales.ToDictionary(r => r.Id, r =>
+            {
+                var texto = TextoDeComida(r);
+                return preferencias.Where(p => p.Key.IsMatch(texto)).Sum(p => p.Value);
+            });
+            if (afinidades.Values.Any(a => a > 0))
+            {
+                var posiciones = recs.Select((r, i) => (r.RestauranteId, i))
+                    .ToDictionary(r => r.RestauranteId, r => r.i);
+                var sugerencias = locales.OrderByDescending(r => afinidades[r.Id])
+                    .ThenBy(r => posiciones.GetValueOrDefault(r.Id, int.MaxValue))
+                    .ThenByDescending(r => r.CalificacionPromedio)
+                    .ThenBy(r => r.Id).Take(Math.Max(1, topK)).ToList();
+                return (sugerencias, true);
+            }
+        }
 
         if (recs.Count > 0)
         {
             var ordenados = recs
                 .Where(r => porId.ContainsKey(r.RestauranteId))
                 .Select(r => porId[r.RestauranteId])
+                .Take(Math.Max(1, topK))
                 .ToList();
 
             var personalizada = recs.Any(r => !r.DeFrio);
