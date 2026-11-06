@@ -219,8 +219,6 @@ a:hover { color: var(--guinda-700); }
   transition: transform .15s ease;
 }
 
-.sidebar-footer { margin-top: auto; text-align: center; padding-top: 14px; }
-.sidebar-footer small { color: var(--muted-2); display: block; margin-top: 10px; }
 
 .sidebar-backdrop {
   display: none;
