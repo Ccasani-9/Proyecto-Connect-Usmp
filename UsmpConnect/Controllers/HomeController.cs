@@ -28,7 +28,7 @@ public class HomeController(
         var nombre = User.GetNombre();
         var primerNombre = !string.IsNullOrWhiteSpace(nombre) ? (nombre.Split(' ').FirstOrDefault() ?? "") : "Comunidad USMP";
 
-        var (recomendados, personalizada) = await catalogoRestaurantes.ObtenerRecomendadosAsync(usuarioClave, topK: 3);
+        var (recomendados, personalizada) = await catalogoRestaurantes.ObtenerRecomendadosAsync(usuarioClave, usuarioId: userId);
 
         var vm = new InicioViewModel
         {

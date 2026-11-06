@@ -35,12 +35,13 @@ public class FoodSpotsController(
                 restaurantes = restaurantes.Where(r => resultadoRutas.MinutosPorLocal.TryGetValue(r.Id, out var minutos)
                     && minutos <= minutosMaximos.Value).ToList();
         }
+        var usuarioId = User?.GetUserId();
         var usuarioClave = !string.IsNullOrWhiteSpace(User?.Identity?.Name)
             ? User.Identity!.Name
-            : User?.GetUserId();
+            : usuarioId;
         var rutasAplicadas = resultadoRutas is { MinutosPorLocal.Count: > 0 };
         var (recomendados, personalizada) = await catalogo.ObtenerRecomendadosAsync(usuarioClave,
-            cancellationToken: ct, candidatos: rutasAplicadas ? restaurantes : null);
+            cancellationToken: ct, candidatos: rutasAplicadas ? restaurantes : null, usuarioId: usuarioId);
 
         var vm = new FoodSpotsIndexVM
         {
