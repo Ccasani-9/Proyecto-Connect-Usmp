@@ -57,8 +57,11 @@ public class AsistenteTests
         var flujo = await respuesta.Content.ReadAsStringAsync();
         Assert.Contains("\"tipo\":\"texto\"", flujo);
         Assert.Contains("\"tipo\":\"fin\"", flujo);
+        Assert.DoesNotContain("\"fuentes\"", flujo);
         using var historial = JsonDocument.Parse(await client.GetStringAsync("/Asistente/Historial"));
         Assert.Equal(2, historial.RootElement.GetProperty("mensajes").GetArrayLength());
+        Assert.All(historial.RootElement.GetProperty("mensajes").EnumerateArray(),
+            mensaje => Assert.False(mensaje.TryGetProperty("fuentes", out _)));
         await client.PostAsync("/Cuenta/Logout", new FormUrlEncodedContent(new Dictionary<string, string> { ["__RequestVerificationToken"] = token }));
         await DemoFactory.LoginAsync(client, "maria.gonzales@usmp.pe");
         using var otroHistorial = JsonDocument.Parse(await client.GetStringAsync("/Asistente/Historial"));
