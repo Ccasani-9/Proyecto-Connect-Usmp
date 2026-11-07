@@ -1176,6 +1176,36 @@ else
 
         // Cargar modal con reseñas reales y datos del local
         const usuarioActualId = @Json.Serialize(User.Identity?.IsAuthenticated == true ? User.GetUserId() : "");
+        let restauranteDetalleSolicitado;
+        let versionDetalle = 0;
+        let actualizacionResenasPendiente = false;
+
+        function modalMuestraRestaurante(id) {
+            return restauranteDetalleSolicitado === id
+                && Number(document.getElementById('formRestauranteId').value) === id
+                && document.getElementById('modalRestaurante').classList.contains('show');
+        }
+
+        function hayEdicionDeResena() {
+            return Boolean(document.getElementById('modalResenasLista')
+                .querySelector('[id^="form-editar-resena-"]:not(.d-none)'));
+        }
+
+        async function actualizarResenasEnVivo(id) {
+            if (!actualizacionResenasPendiente || !modalMuestraRestaurante(id) || hayEdicionDeResena()) return;
+            actualizacionResenasPendiente = false;
+            try {
+                await cargarDatosModal(id, true);
+            } catch (err) {
+                console.warn('No se pudo actualizar el detalle del restaurante.', err);
+            }
+        }
+
+        document.addEventListener('usmp:nueva-resena', ({ detail: id }) => {
+            if (!modalMuestraRestaurante(id)) return;
+            actualizacionResenasPendiente = true;
+            void actualizarResenasEnVivo(id);
+        });
 
         function formatearEtiquetaSentimiento(r) {
             if (!r.sentimiento) return '';
@@ -1215,6 +1245,7 @@ else
             const texto = document.getElementById(`texto-resena-${resenaId}`);
             if (form) form.classList.toggle('d-none', !mostrar);
             if (texto) texto.classList.toggle('d-none', mostrar);
+            if (!mostrar) void actualizarResenasEnVivo(restauranteDetalleSolicitado);
         }
 
         async function guardarEdicionResena(resenaId, restauranteId) {
@@ -1259,10 +1290,21 @@ else
             }
         }
 
-        async function cargarDatosModal(id) {
+        async function cargarDatosModal(id, enVivo = false) {
+            if (id !== restauranteDetalleSolicitado) return false;
+            const version = ++versionDetalle;
             const res = await fetch(`/Restaurantes/Detalle/${id}`, { cache: 'no-store' });
             if (!res.ok) return false;
             const d = await res.json();
+            if (version !== versionDetalle || id !== restauranteDetalleSolicitado) return false;
+            if (enVivo) {
+                if (!modalMuestraRestaurante(id)) return false;
+                if (hayEdicionDeResena()) {
+                    actualizacionResenasPendiente = true;
+                    return false;
+                }
+            }
+            actualizacionResenasPendiente = false;
 
             document.getElementById('modalRestauranteLabel').textContent = d.nombre;
             document.getElementById('modalDistancia').textContent = `${d.distanciaTexto} · ${d.direccion}`;
@@ -1382,6 +1424,8 @@ else
         }
 
         async function abrirModalDetalle(id) {
+            restauranteDetalleSolicitado = id;
+            actualizacionResenasPendiente = false;
             try {
                 const ok = await cargarDatosModal(id);
                 if (!ok) return;
