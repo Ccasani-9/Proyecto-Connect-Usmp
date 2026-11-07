@@ -117,6 +117,10 @@ function iniciarPieHostWebSockets(intento = 0) {
                     const textoToast = `${msg.datos.Usuario || 'Un estudiante'} calificó ${msg.datos.RestauranteNombre} (${msg.datos.NuevaCalificacion} ⭐)`;
                     usmpToast(textoToast);
                     usmpActualizarNotificaciones();
+                    const restauranteId = msg.datos.RestauranteId;
+                    if (Number.isSafeInteger(restauranteId) && restauranteId > 0) {
+                        document.dispatchEvent(new CustomEvent('usmp:nueva-resena', { detail: restauranteId }));
+                    }
                 }
             } catch (e) {}
         };
