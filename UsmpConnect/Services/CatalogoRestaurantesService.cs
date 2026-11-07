@@ -14,6 +14,7 @@ public sealed class CatalogoRestaurantesService(
     IRedisCacheService cache,
     IBuscadorAlgolia algolia,
     IColaMensajes cola,
+    IPieHostService pieHost,
     IAnalisisSentimientoService sentimiento,
     IRecomendacionRestaurantesService recomendador,
     ILogger<CatalogoRestaurantesService> logger)
@@ -318,6 +319,7 @@ public sealed class CatalogoRestaurantesService(
 
         await RecalcularCalificacionRestauranteAsync(resena.Restaurante, cancellationToken);
         await SincronizarCambiosAsync();
+        await AvisarActualizacionResenasAsync(resena.RestauranteId);
 
         var dto = new ResenaDto(
             resena.Id,
@@ -357,9 +359,14 @@ public sealed class CatalogoRestaurantesService(
 
         await RecalcularCalificacionRestauranteAsync(restaurante, cancellationToken);
         await SincronizarCambiosAsync();
+        await AvisarActualizacionResenasAsync(restaurante.Id);
 
         return EstadoOperacionResena.Ok;
     }
+
+    private Task AvisarActualizacionResenasAsync(int restauranteId) => pieHost.IsConfigured
+        ? pieHost.PublicarEventoAsync("1", "resenas_actualizadas", new { RestauranteId = restauranteId })
+        : Task.CompletedTask;
 
     private async Task RecalcularCalificacionRestauranteAsync(Restaurante restaurante, CancellationToken cancellationToken)
     {

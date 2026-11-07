@@ -1201,7 +1201,7 @@ else
             }
         }
 
-        document.addEventListener('usmp:nueva-resena', ({ detail: id }) => {
+        document.addEventListener('usmp:resenas-actualizadas', ({ detail: id }) => {
             if (!modalMuestraRestaurante(id)) return;
             actualizacionResenasPendiente = true;
             void actualizarResenasEnVivo(id);
@@ -1275,18 +1275,29 @@ else
             }
         }
 
-        async function eliminarResenaPropia(resenaId, restauranteId) {
+        async function eliminarResenaPropia(resenaId, restauranteId, boton) {
             if (!confirm('¿Seguro que deseas eliminar tu reseña? Esta acción no se puede deshacer.')) return;
+            boton.disabled = true;
             try {
                 const res = await fetch(`/api/resenas/${resenaId}`, { method: 'DELETE' });
+                if (res.status === 404) {
+                    await cargarDatosModal(restauranteId);
+                    usmpToast('La reseña ya no está disponible.');
+                    return;
+                }
                 if (!res.ok) {
-                    usmpToast('No se pudo eliminar la reseña.', 'error');
+                    const mensaje = res.status === 401 ? 'Vuelve a iniciar sesión para eliminar tu reseña.'
+                        : res.status === 403 ? 'Solo puedes eliminar tus propias reseñas.'
+                        : 'No se pudo eliminar la reseña. Intenta nuevamente.';
+                    usmpToast(mensaje, 'error');
                     return;
                 }
                 await cargarDatosModal(restauranteId);
                 usmpToast('Reseña eliminada correctamente');
             } catch {
                 usmpToast('Error de red al eliminar la reseña.', 'error');
+            } finally {
+                boton.disabled = false;
             }
         }
 
@@ -1364,7 +1375,7 @@ else
                             <button type="button" class="btn btn-link btn-sm p-0 text-secondary text-decoration-none" style="font-size:0.75rem;" onclick="mostrarEdicionResena(${r.id}, true)" title="Editar mi reseña (PUT /api/resenas/${r.id})">
                                 <i class="bi bi-pencil-square"></i> Editar
                             </button>
-                            <button type="button" class="btn btn-link btn-sm p-0 text-danger text-decoration-none" style="font-size:0.75rem;" onclick="eliminarResenaPropia(${r.id}, ${d.id})" title="Eliminar mi reseña (DELETE /api/resenas/${r.id})">
+                            <button type="button" class="btn btn-link btn-sm p-0 text-danger text-decoration-none" style="font-size:0.75rem;" onclick="eliminarResenaPropia(${r.id}, ${d.id}, this)" title="Eliminar mi reseña (DELETE /api/resenas/${r.id})">
                                 <i class="bi bi-trash3"></i> Eliminar
                             </button>
                         </div>
