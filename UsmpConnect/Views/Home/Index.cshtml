@@ -31,8 +31,11 @@
         </div>
         <a class="btn btn-light" href="/Marketplace">Ir al Marketplace <i class="bi bi-arrow-right"></i></a>
     </div>
-    <div class="hero-dots">
-        <button class="active" aria-label="Slide 1"></button><button aria-label="Slide 2"></button><button aria-label="Slide 3"></button>
+    <div class="hero-controls" role="group" aria-label="Banners de Inicio">
+        <button type="button" data-slide aria-label="Restaurantes cercanos" aria-current="true"></button>
+        <button type="button" data-slide aria-label="Exámenes parciales"></button>
+        <button type="button" data-slide aria-label="Marketplace"></button>
+        <button type="button" data-hero-pausa aria-label="Pausar carrusel"><i class="bi bi-pause-fill" aria-hidden="true"></i></button>
     </div>
 </section>
 
@@ -235,13 +238,30 @@
         // Carrusel del banner
         (() => {
             const hero = document.getElementById('hero');
-            const slides = [...hero.querySelectorAll('.slide')], dots = [...hero.querySelectorAll('.hero-dots button')];
+            const slides = [...hero.querySelectorAll('.slide')];
+            const dots = [...hero.querySelectorAll('[data-slide]')];
+            const pausa = hero.querySelector('[data-hero-pausa]');
             let i = 0;
-            const ir = n => { i = n; slides.forEach((s, k) => s.classList.toggle('active', k === i)); dots.forEach((d, k) => d.classList.toggle('active', k === i)); };
+            let timer;
+            let enPausa = matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const ir = n => {
+                i = n;
+                slides.forEach((slide, k) => slide.classList.toggle('active', k === i));
+                dots.forEach((dot, k) => dot.setAttribute('aria-current', String(k === i)));
+            };
+            const ajustarRotacion = () => {
+                clearInterval(timer);
+                pausa.setAttribute('aria-label', enPausa ? 'Reanudar carrusel' : 'Pausar carrusel');
+                pausa.firstElementChild.className = enPausa ? 'bi bi-play-fill' : 'bi bi-pause-fill';
+                if (!enPausa && !hero.matches(':hover') && !hero.contains(document.activeElement)) {
+                    timer = setInterval(() => ir((i + 1) % slides.length), 7000);
+                }
+            };
             dots.forEach((d, k) => d.addEventListener('click', () => ir(k)));
-            let timer = setInterval(() => ir((i + 1) % slides.length), 7000);
-            hero.addEventListener('mouseenter', () => clearInterval(timer));
-            hero.addEventListener('mouseleave', () => timer = setInterval(() => ir((i + 1) % slides.length), 7000));
+            pausa.addEventListener('click', () => { enPausa = !enPausa; ajustarRotacion(); });
+            ['mouseenter', 'mouseleave', 'focusin'].forEach(evento => hero.addEventListener(evento, ajustarRotacion));
+            hero.addEventListener('focusout', () => setTimeout(ajustarRotacion, 0));
+            ajustarRotacion();
         })();
 
         // Pestañas Hoy / Mañana
