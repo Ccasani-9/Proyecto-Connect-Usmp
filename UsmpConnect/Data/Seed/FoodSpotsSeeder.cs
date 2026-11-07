@@ -916,6 +916,17 @@ public class FoodSpotsSeeder : IModuleSeeder
             },
         };
 
+        var indice = 0;
+        foreach (var local in restaurantes)
+        {
+            local.PrecioPromedioReferencial = local.Rango switch
+            {
+                RangoPrecio.Economico => new decimal[] { 9, 10, 11, 12 }[indice % 4],
+                RangoPrecio.Medio => new decimal[] { 14, 16, 18, 20 }[indice % 4],
+                _ => new decimal[] { 24, 28, 32, 35 }[indice % 4]
+            };
+            indice++;
+        }
         db.Restaurantes.AddRange(restaurantes);
         await db.SaveChangesAsync();
 

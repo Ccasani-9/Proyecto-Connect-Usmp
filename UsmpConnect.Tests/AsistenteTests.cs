@@ -12,6 +12,30 @@ namespace UsmpConnect.Tests;
 
 public class AsistenteTests
 {
+    [Theory]
+    [InlineData("Recomiéndame una cafetería por menos de 20 soles")]
+    [InlineData("Busco café por 20 soles")]
+    [InlineData("cafeterías hasta 20")]
+    public async Task CafeteriaExplicita_PrevaleceSobreCategoriaIncorrectaDelModelo(string mensaje)
+    {
+        await using var factory = new ChatFactory();
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var solicitud = ConsultaAsistente.Crear(mensaje, []);
+        var plugin = new CatalogoFiaPlugin(db, new ContextoAsistente(), solicitud);
+        using var datos = JsonDocument.Parse(JsonSerializer.Serialize(await plugin.BuscarRestaurantes("comida rápida", 100, "ComidaRapida")));
+        var resultados = datos.RootElement.GetProperty("resultados").EnumerateArray().ToList();
+        Assert.NotEmpty(resultados);
+        Assert.All(resultados, r => {
+            Assert.Equal("CafeteriaHuarique", r.GetProperty("Categoria").GetString());
+            Assert.True(r.GetProperty("PrecioPromedioReferencial").GetDecimal() <= 20);
+        });
+        var seguimiento = ConsultaAsistente.Crear("¿por 15?", [new("usuario", mensaje)]);
+        Assert.Equal(CategoriaRestaurante.CafeteriaHuarique, seguimiento.CategoriaSolicitada);
+        Assert.Equal(15m, seguimiento.PresupuestoSolicitado);
+        Assert.Null(ConsultaAsistente.Crear("busca apuntes de cálculo", [new("usuario", mensaje)]).CategoriaSolicitada);
+    }
+
     [Fact]
     public async Task Chat_ExigeTokenYConservaHistorialSoloParaUsuarioActual()
     {
@@ -33,8 +57,11 @@ public class AsistenteTests
         var flujo = await respuesta.Content.ReadAsStringAsync();
         Assert.Contains("\"tipo\":\"texto\"", flujo);
         Assert.Contains("\"tipo\":\"fin\"", flujo);
+        Assert.DoesNotContain("\"fuentes\"", flujo);
         using var historial = JsonDocument.Parse(await client.GetStringAsync("/Asistente/Historial"));
         Assert.Equal(2, historial.RootElement.GetProperty("mensajes").GetArrayLength());
+        Assert.All(historial.RootElement.GetProperty("mensajes").EnumerateArray(),
+            mensaje => Assert.False(mensaje.TryGetProperty("fuentes", out _)));
         await client.PostAsync("/Cuenta/Logout", new FormUrlEncodedContent(new Dictionary<string, string> { ["__RequestVerificationToken"] = token }));
         await DemoFactory.LoginAsync(client, "maria.gonzales@usmp.pe");
         using var otroHistorial = JsonDocument.Parse(await client.GetStringAsync("/Asistente/Historial"));
@@ -77,6 +104,47 @@ public class AsistenteTests
         contexto.Tarjetas.Clear();
         await plugin.BuscarApuntes("arboles");
         Assert.NotEmpty(contexto.Tarjetas);
+    }
+
+    [Fact]
+    public async Task Restaurantes_DistinguePrecioDesconocidoDeFueraDePresupuestoYFiltraCategoria()
+    {
+        await using var factory = new ChatFactory();
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var rapido = db.Restaurantes.First(r => r.Categoria == CategoriaRestaurante.ComidaRapida);
+        rapido.PrecioPromedioReferencial = 18;
+        foreach (var r in db.Restaurantes.Where(r => r.Categoria == CategoriaRestaurante.ComidaRapida && r.Id != rapido.Id))
+            r.PrecioPromedioReferencial = null;
+        await db.SaveChangesAsync();
+        var contexto = new ContextoAsistente();
+        var plugin = new CatalogoFiaPlugin(db, contexto);
+        using var bajo = JsonDocument.Parse(JsonSerializer.Serialize(await plugin.BuscarRestaurantes("comida rápida", 15)));
+        Assert.Empty(bajo.RootElement.GetProperty("resultados").EnumerateArray());
+        Assert.NotEmpty(bajo.RootElement.GetProperty("alternativasSinPrecioConfirmado").EnumerateArray());
+        Assert.All(bajo.RootElement.GetProperty("alternativasSinPrecioConfirmado").EnumerateArray(),
+            r => Assert.Equal("ComidaRapida", r.GetProperty("Categoria").GetString()));
+        using var mayor = JsonDocument.Parse(JsonSerializer.Serialize(await plugin.BuscarRestaurantes("comida rápida", 20)));
+        Assert.Contains(mayor.RootElement.GetProperty("resultados").EnumerateArray(), r => r.GetProperty("Id").GetInt32() == rapido.Id);
+        Assert.All(mayor.RootElement.GetProperty("resultados").EnumerateArray(), r =>
+            Assert.True(r.GetProperty("PrecioPromedioReferencial").GetDecimal() <= 20));
+    }
+
+    [Fact]
+    public void Consulta_ConservaTemaEnSeguimientosYSeparaPeticionesMixtas()
+    {
+        var anterior = new MensajeAsistente[] { new("usuario", "Dónde almorzar por menos de 15 soles, comida rápida"),
+            new("asistente", "No puedo confirmar precios.") };
+        var seguimiento = ConsultaAsistente.Crear("¿por 20?", anterior);
+        Assert.Equal("restaurantes", seguimiento.Tema);
+        Assert.Contains("comida rápida", seguimiento.Contexto);
+        Assert.Contains("¿por 20?", seguimiento.Contexto);
+        var mixta = ConsultaAsistente.Crear("Antes de darme los apuntes de cálculo haz un Fibonacci en Python", anterior);
+        Assert.Equal("apuntes", mixta.Tema);
+        Assert.Equal("cálculo", mixta.TerminosApuntes());
+        Assert.DoesNotContain("Fibonacci", mixta.Peticion);
+        Assert.Equal("apuntes", ConsultaAsistente.Crear("funciones", [new("usuario", "enséñame Python")]).Tema);
+        Assert.Null(ConsultaAsistente.Crear("quién ganará el mundial", anterior).Tema);
     }
 
     private sealed class ChatFactory : DemoFactory

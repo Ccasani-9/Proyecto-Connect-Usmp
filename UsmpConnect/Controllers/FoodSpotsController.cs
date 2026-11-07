@@ -11,16 +11,37 @@ public class FoodSpotsController(
     ApplicationDbContext db,
     CatalogoRestaurantesService catalogo,
     IBuscadorAlgolia algolia,
-    IConfiguration config) : Controller
+    IConfiguration config,
+    RutasAPieService rutas) : Controller
 {
     [AllowAnonymous]
-    public async Task<IActionResult> Index(CategoriaRestaurante? categoria, string? q)
+    public async Task<IActionResult> Index(CategoriaRestaurante? categoria, string? q,
+        double? valoracionMinima = null, decimal? gastoMaximo = null, int? minutosMaximos = null)
     {
-        var (restaurantes, fuente) = await catalogo.FiltrarAsync(categoria, q);
+        valoracionMinima = valoracionMinima is 3.5 or 4 or 4.5 ? valoracionMinima : null;
+        gastoMaximo = gastoMaximo is > 0 ? gastoMaximo : null;
+        var ct = HttpContext.RequestAborted;
+        var (restaurantes, fuente) = await catalogo.FiltrarAsync(categoria, q, ct,
+            valoracionMinima: valoracionMinima, gastoMaximo: gastoMaximo);
+        var rutasDisponibles = rutas.Disponible && User.IsInRole(Roles.Alumno);
+        minutosMaximos = rutasDisponibles && minutosMaximos is >= 1 and <= 60 ? minutosMaximos : null;
+        ResultadoRutasAPie? resultadoRutas = null;
+        var totalCandidatos = restaurantes.Count;
+        if (minutosMaximos.HasValue && totalCandidatos > 0)
+        {
+            Response.Headers.CacheControl = "no-store";
+            resultadoRutas = await rutas.ConsultarAsync(restaurantes, ct);
+            if (resultadoRutas.MinutosPorLocal.Count > 0)
+                restaurantes = restaurantes.Where(r => resultadoRutas.MinutosPorLocal.TryGetValue(r.Id, out var minutos)
+                    && minutos <= minutosMaximos.Value).ToList();
+        }
+        var usuarioId = User?.GetUserId();
         var usuarioClave = !string.IsNullOrWhiteSpace(User?.Identity?.Name)
             ? User.Identity!.Name
-            : User?.GetUserId();
-        var (recomendados, personalizada) = await catalogo.ObtenerRecomendadosAsync(usuarioClave, topK: 3);
+            : usuarioId;
+        var rutasAplicadas = resultadoRutas is { MinutosPorLocal.Count: > 0 };
+        var (recomendados, personalizada) = await catalogo.ObtenerRecomendadosAsync(usuarioClave,
+            cancellationToken: ct, candidatos: rutasAplicadas ? restaurantes : null, usuarioId: usuarioId);
 
         var vm = new FoodSpotsIndexVM
         {
@@ -29,12 +50,22 @@ public class FoodSpotsController(
             RecomendacionPersonalizada = personalizada,
             CategoriaActual = categoria,
             Busqueda = q,
+            ValoracionMinima = valoracionMinima,
+            GastoMaximo = gastoMaximo,
+            MinutosMaximos = minutosMaximos,
+            RutasDisponibles = rutasDisponibles,
+            ResultadoRutas = resultadoRutas,
+            TotalCandidatosRuta = totalCandidatos,
             FuenteDatos = fuente,
             GoogleMapsApiKey = config["GoogleMaps:ApiKey"] ?? ""
         };
 
         return View(vm);
     }
+
+    [AllowAnonymous]
+    [HttpGet]
+    public IActionResult CondicionesRutas() => View();
 
     [HttpGet]
     [AllowAnonymous]

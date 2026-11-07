@@ -113,10 +113,17 @@ function iniciarPieHostWebSockets(intento = 0) {
         ws.onmessage = (event) => {
             try {
                 const msg = JSON.parse(event.data);
-                if (msg.evento === 'nueva_resena' && msg.datos) {
+                if (!msg.datos) return;
+                if (msg.evento === 'nueva_resena') {
                     const textoToast = `${msg.datos.Usuario || 'Un estudiante'} calificó ${msg.datos.RestauranteNombre} (${msg.datos.NuevaCalificacion} ⭐)`;
                     usmpToast(textoToast);
                     usmpActualizarNotificaciones();
+                }
+                if (msg.evento === 'nueva_resena' || msg.evento === 'resenas_actualizadas') {
+                    const restauranteId = msg.datos.RestauranteId;
+                    if (Number.isSafeInteger(restauranteId) && restauranteId > 0) {
+                        document.dispatchEvent(new CustomEvent('usmp:resenas-actualizadas', { detail: restauranteId }));
+                    }
                 }
             } catch (e) {}
         };

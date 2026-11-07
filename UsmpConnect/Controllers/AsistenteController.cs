@@ -13,7 +13,7 @@ public sealed class AsistenteController(IAsistenteService asistente, Conversacio
     ILogger<AsistenteController> logger) : Controller
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-    private string Clave => "AsistenteHistorial:" + User.GetUserId();
+    private string Clave => "AsistenteHistorial:v2:" + User.GetUserId();
     private string ClaveActiva => HttpContext.Session.Id + ":" + User.GetUserId();
 
     private List<MensajeAsistente> LeerHistorial() => JsonSerializer.Deserialize<List<MensajeAsistente>>(
@@ -74,10 +74,10 @@ public sealed class AsistenteController(IAsistenteService asistente, Conversacio
             }
             if (texto.Length == 0) throw new InvalidOperationException("Respuesta vacía.");
             historial.Add(new("usuario", mensaje));
-            historial.Add(new("asistente", texto.ToString(), contexto.Tarjetas, contexto.Fuentes));
+            historial.Add(new("asistente", texto.ToString(), contexto.Tarjetas));
             HttpContext.Session.SetString(Clave, JsonSerializer.Serialize(historial.TakeLast(12).ToList(), JsonOptions));
             await HttpContext.Session.CommitAsync(limite.Token);
-            await EnviarAsync(new { tipo = "fin", tarjetas = contexto.Tarjetas, fuentes = contexto.Fuentes }, ct);
+            await EnviarAsync(new { tipo = "fin", tarjetas = contexto.Tarjetas }, ct);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         catch (Exception ex)

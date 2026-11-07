@@ -6,7 +6,7 @@ Red social de la facultad dirigida a alumnos. Español de Perú; importes en sol
 `UsmpConnect/wwwroot/css/site.css` define guinda `#6b1020`, guinda oscuro `#560b19`, fondo `#f4f5f7`, tarjetas blancas, borde `#e7e8ec`, texto `#17171c` y estados semánticos. Tipografía Inter con pesos para jerarquía. Reutilizar variables CSS, Bootstrap, `card-u`, `btn-guinda` y `btn-soft`; no agregar fuentes o paletas independientes por pantalla.
 
 ## Asistente FIA
-Panel flotante no modal con región etiquetada, botón de abrir/cerrar, Escape y retorno de foco. Hereda los tokens del sitio a través de `asistente.css`, sin modificar otras pantallas. Su rasgo distintivo son las tarjetas de contenido de la facultad y las fuentes desplegables, generadas desde resultados de servidor.
+Panel flotante no modal con región etiquetada, botón de abrir/cerrar, Escape y retorno de foco. Hereda los tokens del sitio a través de `asistente.css`, sin modificar otras pantallas. Su rasgo distintivo son las tarjetas de contenido de la facultad generadas desde resultados del servidor. Las guías de ayuda se usan para redactar respuestas, y el chat entrega solo texto y tarjetas.
 
 `_AsistenteChat.cshtml` es el único propietario del widget. `asistente.js` gestiona sus estados: bienvenida, carga de historial, generación, respuesta completa, error y detención. `asistente.css` es una extensión acotada del tema, con scrollbar visible y espacio estable para el compositor.
 
@@ -19,3 +19,11 @@ Mensajes del modelo y de usuarios se renderizan con textContent, nunca HTML. Enl
 - Nueva conversación: confirmación dentro del panel, esperar respuesta del servidor antes de limpiar la vista.
 - Accesibilidad: nombres en botones de iconos, foco visible, estado de generación anunciado sin repetir cada token, diseño adaptable con altura basada en viewport dinámico y safe areas.
 - Un cierre del panel no destruye el historial. Una generación detenida o fallida no se presenta como respuesta completa ni se almacena como intercambio terminado.
+
+## Gasto referencial de restaurantes
+El gasto promedio de demostración por persona se muestra en una línea separada de la valoración y del rango, sin comprimir las estrellas. El modal y las tarjetas del asistente lo identifican como aproximado/demo. Un precio desconocido nunca se representa como gratis ni como compatible con un presupuesto.
+
+## Calendario y lectura del asistente
+Calendario reserva 100px al pie para separar acciones del lanzador flotante. Actividades semanales con días seleccionados y final obligatorio (máximo 366 días); se materializan como actividades independientes y eliminar afecta solo esa fecha. Emoji de paleta acotada integrado al título para mantener compatibilidad con Inicio sin migración. Formulario desplazable en pantallas bajas. El asistente presenta listas mediante nodos DOM con textContent y tarjetas verticales completas, sin HTML del modelo ni carruseles truncados.
+
+El asistente admite negrita y código en línea mediante elementos strong/code creados con textContent (sin HTML del modelo). Un indicador fijo sobre el compositor permanece visible durante toda la petición y el streaming; desaparece en finalización, error o cancelación. Respeta movimiento reducido.

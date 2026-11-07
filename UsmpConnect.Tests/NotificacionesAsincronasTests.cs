@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging.Abstractions;
 using UsmpConnect.Data;
 using UsmpConnect.Services;
+using UsmpConnect.ViewModels;
 
 namespace UsmpConnect.Tests;
 
@@ -36,6 +38,10 @@ public class NotificacionesAsincronasTests
         Assert.Equal("nueva_resena", spyPieHost.UltimoEvento);
         Assert.DoesNotContain("UsuarioId", spyPieHost.UltimosDatos);
         Assert.DoesNotContain("MensajeNotificacion", spyPieHost.UltimosDatos);
+        var estados = factory.Services.GetRequiredService<EstadoIntegraciones>();
+        Assert.False(estados.Obtener("rabbit-publicacion")!.Correcta);
+        Assert.Null(estados.Obtener("rabbit-consumo")); // La cola local no se presenta como consumo remoto.
+        Assert.True(estados.Obtener("notificacion")!.Correcta);
 
         using (var scope = factory.Services.CreateScope())
         {
@@ -56,6 +62,40 @@ public class NotificacionesAsincronasTests
         using var anonimo = factory.CreateSessionClient();
         var sinSesion = await anonimo.GetAsync("/Notificaciones/Resumen");
         Assert.Equal(HttpStatusCode.Redirect, sinSesion.StatusCode);
+    }
+
+    [Fact]
+    public async Task EditarYEliminarResena_PublicanActualizacionDelRestaurante()
+    {
+        var pieHost = new SpyPieHostService();
+        await using var factory = new NotiFactory(pieHost);
+        using var client = factory.CreateSessionClient();
+        await DemoFactory.LoginAsync(client);
+
+        var nueva = new GuardarResenaRequest { Puntuacion = 5, Comentario = "Buen almuerzo cerca del campus." };
+        using var creada = await client.PostAsJsonAsync("/api/restaurantes/1/resenas", nueva);
+        Assert.Equal(HttpStatusCode.Created, creada.StatusCode);
+        var resena = await creada.Content.ReadFromJsonAsync<ResenaDto>();
+        Assert.NotNull(resena);
+        Assert.True(await pieHost.EsperarEventoAsync(TimeSpan.FromSeconds(5)));
+
+        var ruta = $"/api/resenas/{resena.Id}";
+        using var editada = await client.PutAsJsonAsync(ruta,
+            new GuardarResenaRequest { Puntuacion = 2, Comentario = "La comida llegó fría y sin sabor." });
+        Assert.Equal(HttpStatusCode.OK, editada.StatusCode);
+        Assert.Equal("resenas_actualizadas", pieHost.UltimoEvento);
+        using var datosEdicion = JsonDocument.Parse(pieHost.UltimosDatos);
+        Assert.Equal(1, datosEdicion.RootElement.GetProperty("RestauranteId").GetInt32());
+
+        using var borrada = await client.DeleteAsync(ruta);
+        Assert.Equal(HttpStatusCode.NoContent, borrada.StatusCode);
+        Assert.Equal("resenas_actualizadas", pieHost.UltimoEvento);
+        Assert.Equal(3, pieHost.TotalEventos);
+        using var datosBorrado = JsonDocument.Parse(pieHost.UltimosDatos);
+        Assert.Equal(1, datosBorrado.RootElement.GetProperty("RestauranteId").GetInt32());
+        var detalle = await client.GetFromJsonAsync<RestauranteDetalleDto>("/Restaurantes/Detalle/1");
+        Assert.NotNull(detalle);
+        Assert.DoesNotContain(detalle.Resenas, r => r.Id == resena.Id);
     }
 
     [Fact]
@@ -110,6 +150,7 @@ public class NotificacionesAsincronasTests
         private readonly TaskCompletionSource<bool> _tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public string? UltimoEvento { get; private set; }
         public string UltimosDatos { get; private set; } = "";
+        public int TotalEventos { get; private set; }
         public string? WebSocketClientUrl => null;
         public bool IsConfigured => true;
         public string Estado => "Spy";
@@ -118,6 +159,7 @@ public class NotificacionesAsincronasTests
         {
             UltimoEvento = evento;
             UltimosDatos = JsonSerializer.Serialize(datos);
+            TotalEventos++;
             _tcs.TrySetResult(true);
             return Task.CompletedTask;
         }

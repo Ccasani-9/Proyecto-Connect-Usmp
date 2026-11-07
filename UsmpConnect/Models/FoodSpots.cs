@@ -52,6 +52,11 @@ public class Restaurante
     [Required, StringLength(50)]
     public string RangoPrecios { get; set; } = string.Empty;
 
+    // Gasto estimado por persona en la maqueta; no es el precio de un plato ni una cotización.
+    [Column(TypeName = "REAL")]
+    [Range(1, 1000)]
+    public decimal? PrecioPromedioReferencial { get; set; }
+
     [Required, StringLength(100)]
     public string HorarioAtencion { get; set; } = string.Empty;
 

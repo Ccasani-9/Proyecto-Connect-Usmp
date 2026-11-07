@@ -1,0 +1,362 @@
+[
+  {
+    "Clave": "demo-python-funciones.pdf",
+    "Titulo": "Python: funciones, parámetros y retorno",
+    "Curso": "CS-101",
+    "Descripcion": "Material demo: def, parámetros, return y pruebas de funciones en Python.",
+    "Lineas": [
+      "Objetivo: separar una tarea pequeña en una función que pueda reutilizarse.",
+      "Una función recibe argumentos y puede devolver un resultado con return.",
+      "Ejemplo: def sumar(a, b): return a + b",
+      "Llamada: total = sumar(3, 4). El resultado esperado es 7.",
+      "print muestra un valor; return lo entrega al código que llamó a la función.",
+      "Una variable creada dentro de la función es local salvo indicación explícita.",
+      "Pruebas: sumar(0, 0) == 0; sumar(-2, 5) == 3.",
+      "Actividad: escribe una función que reciba tres notas y devuelva su promedio."
+    ],
+    "Existente": false
+  },
+  {
+    "Clave": "demo-python-listas.pdf",
+    "Titulo": "Python: listas, bucles y diccionarios",
+    "Curso": "CS-101",
+    "Descripcion": "Material demo de colecciones, for, acceso y conteo de elementos en Python.",
+    "Lineas": [
+      "Una lista es una colección ordenada: notas = [12, 15, 18].",
+      "notas[0] devuelve 12; len(notas) devuelve 3.",
+      "for nota in notas: permite recorrer los elementos.",
+      "Un diccionario asocia claves con valores: alumno = {\"nombre\": \"Ana\", \"ciclo\": 2}.",
+      "alumno[\"nombre\"] devuelve Ana. get permite indicar un valor por defecto.",
+      "Para promediar comprueba primero que la lista no esté vacía.",
+      "Ejercicio: contar cuántas notas son mayores o iguales a 11."
+    ],
+    "Existente": false
+  },
+  {
+    "Clave": "demo-python-condiciones.pdf",
+    "Titulo": "Python: condicionales y validación de entradas",
+    "Curso": "CS-101",
+    "Descripcion": "Uso de if, elif, else, comparaciones y límites de entrada.",
+    "Lineas": [
+      "if evalúa una condición; elif añade otra posibilidad y else cubre el resto.",
+      "Validar una nota exige comprobar el intervalo de 0 a 20.",
+      "No confundir asignación (=) con comparación (==).",
+      "Usa and cuando ambas condiciones deban cumplirse, or si basta una.",
+      "Casos límite: -1, 0, 20 y 21 permiten comprobar la validación.",
+      "Ejercicio: validar un precio mayor que cero y menor o igual a un presupuesto."
+    ],
+    "Existente": false
+  },
+  {
+    "Clave": "demo-sql-select.pdf",
+    "Titulo": "SQL: SELECT, filtros y ordenamiento",
+    "Curso": "CS-301",
+    "Descripcion": "Consultas SQL con WHERE, ORDER BY y límites para un catálogo.",
+    "Lineas": [
+      "SELECT elige columnas y FROM indica la tabla.",
+      "Ejemplo: SELECT Nombre FROM Restaurantes WHERE PrecioPromedioReferencial <= 15;",
+      "ORDER BY CalificacionPromedio DESC ordena de mayor a menor.",
+      "Los valores de entrada se pasan como parámetros; no concatenes texto del usuario al SQL.",
+      "NULL representa ausencia de dato; utiliza IS NULL, no = NULL.",
+      "Ejercicio: consultar solo locales con gasto registrado y ordenar por valoración."
+    ],
+    "Existente": false
+  },
+  {
+    "Clave": "demo-sql-relaciones.pdf",
+    "Titulo": "Base de datos: claves, relaciones y JOIN",
+    "Curso": "CS-301",
+    "Descripcion": "Relación entre usuarios, reseñas y restaurantes con claves foráneas.",
+    "Lineas": [
+      "La clave primaria identifica cada fila. Una clave foránea referencia otra entidad.",
+      "Un restaurante puede tener muchas reseñas; cada reseña pertenece a un restaurante.",
+      "JOIN combina filas mediante una condición relacionada.",
+      "Ejemplo: SELECT r.Nombre, COUNT(s.Id) FROM Restaurantes r LEFT JOIN ResenasRestaurantes s ON s.RestauranteId=r.Id GROUP BY r.Id;",
+      "LEFT JOIN conserva locales sin reseñas.",
+      "Una transacción permite confirmar o deshacer varias escrituras como unidad."
+    ],
+    "Existente": false
+  },
+  {
+    "Clave": "demo-redes-http.pdf",
+    "Titulo": "Redes: HTTP, JSON y códigos de respuesta",
+    "Curso": "CS-401",
+    "Descripcion": "HTTP y respuestas 200, 201, 204, 400, 401, 403 y 404.",
+    "Lineas": [
+      "HTTP conecta cliente y servidor mediante peticiones y respuestas.",
+      "GET consulta; POST crea; PUT reemplaza o actualiza; DELETE elimina.",
+      "JSON representa objetos y listas como texto estructurado.",
+      "200: consulta correcta. 201: recurso creado. 204: éxito sin cuerpo.",
+      "400: entrada inválida. 401: falta autenticación. 403: falta permiso. 404: no existe.",
+      "Ejercicio: explicar por qué una reseña ajena devuelve 403 aunque el usuario haya iniciado sesión."
+    ],
+    "Existente": false
+  },
+  {
+    "Clave": "demo-redes-websocket.pdf",
+    "Titulo": "Redes: WebSocket y notificaciones",
+    "Curso": "CS-401",
+    "Descripcion": "Diferencias entre petición HTTP, polling y conexión WebSocket.",
+    "Lineas": [
+      "En HTTP tradicional el navegador inicia cada intercambio.",
+      "Polling consulta periódicamente si hay novedades.",
+      "WebSocket mantiene una conexión para recibir eventos con menor espera.",
+      "Una notificación persistida en base de datos y un aviso en vivo cumplen funciones diferentes.",
+      "Si se desconecta el navegador, la notificación guardada puede consultarse al volver.",
+      "Nunca publiques mensajes privados en un canal compartido."
+    ],
+    "Existente": false
+  },
+  {
+    "Clave": "demo-calculo-derivadas.pdf",
+    "Titulo": "Cálculo: derivadas y regla de la cadena",
+    "Curso": "MA-101",
+    "Descripcion": "Ejemplos de regla de potencia, producto y cadena.",
+    "Lineas": [
+      "La derivada expresa una tasa de cambio instantánea.",
+      "Potencia: si f(x)=x^n, entonces f'(x)=n*x^(n-1).",
+      "Para f(x)=3*x^2, la derivada es 6*x.",
+      "Cadena: para f(x)=(2*x+1)^3, la derivada es 6*(2*x+1)^2.",
+      "Producto: (u*v)'=u'*v+u*v'.",
+      "Comprueba el dominio antes de aplicar reglas.",
+      "Ejercicio: derivar (x^2+1)^4 y explicar las funciones interna y externa."
+    ],
+    "Existente": false
+  },
+  {
+    "Clave": "demo-calculo-limites.pdf",
+    "Titulo": "Cálculo: límites y continuidad",
+    "Curso": "MA-101",
+    "Descripcion": "Límites por factorización y continuidad en un punto.",
+    "Lineas": [
+      "Un límite describe el valor al que se aproxima una función cerca de un punto.",
+      "Para (x^2-1)/(x-1), factoriza x^2-1=(x-1)*(x+1).",
+      "Si x es distinto de 1, se simplifica a x+1; el límite en 1 es 2.",
+      "La función original no está definida en 1: límite y valor puntual son conceptos distintos.",
+      "Continuidad requiere que exista f(a), exista el límite y ambos coincidan.",
+      "Ejercicio: identificar si una función por tramos es continua en su punto de unión."
+    ],
+    "Existente": false
+  },
+  {
+    "Clave": "demo-integracion.pdf",
+    "Titulo": "Integrales: sustitución y comprobación",
+    "Curso": "MA-102",
+    "Descripcion": "Ejercicio guiado de integración por sustitución con verificación.",
+    "Lineas": [
+      "Integrar busca una antiderivada y añade una constante C.",
+      "Ejemplo: integral de 2*x*(x^2+1)^3 dx.",
+      "Sustituye u=x^2+1; entonces du=2*x dx.",
+      "Queda integral de u^3 du = u^4/4 + C.",
+      "Resultado: (x^2+1)^4/4 + C.",
+      "Deriva el resultado para comprobar que recuperas el integrando."
+    ],
+    "Existente": false
+  },
+  {
+    "Clave": "demo-algoritmos-busqueda.pdf",
+    "Titulo": "Algoritmos: búsqueda binaria y complejidad",
+    "Curso": "CS-201",
+    "Descripcion": "Precondiciones, búsqueda binaria y coste O(log n).",
+    "Lineas": [
+      "La búsqueda lineal examina elementos hasta encontrar el objetivo: O(n).",
+      "La búsqueda binaria requiere que los datos estén ordenados.",
+      "Compara con el elemento central y descarta la mitad que no puede contener el objetivo.",
+      "Actualiza los límites hasta encontrarlo o vaciar el intervalo.",
+      "Su coste es O(log n) porque reduce el espacio de búsqueda a la mitad.",
+      "Pruebas: lista vacía, primer elemento, último y un valor ausente."
+    ],
+    "Existente": false
+  },
+  {
+    "Clave": "demo-algoritmos-colas.pdf",
+    "Titulo": "Estructuras: pilas, colas y productor-consumidor",
+    "Curso": "CS-201",
+    "Descripcion": "LIFO, FIFO y aplicación de una cola al procesamiento de eventos.",
+    "Lineas": [
+      "Una pila sigue LIFO: el último en entrar sale primero.",
+      "Una cola sigue FIFO: el primero en entrar sale primero.",
+      "El productor genera un trabajo y el consumidor lo procesa.",
+      "Una cola de mensajes remota permite desacoplar ambos componentes.",
+      "Confirmar un mensaje después de procesarlo evita perder trabajo antes de guardarlo.",
+      "La reentrega puede repetirse: el consumidor debe evitar duplicar efectos."
+    ],
+    "Existente": false
+  },
+  {
+    "Clave": "demo-poo.pdf",
+    "Titulo": "POO: clases, interfaces e inyección de dependencias",
+    "Curso": "CS-302",
+    "Descripcion": "Separación de contratos e implementaciones en servicios.",
+    "Lineas": [
+      "Una clase reúne estado y comportamiento; una interfaz define un contrato.",
+      "Un servicio de búsqueda puede tener implementación remota y respaldo local.",
+      "La inyección de dependencias entrega los colaboradores en lugar de crearlos dentro de cada método.",
+      "Un doble de prueba puede implementar el mismo contrato sin acceder a la nube.",
+      "No uses herencia solo para reutilizar unas líneas: busca una relación de comportamiento clara."
+    ],
+    "Existente": false
+  },
+  {
+    "Clave": "demo-so-concurrencia.pdf",
+    "Titulo": "Sistemas operativos: concurrencia y exclusión mutua",
+    "Curso": "CS-402",
+    "Descripcion": "Condiciones de carrera, SemaphoreSlim y recursos compartidos.",
+    "Lineas": [
+      "Dos tareas pueden intercalar operaciones sobre un estado compartido.",
+      "Una condición de carrera aparece cuando el resultado depende del orden de esas operaciones.",
+      "Un semáforo limita cuántas tareas entran a una sección crítica.",
+      "En código asíncrono, WaitAsync permite esperar sin bloquear un hilo.",
+      "Liberar en finally garantiza la salida incluso si hay un error.",
+      "Ejemplo: no usar un motor de predicción mutable simultáneamente sin protección."
+    ],
+    "Existente": false
+  },
+  {
+    "Clave": "demo-requisitos.pdf",
+    "Titulo": "Ingeniería de software: historias y criterios de aceptación",
+    "Curso": "IS-101",
+    "Descripcion": "Historia de usuario, criterio verificable y ejemplo de autoría.",
+    "Lineas": [
+      "Una historia explica quién necesita algo, qué necesita y para qué.",
+      "Ejemplo: como alumno quiero editar mi reseña para corregir un comentario.",
+      "Criterio: el autor puede editar puntuación y texto; otro alumno recibe rechazo.",
+      "Un criterio debe poder observarse mediante un ejemplo concreto.",
+      "Incluye casos correctos, entradas inválidas y falta de permiso.",
+      "No confundas una tecnología instalada con una función comprobada."
+    ],
+    "Existente": false
+  },
+  {
+    "Clave": "demo-web-mvc.pdf",
+    "Titulo": "Desarrollo web: MVC y validación en servidor",
+    "Curso": "CS-403",
+    "Descripcion": "Modelo, vista, controlador y validación independiente del navegador.",
+    "Lineas": [
+      "El modelo representa datos y reglas; la vista presenta información.",
+      "El controlador recibe una petición y coordina servicios y respuesta.",
+      "La validación del navegador mejora la experiencia, pero puede omitirse.",
+      "El servidor debe validar los datos y comprobar el permiso en cada escritura.",
+      "Una cookie identifica la sesión; antiforgery protege formularios frente a peticiones cruzadas.",
+      "Ejercicio: describir el recorrido completo de publicar una reseña."
+    ],
+    "Existente": false
+  },
+  {
+    "Clave": "Resumen Completo - Árboles y Grafos.pdf",
+    "Titulo": "Resumen Completo - Árboles y Grafos",
+    "Curso": "CS-201",
+    "Descripcion": "Contenido original breve de demostración del equipo.",
+    "Lineas": [
+      "Un árbol no contiene ciclos y conecta sus nodos mediante aristas.",
+      "BFS recorre por niveles usando una cola; DFS profundiza usando pila o recursión.",
+      "Un árbol binario de búsqueda mantiene menores a la izquierda y mayores a la derecha.",
+      "AVL equilibra alturas mediante rotaciones.",
+      "Dijkstra encuentra caminos mínimos con pesos no negativos.",
+      "Ejercicio: comparar recorridos de un árbol de siete nodos."
+    ],
+    "Existente": true
+  },
+  {
+    "Clave": "Examen Parcial 2025-II Resuelto.pdf",
+    "Titulo": "Examen Parcial 2025-II Resuelto",
+    "Curso": "MA-101",
+    "Descripcion": "Contenido original breve de demostración del equipo.",
+    "Lineas": [
+      "1. Límite de (x^2-1)/(x-1) en x=1: factorizar y simplificar; resultado 2.",
+      "2. Derivada de x^3: aplicar potencia; resultado 3*x^2.",
+      "3. Derivada de (2*x+1)^2: aplicar cadena; resultado 4*(2*x+1).",
+      "4. Continuidad en a: comprobar valor, límite e igualdad.",
+      "5. Recta tangente a x^2 en x=1: pendiente 2, punto (1,1); y=2*x-1."
+    ],
+    "Existente": true
+  },
+  {
+    "Clave": "Guía de Laboratorio 3 - Circuitos RC.pdf",
+    "Titulo": "Guía de Laboratorio 3 - Circuitos RC",
+    "Curso": "FI-102",
+    "Descripcion": "Contenido original breve de demostración del equipo.",
+    "Lineas": [
+      "Un circuito RC combina resistencia y condensador.",
+      "La constante de tiempo es tau=R*C.",
+      "Durante la carga ideal Vc(t)=V*(1-exp(-t/tau)).",
+      "Para R=1000 ohm y C=0.001 F, tau=1 segundo.",
+      "Registrar voltaje a intervalos iguales y comparar con el modelo.",
+      "Desconectar la alimentación antes de cambiar componentes."
+    ],
+    "Existente": true
+  },
+  {
+    "Clave": "Formulario de Integrales Completo.pdf",
+    "Titulo": "Formulario de Integrales Completo",
+    "Curso": "MA-101",
+    "Descripcion": "Contenido original breve de demostración del equipo.",
+    "Lineas": [
+      "Integral de x^n: x^(n+1)/(n+1)+C, para n distinto de -1.",
+      "Integral de 1/x: ln(abs(x))+C, fuera de cero.",
+      "Integral de cos(x): sin(x)+C.",
+      "Por partes: integral de u dv = u*v - integral de v du.",
+      "Ejemplo: integral de x*exp(x) = exp(x)*(x-1)+C.",
+      "La derivada del resultado debe recuperar el integrando."
+    ],
+    "Existente": true
+  },
+  {
+    "Clave": "Resumen Final - Ing. de Software.pdf",
+    "Titulo": "Resumen Final - Ing. de Software",
+    "Curso": "IS-101",
+    "Descripcion": "Contenido original breve de demostración del equipo.",
+    "Lineas": [
+      "Un requisito funcional describe un comportamiento observable.",
+      "Un requisito no funcional expresa una cualidad, como disponibilidad o accesibilidad.",
+      "Un caso de uso describe actor, precondiciones y flujo.",
+      "Un diagrama de clases muestra entidades y relaciones.",
+      "Verificación pregunta si se construyó según la especificación.",
+      "Validación pregunta si resuelve la necesidad de los usuarios."
+    ],
+    "Existente": true
+  },
+  {
+    "Clave": "Guía Lab 5 - Movimiento Armónico.pdf",
+    "Titulo": "Guía Lab 5 - Movimiento Armónico",
+    "Curso": "FI-102",
+    "Descripcion": "Contenido original breve de demostración del equipo.",
+    "Lineas": [
+      "En el modelo ideal masa-resorte, T=2*pi*sqrt(m/k).",
+      "Medir el tiempo de varias oscilaciones y dividir entre su cantidad.",
+      "Repetir y promediar reduce el efecto del tiempo de reacción.",
+      "Para m=1 kg y k=100 N/m, el periodo es aproximadamente 0.628 s.",
+      "Comparar teoría y experimento e identificar fuentes de error."
+    ],
+    "Existente": true
+  },
+  {
+    "Clave": "Examen Final 2025-I Resuelto.pdf",
+    "Titulo": "Examen Final 2025-I Resuelto",
+    "Curso": "CS-201",
+    "Descripcion": "Contenido original breve de demostración del equipo.",
+    "Lineas": [
+      "Pila: apilar A, B, C y desapilar devuelve C.",
+      "Cola: encolar A, B, C y desencolar devuelve A.",
+      "Búsqueda binaria en [2,4,6,8,10] de 8: comparar 6 y continuar a la derecha.",
+      "Ordenar con inserción requiere O(n^2) en el peor caso.",
+      "Un recorrido inorden en un árbol de búsqueda obtiene claves ordenadas.",
+      "Para probar un algoritmo incluye colección vacía y elementos repetidos."
+    ],
+    "Existente": true
+  },
+  {
+    "Clave": "Apuntes de Clase Semana 1-8.pdf",
+    "Titulo": "Apuntes de Clase Semana 1-8",
+    "Curso": "HU-101",
+    "Descripcion": "Contenido original breve de demostración del equipo.",
+    "Lineas": [
+      "Una idea principal organiza el párrafo y las secundarias la desarrollan.",
+      "Coherencia: relación lógica de ideas. Cohesión: conexiones lingüísticas.",
+      "Una fuente debe distinguirse de la opinión propia.",
+      "Parafrasear exige comprender y citar, no solo sustituir palabras.",
+      "Revisar propósito, audiencia, orden y claridad antes de entregar."
+    ],
+    "Existente": true
+  }
+]
