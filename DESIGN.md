@@ -21,7 +21,7 @@ Mensajes del modelo y de usuarios se renderizan con textContent, nunca HTML. Enl
 - Un cierre del panel no destruye el historial. Una generación detenida o fallida no se presenta como respuesta completa ni se almacena como intercambio terminado.
 
 ## Gasto referencial de restaurantes
-El gasto promedio de demostración por persona se muestra en una línea separada de la valoración y del rango, sin comprimir las estrellas. El modal y las tarjetas del asistente lo identifican como aproximado/demo. Un precio desconocido nunca se representa como gratis ni como compatible con un presupuesto.
+El catálogo coloca los filtros del listado antes del mapa. Los controles de zona se agrupan con el mapa. Las tarjetas de la grilla muestran foto, nombre, categoría, valoración, gasto aproximado y cercanía. El modal reúne descripción, dirección, horarios, rutas y reseñas. Un precio desconocido se muestra como gasto por confirmar y queda fuera del filtro de presupuesto.
 
 ## Calendario y lectura del asistente
 Calendario reserva 100px al pie para separar acciones del lanzador flotante. Actividades semanales con días seleccionados y final obligatorio (máximo 366 días); se materializan como actividades independientes y eliminar afecta solo esa fecha. Emoji de paleta acotada integrado al título para mantener compatibilidad con Inicio sin migración. Formulario desplazable en pantallas bajas. El asistente presenta listas mediante nodos DOM con textContent y tarjetas verticales completas, sin HTML del modelo ni carruseles truncados.
