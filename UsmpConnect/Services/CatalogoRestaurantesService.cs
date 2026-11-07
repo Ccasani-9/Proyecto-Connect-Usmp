@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using UsmpConnect.Data;
 using UsmpConnect.Models;
@@ -13,24 +14,45 @@ public sealed class CatalogoRestaurantesService(
     IRedisCacheService cache,
     IBuscadorAlgolia algolia,
     IColaMensajes cola,
+    IPieHostService pieHost,
     IAnalisisSentimientoService sentimiento,
     IRecomendacionRestaurantesService recomendador,
     ILogger<CatalogoRestaurantesService> logger)
 {
-    public const string CacheKey = "foodspots:catalogo:v1";
+    public const string CacheKey = "foodspots:catalogo:v2";
     // Evita que una carga en curso vuelva a guardar una copia vieja después de invalidar
     // dentro de este proceso. Redis sigue compartiendo la clave entre instancias.
     private static readonly SemaphoreSlim Gate = new(1, 1);
+    private static readonly Regex[] FamiliasDeComida =
+    [
+        Familia("pizzas?|pizzer[ií]as?|pastas?|lasa(?:ñ|gn|gñ)as?|trattorias?|ravioles?|fetuccinis?"),
+        Familia("ceviches?|cebiches?|mariscos?|chicharr[oó]n de pescado|tr[ií]os? marinos?"),
+        Familia("sushis?|makis?|ramen|nikkei|sashimi|nigiris?"),
+        Familia("chifas?|chaufa|aeropuerto|want[aá]n|tallar[ií]n saltado"),
+        Familia("pollos? a la brasa|broaster|poller[ií]as?"),
+        Familia("hamburguesas?|salchipapas?|sandwich(?:es)?|s[aá]nguches?"),
+        Familia("caf[eé]s?|cafeter[ií]as?|espresso|lattes?|capuchinos?"),
+        Familia("pasteles?|pasteler[ií]as?|tortas?|postres?|helados?|brownies?"),
+        Familia("men[uú]s? criollos?|men[uú]s? caseros?|lomo saltado|aj[ií] de gallina|seco de res"),
+        Familia("bowls?|ensaladas?|quinua|quinoa|vegetarian[oa]s?")
+    ];
+
+    private static Regex Familia(string platos) => new($@"\b(?:{platos})\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    private static string TextoDeComida(RestauranteItemVM local) => string.Join(" ",
+        new[] { local.Nombre, local.Descripcion }.Concat(local.PlatosPopulares.Select(p => $"{p.Nombre} {p.Descripcion}")));
 
     public async Task<CatalogoRestaurantes> ObtenerAsync(CancellationToken cancellationToken = default)
     {
         await Gate.WaitAsync(cancellationToken);
         try
         {
-            var items = await cache.GetAsync<List<RestauranteItemVM>>(CacheKey);
+            var lectura = await cache.LeerConOrigenAsync<List<RestauranteItemVM>>(CacheKey);
+            var items = lectura.Valor;
             if (items is not null)
             {
-                var fuente = cache.IsConnected ? "Redis Cache" : "Caché local";
+                var fuente = lectura.Origen;
                 logger.LogDebug("Catálogo de restaurantes: hit en {Fuente}", fuente);
                 return new(items, fuente);
             }
@@ -41,7 +63,8 @@ public sealed class CatalogoRestaurantesService(
                 r.Id, r.Nombre, r.Descripcion, r.Categoria.Nombre(), r.Categoria, r.Rango,
                 r.Direccion, r.DistanciaTexto, r.RangoPrecios, r.HorarioAtencion, r.TelefonoWhatsApp,
                 r.FotoUrl, r.Latitud, r.Longitud, r.CalificacionPromedio, r.TotalResenas,
-                r.Platos.Select(p => new PlatoItemVM(p.Id, p.Nombre, p.Precio, p.Descripcion, p.EsPopular)).ToList()
+                r.Platos.Select(p => new PlatoItemVM(p.Id, p.Nombre, p.Precio, p.Descripcion, p.EsPopular)).ToList(),
+                r.PrecioPromedioReferencial
             )).ToList();
             await cache.SetAsync(CacheKey, items, TimeSpan.FromMinutes(5));
             logger.LogInformation("Catálogo cargado desde SQLite: {Cantidad} restaurantes; {Estado}", items.Count, cache.Estado);
@@ -53,24 +76,67 @@ public sealed class CatalogoRestaurantesService(
     public async Task<(List<RestauranteItemVM> Recomendados, bool Personalizada)> ObtenerRecomendadosAsync(
         string? usuarioClave,
         int topK = 3,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IReadOnlyList<RestauranteItemVM>? candidatos = null,
+        string? usuarioId = null)
     {
-        var datos = await ObtenerAsync(cancellationToken);
-        if (datos.Restaurantes.Count == 0)
+        var locales = candidatos ?? (await ObtenerAsync(cancellationToken)).Restaurantes;
+        Dictionary<Regex, double> preferencias = [];
+        if (!string.IsNullOrWhiteSpace(usuarioId))
+        {
+            var resenas = await db.ResenasRestaurantes.AsNoTracking().Where(r => r.UsuarioId == usuarioId)
+                .Select(r => new { r.RestauranteId, r.Puntuacion }).ToListAsync(cancellationToken);
+            if (resenas.Count > 0)
+            {
+                var historial = resenas.GroupBy(r => r.RestauranteId)
+                    .ToDictionary(g => g.Key, g => g.Average(r => r.Puntuacion));
+                var catalogoCompleto = candidatos is null ? locales : (await ObtenerAsync(cancellationToken)).Restaurantes;
+                var favoritos = catalogoCompleto.Where(r => historial.GetValueOrDefault(r.Id) >= 4);
+                foreach (var favorito in favoritos)
+                {
+                    var texto = TextoDeComida(favorito);
+                    foreach (var familia in FamiliasDeComida.Where(f => f.IsMatch(texto)))
+                        preferencias[familia] = preferencias.GetValueOrDefault(familia) + historial[favorito.Id] - 3;
+                }
+
+                locales = locales.Where(r => !historial.ContainsKey(r.Id)).ToList();
+            }
+        }
+        if (locales.Count == 0)
             return ([], false);
 
-        var porId = datos.Restaurantes.ToDictionary(r => r.Id);
+        var porId = locales.ToDictionary(r => r.Id);
         var recs = await recomendador.RecomendarAsync(
             usuarioClave,
             porId.Keys,
-            topK,
+            preferencias.Count > 0 ? locales.Count : topK,
             cancellationToken);
+
+        if (preferencias.Count > 0)
+        {
+            var afinidades = locales.ToDictionary(r => r.Id, r =>
+            {
+                var texto = TextoDeComida(r);
+                return preferencias.Where(p => p.Key.IsMatch(texto)).Sum(p => p.Value);
+            });
+            if (afinidades.Values.Any(a => a > 0))
+            {
+                var posiciones = recs.Select((r, i) => (r.RestauranteId, i))
+                    .ToDictionary(r => r.RestauranteId, r => r.i);
+                var sugerencias = locales.OrderByDescending(r => afinidades[r.Id])
+                    .ThenBy(r => posiciones.GetValueOrDefault(r.Id, int.MaxValue))
+                    .ThenByDescending(r => r.CalificacionPromedio)
+                    .ThenBy(r => r.Id).Take(Math.Max(1, topK)).ToList();
+                return (sugerencias, true);
+            }
+        }
 
         if (recs.Count > 0)
         {
             var ordenados = recs
                 .Where(r => porId.ContainsKey(r.RestauranteId))
                 .Select(r => porId[r.RestauranteId])
+                .Take(Math.Max(1, topK))
                 .ToList();
 
             var personalizada = recs.Any(r => !r.DeFrio);
@@ -78,7 +144,7 @@ public sealed class CatalogoRestaurantesService(
         }
 
         // Respaldo por calificación promedio si el recomendador está deshabilitado
-        var populares = datos.Restaurantes
+        var populares = locales
             .OrderByDescending(r => r.CalificacionPromedio)
             .ThenByDescending(r => r.TotalResenas)
             .Take(Math.Max(1, topK))
@@ -88,12 +154,17 @@ public sealed class CatalogoRestaurantesService(
     }
 
     public async Task<(List<RestauranteItemVM> Restaurantes, string Fuente)> FiltrarAsync(
-        CategoriaRestaurante? categoria, string? q, CancellationToken cancellationToken = default)
+        CategoriaRestaurante? categoria, string? q, CancellationToken cancellationToken = default,
+        double? valoracionMinima = null, decimal? gastoMaximo = null)
     {
         var datos = await ObtenerAsync(cancellationToken);
         IEnumerable<RestauranteItemVM> restaurantes = datos.Restaurantes;
         if (categoria.HasValue)
             restaurantes = restaurantes.Where(r => r.Categoria == categoria.Value);
+        if (valoracionMinima.HasValue)
+            restaurantes = restaurantes.Where(r => r.TotalResenas > 0 && r.CalificacionPromedio >= valoracionMinima.Value);
+        if (gastoMaximo.HasValue)
+            restaurantes = restaurantes.Where(r => r.PrecioPromedioReferencial is > 0 && r.PrecioPromedioReferencial <= gastoMaximo.Value);
         if (!string.IsNullOrWhiteSpace(q))
         {
             var term = q.Trim();
@@ -156,7 +227,8 @@ public sealed class CatalogoRestaurantesService(
             r.TotalResenas,
             esCampus,
             platos,
-            resenas);
+            resenas,
+            r.PrecioPromedioReferencial);
     }
 
     public async Task<ResenaDto?> CrearResenaAsync(
@@ -247,6 +319,7 @@ public sealed class CatalogoRestaurantesService(
 
         await RecalcularCalificacionRestauranteAsync(resena.Restaurante, cancellationToken);
         await SincronizarCambiosAsync();
+        await AvisarActualizacionResenasAsync(resena.RestauranteId);
 
         var dto = new ResenaDto(
             resena.Id,
@@ -286,9 +359,14 @@ public sealed class CatalogoRestaurantesService(
 
         await RecalcularCalificacionRestauranteAsync(restaurante, cancellationToken);
         await SincronizarCambiosAsync();
+        await AvisarActualizacionResenasAsync(restaurante.Id);
 
         return EstadoOperacionResena.Ok;
     }
+
+    private Task AvisarActualizacionResenasAsync(int restauranteId) => pieHost.IsConfigured
+        ? pieHost.PublicarEventoAsync("1", "resenas_actualizadas", new { RestauranteId = restauranteId })
+        : Task.CompletedTask;
 
     private async Task RecalcularCalificacionRestauranteAsync(Restaurante restaurante, CancellationToken cancellationToken)
     {

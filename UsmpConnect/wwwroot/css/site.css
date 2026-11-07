@@ -113,11 +113,13 @@ a:hover { color: var(--guinda-700); }
 .btn-ayuda { background: rgba(255, 255, 255, .14); color: #fff; border: 0; border-radius: 999px; padding: 6px 14px; font-size: .8rem; font-weight: 600; }
 .btn-ayuda:hover { background: rgba(255, 255, 255, .22); color: #fff; }
 .user-chip {
-  display: flex; align-items: center; gap: 12px; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .2); color: #fff;
-  border-radius: 12px; padding: 7px 14px; text-align: left;
+  display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .2); color: #fff;
+  border-radius: 12px; padding: 5px 9px; text-align: left;
 }
-.user-chip .nombre { font-weight: 700; font-size: .88rem; line-height: 1.1; }
-.user-chip .escuela { font-size: .72rem; opacity: .85; }
+.user-chip .nombre { max-inline-size: 8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: .88rem; }
+.user-chip img.avatar { object-fit: cover; }
+.menu-perfil { inline-size: min(19rem, calc(100vw - 2rem)); }
+.menu-perfil .dropdown-item-text { overflow-wrap: anywhere; }
 .avatar {
   width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0;
   font-weight: 700; font-size: .82rem; background: #f5b82e; color: #3b2400;
@@ -219,8 +221,6 @@ a:hover { color: var(--guinda-700); }
   transition: transform .15s ease;
 }
 
-.sidebar-footer { margin-top: auto; text-align: center; padding-top: 14px; }
-.sidebar-footer small { color: var(--muted-2); display: block; margin-top: 10px; }
 
 .sidebar-backdrop {
   display: none;
@@ -277,9 +277,6 @@ a:hover { color: var(--guinda-700); }
   }
   .user-chip .nombre {
     font-size: .78rem;
-  }
-  .user-chip .escuela {
-    font-size: .66rem;
   }
   .avatar {
     width: 30px;
@@ -377,18 +374,32 @@ a:hover { color: var(--guinda-700); }
 /* ---------- Inicio ---------- */
 .hero {
   position: relative; overflow: hidden; background: var(--guinda); color: #fff; border-radius: 18px;
-  padding: 28px 28px; min-height: 150px;
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px;
+  padding: clamp(16px, 2.4vw, 28px); min-height: 150px;
 }
 .hero::after { content: ""; position: absolute; right: -60px; top: -60px; width: 260px; height: 260px; border-radius: 50%; background: rgba(255, 255, 255, .07); }
-.hero .slide { display: none; position: relative; z-index: 1; }
-.hero .slide.active { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; animation: fade .35s; }
+.hero .slide {
+  grid-area: 1 / 1; display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center; gap: 16px; position: relative; z-index: 1; visibility: hidden;
+}
+.hero .slide.active { visibility: visible; animation: fade .35s; }
 .hero h2 { font-weight: 800; font-size: 1.6rem; margin: 8px 0 6px; }
 .hero p { margin: 0; opacity: .85; }
 .hero-tag { background: #f8e38a; color: #5a4400; border-radius: 4px; padding: 2px 8px; font-size: .7rem; font-weight: 800; letter-spacing: .4px; }
 .hero .btn-light { font-weight: 700; color: var(--guinda); border-radius: 8px; padding: 10px 18px; }
-.hero-dots { position: absolute; right: 26px; bottom: 16px; display: flex; gap: 6px; z-index: 2; }
-.hero-dots button { width: 7px; height: 7px; border-radius: 50%; border: 0; padding: 0; background: rgba(255, 255, 255, .4); }
-.hero-dots button.active { background: #fff; }
+.hero-controls { grid-area: 2 / 1; justify-self: end; display: flex; align-items: center; gap: 3px; z-index: 2; }
+.hero-controls button { min-width: 28px; min-height: 28px; border: 0; border-radius: 6px; background: transparent; color: #fff; }
+.hero-controls button:hover { background: rgba(255, 255, 255, .15); }
+.hero-controls button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+.hero-controls [data-slide]::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, .55); }
+.hero-controls [aria-current='true']::before { background: #fff; }
+@media (max-width: 767.98px) {
+  .hero .slide { grid-template-columns: minmax(0, 1fr); align-content: start; }
+  .hero .btn-light { justify-self: start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero .slide.active { animation: none; }
+}
 @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
 .saludo { border-left: 4px solid var(--guinda); padding: 13px 18px; margin: 16px 0; }

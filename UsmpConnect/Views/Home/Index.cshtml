@@ -11,7 +11,7 @@
         <div>
             <span class="hero-tag">RESTAURANTES CERCANOS</span>
             <h2>¿Buscando dónde almorzar cerca del campus?</h2>
-            <p>Descubre los huariques y restaurantes en La Fontana, Frutales y Constructores con menús para alumnos.</p>
+            <p>Descubre los restaurantes en La Fontana, Frutales y Constructores con menús para alumnos.</p>
         </div>
         <a class="btn btn-light" href="/Restaurantes">Explorar Restaurantes <i class="bi bi-arrow-right"></i></a>
     </div>
@@ -31,8 +31,11 @@
         </div>
         <a class="btn btn-light" href="/Marketplace">Ir al Marketplace <i class="bi bi-arrow-right"></i></a>
     </div>
-    <div class="hero-dots">
-        <button class="active" aria-label="Slide 1"></button><button aria-label="Slide 2"></button><button aria-label="Slide 3"></button>
+    <div class="hero-controls" role="group" aria-label="Banners de Inicio">
+        <button type="button" data-slide aria-label="Restaurantes cercanos" aria-current="true"></button>
+        <button type="button" data-slide aria-label="Exámenes parciales"></button>
+        <button type="button" data-slide aria-label="Marketplace"></button>
+        <button type="button" data-hero-pausa aria-label="Pausar carrusel"><i class="bi bi-pause-fill" aria-hidden="true"></i></button>
     </div>
 </section>
 
@@ -45,7 +48,7 @@
 </div>
 
 <div class="row g-3">
-    <!-- Huarique del Día / Dónde Almorzar Hoy -->
+    <!-- Restaurante del Día / Dónde Almorzar Hoy -->
     <div class="col-xl-4 col-lg-6">
         <div class="card-u p h-100 d-flex flex-column justify-content-between" data-recomendacion-home>
             <div>
@@ -118,14 +121,14 @@
                 {
                     <div class="p-4 text-center text-muted">
                         <i class="bi bi-shop fs-1 d-block mb-2 text-muted"></i>
-                        <p class="small">Explora los restaurantes y huariques recomendados alrededor de la FIA.</p>
+                        <p class="small">Explora los restaurantes recomendados alrededor de la FIA.</p>
                     </div>
                 }
             </div>
 
             <div>
                 <a href="/Restaurantes" class="btn btn-guinda w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold" style="border-radius:10px;">
-                    <i class="bi bi-compass"></i> Explorar Restaurantes y Huariques <i class="bi bi-arrow-right"></i>
+                    <i class="bi bi-compass"></i> Explorar Restaurantes <i class="bi bi-arrow-right"></i>
                 </a>
             </div>
         </div>
@@ -235,13 +238,30 @@
         // Carrusel del banner
         (() => {
             const hero = document.getElementById('hero');
-            const slides = [...hero.querySelectorAll('.slide')], dots = [...hero.querySelectorAll('.hero-dots button')];
+            const slides = [...hero.querySelectorAll('.slide')];
+            const dots = [...hero.querySelectorAll('[data-slide]')];
+            const pausa = hero.querySelector('[data-hero-pausa]');
             let i = 0;
-            const ir = n => { i = n; slides.forEach((s, k) => s.classList.toggle('active', k === i)); dots.forEach((d, k) => d.classList.toggle('active', k === i)); };
+            let timer;
+            let enPausa = matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const ir = n => {
+                i = n;
+                slides.forEach((slide, k) => slide.classList.toggle('active', k === i));
+                dots.forEach((dot, k) => dot.setAttribute('aria-current', String(k === i)));
+            };
+            const ajustarRotacion = () => {
+                clearInterval(timer);
+                pausa.setAttribute('aria-label', enPausa ? 'Reanudar carrusel' : 'Pausar carrusel');
+                pausa.firstElementChild.className = enPausa ? 'bi bi-play-fill' : 'bi bi-pause-fill';
+                if (!enPausa && !hero.matches(':hover') && !hero.contains(document.activeElement)) {
+                    timer = setInterval(() => ir((i + 1) % slides.length), 7000);
+                }
+            };
             dots.forEach((d, k) => d.addEventListener('click', () => ir(k)));
-            let timer = setInterval(() => ir((i + 1) % slides.length), 7000);
-            hero.addEventListener('mouseenter', () => clearInterval(timer));
-            hero.addEventListener('mouseleave', () => timer = setInterval(() => ir((i + 1) % slides.length), 7000));
+            pausa.addEventListener('click', () => { enPausa = !enPausa; ajustarRotacion(); });
+            ['mouseenter', 'mouseleave', 'focusin'].forEach(evento => hero.addEventListener(evento, ajustarRotacion));
+            hero.addEventListener('focusout', () => setTimeout(ajustarRotacion, 0));
+            ajustarRotacion();
         })();
 
         // Pestañas Hoy / Mañana

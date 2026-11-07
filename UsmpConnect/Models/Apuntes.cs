@@ -71,7 +71,14 @@ public class Apunte
     };
 
     /// <summary>PDF de un apunte de ejemplo (sin archivo subido). Requiere <see cref="Curso"/> cargado.</summary>
-    public byte[] GenerarPdfEjemplo() => Services.PdfSimple.Generar(Titulo,
+    public byte[] GenerarPdfEjemplo()
+    {
+        var documento = Data.Seed.ContenidoApuntesDemo.Buscar(NombreArchivo);
+        if (documento is not null)
+            return Services.PdfSimple.Generar(Titulo, new[] {
+                $"Curso: {Curso.Nombre}", "Material original breve del equipo - DEMOSTRACION, no documento oficial.", ""
+            }.Concat(documento.Lineas));
+        return Services.PdfSimple.Generar(Titulo,
     [
         $"Curso: {Curso.Nombre} ({Curso.Codigo}) - {Curso.CicloRomano} Ciclo",
         $"Docente: {Profesor}",
@@ -82,6 +89,7 @@ public class Apunte
         "Documento de ejemplo del Banco de Apuntes de USMP Connect.",
         "Los apuntes que suben los alumnos se descargan tal como fueron subidos."
     ]);
+    }
 }
 
 /// <summary>Calificación de 1 a 5 estrellas. Una por usuario y apunte (se puede cambiar).</summary>

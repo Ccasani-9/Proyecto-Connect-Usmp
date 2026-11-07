@@ -34,6 +34,7 @@ public class CloudAmqpColaMensajes : IColaMensajes, IAsyncDisposable, IDisposabl
     public const string ColaPorDefecto = "usmp_notificaciones_cola";
 
     private readonly ILogger<CloudAmqpColaMensajes> _logger;
+    private readonly EstadoIntegraciones? _estados;
     private readonly string? _amqpUrl;
     private readonly string _colaPorDefecto;
     private readonly Channel<MensajeCola> _colaLocal = Channel.CreateUnbounded<MensajeCola>();
@@ -47,9 +48,10 @@ public class CloudAmqpColaMensajes : IColaMensajes, IAsyncDisposable, IDisposabl
     public ChannelReader<MensajeCola> LecturaLocal => _colaLocal.Reader;
     public bool TieneConfiguracionRemota => !string.IsNullOrWhiteSpace(_amqpUrl);
 
-    public CloudAmqpColaMensajes(IConfiguration config, ILogger<CloudAmqpColaMensajes> logger)
+    public CloudAmqpColaMensajes(IConfiguration config, ILogger<CloudAmqpColaMensajes> logger, EstadoIntegraciones? estados = null)
     {
         _logger = logger;
+        _estados = estados;
         _amqpUrl = config["CloudAMQP:Url"];
         _colaPorDefecto = string.IsNullOrWhiteSpace(config["CloudAMQP:QueueName"])
             ? ColaPorDefecto
@@ -158,6 +160,7 @@ public class CloudAmqpColaMensajes : IColaMensajes, IAsyncDisposable, IDisposabl
                     _connectLock.Release();
                 }
 
+                _estados?.Registrar("rabbit-publicacion", true, "Evento enviado por el productor a RabbitMQ remoto");
                 _logger.LogInformation("Mensaje publicado en CloudAMQP ({Cola}): {Tipo}", nombreCola, typeof(T).Name);
                 return;
             }
@@ -167,6 +170,7 @@ public class CloudAmqpColaMensajes : IColaMensajes, IAsyncDisposable, IDisposabl
             }
         }
 
+        _estados?.Registrar("rabbit-publicacion", false, "Evento encolado en el respaldo local");
         await _colaLocal.Writer.WriteAsync(envelope);
     }
 
@@ -207,15 +211,17 @@ public class ConsumidorNotificacionesService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IConfiguration _config;
     private readonly ILogger<ConsumidorNotificacionesService> _logger;
+    private readonly EstadoIntegraciones? _estados;
     private IChannel? _consumerChannel;
 
     public ConsumidorNotificacionesService(
         IColaMensajes colaMensajes,
         IServiceScopeFactory scopeFactory,
         IConfiguration config,
-        ILogger<ConsumidorNotificacionesService> logger)
+        ILogger<ConsumidorNotificacionesService> logger, EstadoIntegraciones? estados = null)
     {
         _colaMensajes = colaMensajes;
+        _estados = estados;
         _scopeFactory = scopeFactory;
         _config = config;
         _logger = logger;
@@ -254,6 +260,7 @@ public class ConsumidorNotificacionesService : BackgroundService
             {
                 _consumerChannel?.Dispose();
                 _consumerChannel = null;
+                _estados?.Registrar("rabbit-consumo", false, "Suscripción remota fallida; pendiente de reintento");
                 _logger.LogWarning(ex, "Se reintentará la suscripción a RabbitMQ.");
             }
             await Task.Delay(TimeSpan.FromSeconds(10), ct);
@@ -299,6 +306,7 @@ public class ConsumidorNotificacionesService : BackgroundService
                 envelope = JsonSerializer.Deserialize<MensajeCola>(raw);
                 if (envelope is null || string.IsNullOrWhiteSpace(envelope.Tipo))
                 {
+                    _estados?.Registrar("rabbit-consumo", false, "Mensaje remoto inválido descartado");
                     _logger.LogWarning("Mensaje inválido en cola {Cola}. Se descarta sin reencolar.", nombreCola);
                     await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, stoppingToken);
                     return;
@@ -306,6 +314,7 @@ public class ConsumidorNotificacionesService : BackgroundService
             }
             catch (JsonException ex)
             {
+                _estados?.Registrar("rabbit-consumo", false, "JSON remoto inválido descartado");
                 _logger.LogWarning(ex, "JSON corrupto recibido en cola {Cola}. Se descarta sin reencolar.", nombreCola);
                 await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, stoppingToken);
                 return;
@@ -315,14 +324,17 @@ public class ConsumidorNotificacionesService : BackgroundService
             {
                 await ProcesarSobreAsync(envelope, stoppingToken);
                 await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, stoppingToken);
+                _estados?.Registrar("rabbit-consumo", true, "Evento consumido desde RabbitMQ remoto y ACK enviado");
             }
             catch (JsonException ex)
             {
+                _estados?.Registrar("rabbit-consumo", false, "Carga remota inválida descartada");
                 _logger.LogWarning(ex, "Carga útil inválida para el tipo {Tipo}. Se descarta sin reencolar.", envelope.Tipo);
                 await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, stoppingToken);
             }
             catch (Exception ex)
             {
+                _estados?.Registrar("rabbit-consumo", false, "Procesamiento remoto fallido");
                 var reencolar = !ea.Redelivered;
                 _logger.LogError(ex, "Fallo al procesar mensaje {Tipo} en RabbitMQ (requeue={Requeue}).", envelope.Tipo, reencolar);
                 await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: reencolar, stoppingToken);
@@ -364,6 +376,7 @@ public class ConsumidorNotificacionesService : BackgroundService
 
         var mensajeNoti = $"Tu reseña #{evento.ResenaId} de {evento.RestauranteNombre} ({evento.Puntuacion} ★) fue procesada y publicada.";
 
+        var persistida = false;
         if (!string.IsNullOrWhiteSpace(evento.UsuarioId))
         {
             var existeUsuario = await db.Users.AsNoTracking().AnyAsync(u => u.Id == evento.UsuarioId, ct);
@@ -386,9 +399,11 @@ public class ConsumidorNotificacionesService : BackgroundService
                     });
                     await db.SaveChangesAsync(ct);
                 }
+                persistida = true;
             }
         }
 
+        _estados?.Registrar("notificacion", persistida, persistida ? "Notificación guardada o ya existente (idempotente)" : "No se guardó notificación: destinatario inexistente");
         await pieHost.PublicarEventoAsync("1", "nueva_resena", new
         {
             RestauranteId = evento.RestauranteId,

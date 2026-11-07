@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using UsmpConnect.Models;
+using UsmpConnect.Services;
 
 namespace UsmpConnect.ViewModels;
 
@@ -20,7 +21,8 @@ public record RestauranteItemVM(
     double Longitud,
     double CalificacionPromedio,
     int TotalResenas,
-    List<PlatoItemVM> PlatosPopulares
+    List<PlatoItemVM> PlatosPopulares,
+    decimal? PrecioPromedioReferencial = null
 )
 {
     public bool EsCampus => (Direccion?.Contains("Campus FIA", StringComparison.OrdinalIgnoreCase) ?? false) ||
@@ -65,7 +67,8 @@ public record RestauranteDetalleDto(
     int TotalResenas,
     bool EsCampus,
     List<PlatoItemVM> Platos,
-    List<ResenaItemVM> Resenas
+    List<ResenaItemVM> Resenas,
+    decimal? PrecioPromedioReferencial = null
 );
 
 public record ResenaDto(
@@ -107,6 +110,16 @@ public class FoodSpotsIndexVM
     public bool RecomendacionPersonalizada { get; set; }
     public CategoriaRestaurante? CategoriaActual { get; set; }
     public string? Busqueda { get; set; }
+    public double? ValoracionMinima { get; set; }
+    public decimal? GastoMaximo { get; set; }
+    public int? MinutosMaximos { get; set; }
+    public bool RutasDisponibles { get; set; }
+    public ResultadoRutasAPie? ResultadoRutas { get; set; }
+    public int TotalCandidatosRuta { get; set; }
+    public bool RutasAplicadas => ResultadoRutas is { MinutosPorLocal.Count: > 0 };
+    public int? MinutosAPie(int id) => ResultadoRutas?.MinutosPorLocal.TryGetValue(id, out var minutos) == true ? minutos : null;
+    public bool TieneFiltros => CategoriaActual.HasValue || !string.IsNullOrWhiteSpace(Busqueda)
+        || ValoracionMinima.HasValue || GastoMaximo.HasValue || MinutosMaximos.HasValue;
     public int TotalLugares => Restaurantes.Count;
     public string FuenteDatos { get; set; } = "SQLite"; // "Redis Cache (Hit)" o "SQLite"
     public string GoogleMapsApiKey { get; set; } = string.Empty;

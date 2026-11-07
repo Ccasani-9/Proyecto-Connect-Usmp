@@ -471,11 +471,11 @@ public class FoodSpotsSeeder : IModuleSeeder
                 TotalResenas = 1
             },
 
-            // --- 4. HUARIQUES Y MENÚS CASEROS DETECTADOS EN ZOOM ALTO (FLORA TRISTÁN Y LA FONTANA) ---
+            // --- 4. RESTAURANTES Y MENÚS CASEROS DETECTADOS EN ZOOM ALTO (FLORA TRISTÁN Y LA FONTANA) ---
             new()
             {
                 Nombre = "Pim Pam",
-                Descripcion = "El clásico huarique de menú casero preferido por los estudiantes. Sopa de entrada, platos de fondo criollos bien servidos, refresco natural y atención rápida.",
+                Descripcion = "El clásico restaurante de menú casero preferido por los estudiantes. Sopa de entrada, platos de fondo criollos bien servidos, refresco natural y atención rápida.",
                 Categoria = CategoriaRestaurante.MenuCriollo,
                 Rango = RangoPrecio.Economico,
                 Direccion = "Jr. Bogotá 297 (Esq. Flora Tristán), La Molina",
@@ -526,7 +526,7 @@ public class FoodSpotsSeeder : IModuleSeeder
             new()
             {
                 Nombre = "Menú Rakus",
-                Descripcion = "Huarique de menú universitario al toque de la esquina. Porciones contundentes, sazón casera y precios al alcance del bolsillo de los alumnos.",
+                Descripcion = "Restaurante de menú universitario al toque de la esquina. Porciones contundentes, sazón casera y precios al alcance del bolsillo de los alumnos.",
                 Categoria = CategoriaRestaurante.MenuCriollo,
                 Rango = RangoPrecio.Economico,
                 Direccion = "Av. Flora Tristán 394, La Molina",
@@ -713,7 +713,7 @@ public class FoodSpotsSeeder : IModuleSeeder
             new()
             {
                 Nombre = "Full Sanguchón La Fontana",
-                Descripcion = "Huarique nocturno de salchipapas monstruo, hamburguesas caseras, alitas broaster y combos rápidos a buen precio para estudiantes.",
+                Descripcion = "Restaurante nocturno de salchipapas monstruo, hamburguesas caseras, alitas broaster y combos rápidos a buen precio para estudiantes.",
                 Categoria = CategoriaRestaurante.ComidaRapida,
                 Rango = RangoPrecio.Economico,
                 Direccion = "Av. La Fontana 836 · Cerca a Los Ingenieros",
@@ -832,7 +832,7 @@ public class FoodSpotsSeeder : IModuleSeeder
             new()
             {
                 Nombre = "Cevichería Punta del Este",
-                Descripcion = "Huarique marino escondido en Santa Patricia: ceviche carretillero con chicharrón de calamar, arroz con mariscos y leche de tigre.",
+                Descripcion = "Restaurante marino escondido en Santa Patricia: ceviche carretillero con chicharrón de calamar, arroz con mariscos y leche de tigre.",
                 Categoria = CategoriaRestaurante.MenuCriollo,
                 Rango = RangoPrecio.Economico,
                 Direccion = "Calle Arequipa 140 · Urb. Santa Patricia",
@@ -900,7 +900,7 @@ public class FoodSpotsSeeder : IModuleSeeder
             new()
             {
                 Nombre = "Don Lucho (Salchipapas & Broaster)",
-                Descripcion = "Clásico huarique nocturno de salchipapas campesinas, alitas broaster crocantes, hamburguesas y cremas variadas.",
+                Descripcion = "Clásico restaurante nocturno de salchipapas campesinas, alitas broaster crocantes, hamburguesas y cremas variadas.",
                 Categoria = CategoriaRestaurante.ComidaRapida,
                 Rango = RangoPrecio.Economico,
                 Direccion = "Calle Madre de Dios 270 · Urb. Santa Patricia",
@@ -916,6 +916,17 @@ public class FoodSpotsSeeder : IModuleSeeder
             },
         };
 
+        var indice = 0;
+        foreach (var local in restaurantes)
+        {
+            local.PrecioPromedioReferencial = local.Rango switch
+            {
+                RangoPrecio.Economico => new decimal[] { 9, 10, 11, 12 }[indice % 4],
+                RangoPrecio.Medio => new decimal[] { 14, 16, 18, 20 }[indice % 4],
+                _ => new decimal[] { 24, 28, 32, 35 }[indice % 4]
+            };
+            indice++;
+        }
         db.Restaurantes.AddRange(restaurantes);
         await db.SaveChangesAsync();
 

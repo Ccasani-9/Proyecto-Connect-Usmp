@@ -75,6 +75,7 @@ builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add(new AuthorizeFilter(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().RequireRole(Roles.Alumno).Build()));
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+    options.Filters.Add<RecuperarFormularioAccesoFilter>();
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -106,7 +107,7 @@ builder.Services.AddScoped<UsmpConnect.Services.Agente.IAsistenteService, UsmpCo
 builder.Services.AddSingleton<UsmpConnect.Services.Agente.ConversacionesActivas>();
 builder.Services.AddHttpClient<IFirebaseTokenValidator, FirebaseTokenValidator>(client =>
     client.Timeout = TimeSpan.FromSeconds(10));
-
+builder.Services.AddScoped<AccesoExternoService>();
 
 // Subidas de hasta 25 MB (Banco de Apuntes).
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(o => o.MultipartBodyLengthLimit = 26 * 1024 * 1024);
@@ -217,6 +218,10 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
-app.MapGet("/health", () => Results.Ok(new { estado = "ok" })).AllowAnonymous();
+app.MapGet("/health", (IConfiguration config) => Results.Ok(new
+{
+    estado = "ok",
+    version = config["RENDER_GIT_COMMIT"]
+})).AllowAnonymous();
 
 app.Run();

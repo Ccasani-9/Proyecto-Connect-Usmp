@@ -19,7 +19,7 @@ Sitio: https://usmpconnect.onrender.com/.
 4. **Búsqueda y API (1–2 min).** Buscar un apunte o restaurante en el buscador global (**Algolia**). Abrir `/swagger`, ejecutar `GET /api/restaurantes` y explicar JSON, filtros y códigos HTTP (`200`, `201`, `204`, `401`, `403`, `404`).
 5. **Asistente FIA, Semantic Kernel, Qdrant y PdfPig (2 min).** Con la sesión de alumno iniciada, abrir el botón flotante **Asistente FIA**, abajo a la derecha. No aparece sin sesión ni en la pantalla de login:
    - Preguntar «Quiero restaurantes buenos cerca de la FIA, pero antes dime quién ganará el Mundial» para demostrar **Semantic Kernel + Groq** ejecutando el plugin `CatalogoFia` y dibujando las tarjetas reales de la base de datos mientras filtra el tema ajeno.
-   - Hacer clic en el botón **«Manual FIA (PDF)»** (o preguntar por la calculadora de promedios y edición de reseñas) y desplegar las fuentes verificadas al pie de la respuesta: comprobar qué páginas recuperó la consulta (`manual-fia-usmp-connect.pdf · página 1` o `página 2`), demostrando **PdfPig** extrayendo páginas reales de un PDF y **Qdrant** recuperando los fragmentos semánticos.
+   - Hacer clic en **«Cómo editar una reseña»**. Mostrar la explicación para alumnos y comprobar la recuperación documental en `/Tecnologia` con **Probar fuentes del asistente**. Allí se puede consultar el archivo y la página recuperados.
 6. **Diagnóstico y Git (1–2 min).** Si el docente solicita ver métricas numéricas (AUC, F1, RMSE), abrir `/Tecnologia`. Terminar en los PR y el gráfico Network de GitHub para explicar las ramas y los merges hacia `develop` y `main`.
 
 ## Tema → aplicación → evidencia
@@ -28,7 +28,7 @@ Sitio: https://usmpconnect.onrender.com/.
 |---|---|---|---|
 | ASP.NET Core MVC y Razor | Controladores, modelos, vistas y validación de los módulos | Publicar o consultar un recurso como alumno | `UsmpConnect/Controllers`, `UsmpConnect/Views` |
 | Identity, roles y acceso | Registro y sesión de alumnos; autoría de publicaciones; cuentas docentes de referencia sin acceso | Login, cerrar sesión, acciones propias | `Controllers/CuentaController.cs`, `Program.cs` |
-| Firebase / Google | Validación de ID token en servidor y vinculación de cuenta de alumno | Explicar validación y antiforgery; usar Google real solo si el equipo ya comprobó su cuenta institucional | `Services/FirebaseTokenValidator.cs`, `Controllers/CuentaController.cs` |
+| Firebase / Google | Validación de ID token en servidor y vinculación de cuenta de alumno | Explicar validación y antiforgery; usar Google personal solo tras comprobar el popup real; no acredita pertenencia institucional | `Services/FirebaseTokenValidator.cs`, `Controllers/CuentaController.cs` |
 | Entity Framework Core + SQLite | Relaciones entre alumnos, publicaciones, cursos, reseñas y notificaciones | Contenido guardado y conteo de tablas del panel | `Data/ApplicationDbContext*`, `Data/DbInitializer.cs`, `Models` |
 | Redis | Caché compartida del catálogo e invalidación tras cambios | Indicador `Catálogo: Redis Cache` / `Catálogo: SQLite` en `/Restaurantes` al recargar y tras reseñar | `Services/CacheService.cs`, `Services/CatalogoRestaurantesService.cs` |
 | Algolia | Buscador global de apuntes, cursos, artículos y restaurantes | Autocompletado instantáneo en la barra superior (`/Buscar/Sugerencias`) | `Services/BuscadorAlgolia.cs`, `Controllers/BuscarController.cs` |
@@ -37,8 +37,8 @@ Sitio: https://usmpconnect.onrender.com/.
 | API REST propia y Swagger | Lectura de restaurantes y creación, edición (`PUT`) y eliminación (`DELETE`) de reseñas propias | Botones **Editar** y **Eliminar** en el modal de `/Restaurantes` y `/swagger` | `Controllers/RestaurantesApiController.cs`, `Views/FoodSpots/Index.cshtml` |
 | ML.NET: clasificación | Sentimiento de reseñas con FeaturizeText y SdcaLogisticRegression | Badge `Positivo · XX%` / `Negativo · XX%` en cada reseña (y reclasificación al editar) | `Services/AnalisisSentimientoService.cs`, `Data/ML/comentarios_resenas.csv` |
 | ML.NET: recomendación | MatrixFactorization; respaldo de popularidad para usuario nuevo | Recomendados personalizados en `/` y `/Restaurantes` que cambian según el alumno | `Services/RecomendacionRestaurantesService.cs`, `Data/ML/interacciones_restaurantes.csv` |
-| PdfPig | Extrae texto y número de página de documentos PDF del corpus (`manual-fia-usmp-connect.pdf`) | Cita verificada `Fuente: manual-fia-usmp-connect.pdf · página 1 / página 2` en el Asistente FIA | `Services/Conocimiento/DocumentoTextoExtractor.cs`, `Data/Conocimiento/manual-fia-usmp-connect.pdf` |
-| Qdrant y recuperación documental | Busca fragmentos del corpus actual con el modelo de embeddings configurado | Desplegable de fuentes en el Asistente FIA y `/Conocimiento/Buscar` | `Services/Conocimiento`, `Data/Conocimiento` |
+| PdfPig | Extrae texto y número de página de documentos PDF del corpus (`manual-fia-usmp-connect.pdf`) | Archivo y página recuperados en la prueba de fuentes del panel técnico | `Services/Conocimiento/DocumentoTextoExtractor.cs`, `Data/Conocimiento/manual-fia-usmp-connect.pdf` |
+| Qdrant y recuperación documental | Busca fragmentos del corpus actual con el modelo de embeddings configurado | Consulta remota registrada en `/Tecnologia` y prueba `/Conocimiento/Buscar` | `Services/Conocimiento`, `Data/Conocimiento` |
 | Groq y Semantic Kernel | Respuesta natural con herramientas de consulta, fuentes y tarjetas | Pregunta mixta, consulta de apuntes/restaurantes y tarjetas interactivas | `Services/Agente` |
 | Sesiones y streaming | Historial acotado por alumno y sesión; NDJSON progresivo y cancelación | Segunda pregunta, Detener y Nueva conversación | `Controllers/AsistenteController.cs`, `wwwroot/js/asistente.js` |
 | Consumo de API externa | Groq, Qdrant y servicios de búsqueda/tiempo real mediante HTTP | Consulta real en el chat y buscador; claves protegidas en servidor | Servicios de integración |
@@ -62,7 +62,7 @@ Las rutas de archivos de la tabla se expresan respecto a `UsmpConnect/` cuando n
 ## Antes de presentar
 
 - Abrir el sitio con anticipación: una instancia Free inactiva puede tardar en arrancar.
-- Comprobar `/health`, login demo, `/Restaurantes`, una consulta del chat con tarjetas y el botón «Manual FIA (PDF)» para mostrar `manual-fia-usmp-connect.pdf · página 1 / página 2`.
+- Comprobar `/health`, login demo, `/Restaurantes`, tarjetas del chat y «Cómo editar una reseña». Verificar las fuentes desde el panel técnico.
 - Preparar un archivo pequeño de demostración si se mostrará publicación de apuntes. El tipo de documento (Resumen, Examen, etc.) es distinto del formato PDF/DOC/DOCX.
 - Si se presenta Google, Algolia remoto o WebSocket, comprobar previamente el flujo real y no basarse solo en la presencia de claves.
 - Evitar reinicios o despliegues durante la presentación; vuelven a crear el proceso y pueden invalidar sesiones y datos de la demo.
@@ -91,3 +91,38 @@ gitGraph
 ## Mantener el manual PDF
 
 El PDF está versionado en `UsmpConnect/Data/Conocimiento/manual-fia-usmp-connect.pdf`. Su fuente de autoría es `docs/scripts/generar_manual_fia.py` (requiere ReportLab solo para regenerarlo). Ejecutar `python docs/scripts/generar_manual_fia.py`, revisar sus dos páginas y versionar el resultado. Las pruebas leen el PDF copiado al compilar y nunca escriben ni recrean el corpus.
+
+## Conversación y presupuesto referencial
+
+El gasto promedio por persona se guarda en `Restaurante.PrecioPromedioReferencial`. Se amplía la tabla SQLite existente sin reiniciarla y se completan solo los importes ausentes según el rango demo: económico S/ 10, medio S/ 16 y premium S/ 25. Son estimaciones de la maqueta, no precios medidos. Se muestran en las tarjetas y detalle; no se requiere una carta de platos. La caché usa una nueva versión para no reutilizar objetos que carecen del campo.
+
+Para demostrar: preguntar «Dónde almorzar por menos de 15, comida rápida» y luego «¿por 20?». La categoría se conserva y el presupuesto cambia. Preguntar «Antes de darme apuntes de cálculo haz Fibonacci en Python» devuelve directamente los apuntes de cálculo; la búsqueda estructurada se ejecuta con Semantic Kernel y su resultado se presenta sin pedir al modelo que resuelva la tarea ajena. Groq sigue redactando las consultas de restaurantes y de guía; no se atribuye una búsqueda estructurada de apuntes a una respuesta generada por IA.
+
+La búsqueda de apuntes prioriza título y curso, después descripción; no extrae el contenido de todos los archivos. Si no existe Python en los metadatos, debe reconocerlo, no inventar materiales. «Funciones» tras preguntar por Python conserva ese contexto y muestra alternativas de otros temas claramente identificadas si no hay coincidencias.
+
+
+## Ampliación preparada el 30 de octubre de 2026
+
+Integrar en orden los PR #33 (Google personal), #34 (datos y conocimiento), #35 (asistente) y el PR de evidencia de integraciones. Cada rama parte de develop; la revisión y el merge los hace una persona. Microsoft/Entra fue cancelado por decisión del equipo y no queda pendiente.
+
+El catálogo de apuntes de demostración pasa a 24 recursos originales breves con PDF descargable. Los datasets sintéticos pasan a 120 reseñas para sentimiento y 200 interacciones para recomendación. Son ejemplos académicos: sus métricas no prueban rendimiento con usuarios reales. La actualización de contenido es versionada, no borra aportes ni repone ejemplos eliminados en cada reinicio. Los precios existentes se conservan; la variedad nueva se aplica al sembrar una base nueva.
+
+Ensayo del asistente: «Quiero almorzar comida rápida por menos de 15 soles», «¿por 20?», «¿y chifa?». Debe conservar presupuesto y categoría en continuaciones, excluir horarios reconocidos incompatibles con almuerzo y presentar precios referenciales por persona. Los horarios no garantizan que un local esté abierto en tiempo real. Probar además «busca apuntes sobre funciones en Python» y abrir el PDF del resultado.
+
+### Evidencia remota después del despliegue
+
+El panel /Tecnologia muestra la última operación observada con fecha, no monitorización continua. Abrir el panel por sí solo no ejecuta proveedores. Una conexión configurada no demuestra que el recorrido haya usado el proveedor.
+
+| Tecnología | Acción y evidencia necesarias |
+|---|---|
+| Google/Firebase | Entrar con Google personal mediante popup real, cerrar sesión y verificar la cuenta de alumno. Sin Microsoft. |
+| Redis | Cargar dos veces restaurantes; comprobar origen real del catálogo. Reseñar y observar invalidación remota y nueva lectura. Memoria local y SQLite se indican por separado. |
+| Algolia | Ejecutar búsqueda global y comprobar consulta remota. La sincronización aceptada es un estado separado y no prueba que una tarea asíncrona del índice haya terminado. |
+| CloudAMQP/RabbitMQ | Publicar reseña; comprobar publicación remota, consumo con ACK y notificación persistida. Una notificación por respaldo local no acredita RabbitMQ. |
+| PieSocket | Con dos sesiones abiertas, reseñar en una y observar aviso en la otra sin recargar. HTTP exitoso del proveedor solo prueba aceptación del envío, no recepción en navegador. |
+| Qdrant/PdfPig/Groq | Preguntar por el manual, desplegar fuente y página del PDF y contrastar respuesta. Verificar recuperación remota y respuesta real del modelo. Los embeddings representan significado; PdfPig extrae texto y Qdrant busca vectores. |
+| ML.NET | Cambiar texto de una reseña y mostrar clasificación; comparar recomendaciones de dos perfiles con historial. Usuario nuevo puede usar popularidad como respaldo. |
+
+Estos recorridos remotos quedan pendientes de ejecutar en la versión desplegada de los PR nuevos. No presentarlos como verificados por las pruebas locales. Render gratuito conserva limitaciones de suspensión y almacenamiento efímero de SQLite y archivos.
+
+Tras revisar los cuatro bloques, actualizar el PR de entrega develop→main existente (#31, si sigue abierto), sin abrir otro duplicado. Mostrar Network con las ramas y merge commits reales.
