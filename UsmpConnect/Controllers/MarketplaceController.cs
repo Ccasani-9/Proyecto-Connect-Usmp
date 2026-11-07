@@ -102,6 +102,9 @@ public class MarketplaceController(ApplicationDbContext db, IAlmacenArchivos alm
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CambiarEstado(int id, EstadoPublicacion nuevoEstado)
     {
+        if (!ModelState.IsValid || !Enum.IsDefined(nuevoEstado))
+            return BadRequest();
+
         var articulo = await db.Articulos.FindAsync(id);
         if (articulo == null)
             return NotFound();

@@ -36,18 +36,24 @@
     <form method="get" class="d-flex flex-wrap gap-3 align-items-center">
         <div class="search-box flex-grow-1" style="min-width: 260px;">
             <i class="bi bi-search"></i>
-            <input type="text" name="q" value="@Model.Busqueda" placeholder="Buscar artículo, libro, calculadora..." class="form-control" />
+            <input type="search" name="q" value="@Model.Busqueda" aria-label="Buscar en Marketplace" placeholder="Buscar artículo, libro, calculadora..." class="form-control" />
         </div>
+        <input type="hidden" name="categoria" value="@Model.CategoriaFiltro" />
+        <button class="btn-guinda" type="submit">Buscar</button>
+        @if (!string.IsNullOrWhiteSpace(Model.Busqueda) || Model.CategoriaFiltro.HasValue)
+        {
+            <a asp-action="Index" class="btn btn-soft">Limpiar filtros</a>
+        }
         <div class="chips d-flex flex-wrap gap-2">
-            <a href="/Marketplace@(string.IsNullOrEmpty(Model.Busqueda) ? "" : $"?q={Model.Busqueda}")"
+            <a asp-action="Index" asp-route-q="@Model.Busqueda"
                class="chip @(Model.CategoriaFiltro == null ? "active" : "")">Todo</a>
-            <a href="/Marketplace?categoria=@((int)CategoriaMarketplace.CalculadorasHardware)@(string.IsNullOrEmpty(Model.Busqueda) ? "" : $"&q={Model.Busqueda}")"
+            <a asp-action="Index" asp-route-categoria="@CategoriaMarketplace.CalculadorasHardware" asp-route-q="@Model.Busqueda"
                class="chip @(Model.CategoriaFiltro == CategoriaMarketplace.CalculadorasHardware ? "active" : "")">Calculadoras/Hardware</a>
-            <a href="/Marketplace?categoria=@((int)CategoriaMarketplace.LibrosGuias)@(string.IsNullOrEmpty(Model.Busqueda) ? "" : $"&q={Model.Busqueda}")"
+            <a asp-action="Index" asp-route-categoria="@CategoriaMarketplace.LibrosGuias" asp-route-q="@Model.Busqueda"
                class="chip @(Model.CategoriaFiltro == CategoriaMarketplace.LibrosGuias ? "active" : "")">Libros y Guías</a>
-            <a href="/Marketplace?categoria=@((int)CategoriaMarketplace.BatasUniformes)@(string.IsNullOrEmpty(Model.Busqueda) ? "" : $"&q={Model.Busqueda}")"
+            <a asp-action="Index" asp-route-categoria="@CategoriaMarketplace.BatasUniformes" asp-route-q="@Model.Busqueda"
                class="chip @(Model.CategoriaFiltro == CategoriaMarketplace.BatasUniformes ? "active" : "")">Batas/Uniformes</a>
-            <a href="/Marketplace?categoria=@((int)CategoriaMarketplace.AlquilerCuartos)@(string.IsNullOrEmpty(Model.Busqueda) ? "" : $"&q={Model.Busqueda}")"
+            <a asp-action="Index" asp-route-categoria="@CategoriaMarketplace.AlquilerCuartos" asp-route-q="@Model.Busqueda"
                class="chip @(Model.CategoriaFiltro == CategoriaMarketplace.AlquilerCuartos ? "active" : "")">Alquiler de cuartos</a>
         </div>
     </form>
@@ -96,7 +102,7 @@ else
                         <span class="item-badge @badgeClass">@badgeText</span>
                         @if (!string.IsNullOrEmpty(item.ImagenUrl))
                         {
-                            <img src="@item.ImagenUrl" alt="@item.Titulo" class="item-img" />
+                            <img src="@item.ImagenUrl" alt="@item.Titulo" class="item-img" loading="lazy" onerror="this.onerror=null;this.src='/images/demo/sin-foto.svg';" />
                         }
                         else
                         {
@@ -120,6 +126,10 @@ else
                             </div>
                         }
                     </div>
+                    @if (item.ImagenUrl?.StartsWith("/images/demo/", StringComparison.Ordinal) == true)
+                    {
+                        <p class="small text-muted px-3 pt-2 mb-0">Foto referencial · Publicación de demostración</p>
+                    }
 
                     <!-- Datos del Artículo -->
                     <div class="p-3 d-flex flex-column flex-grow-1">
@@ -163,7 +173,7 @@ else
 
                         <!-- Botones de Acción -->
                         <div class="mt-auto d-flex flex-column gap-2">
-                            @if (item.Estado != EstadoPublicacion.Vendido)
+                            @if (item.Estado != EstadoPublicacion.Vendido && !string.IsNullOrWhiteSpace(item.WhatsApp))
                             {
                                 <a href="@waUrl" target="_blank" rel="noopener" class="btn btn-wa w-100 py-2 d-flex align-items-center justify-content-center gap-2">
                                     <i class="bi bi-whatsapp"></i>
@@ -173,7 +183,7 @@ else
                             else
                             {
                                 <button class="btn btn-secondary w-100 py-2" disabled>
-                                    <i class="bi bi-check-all me-1"></i>Vendido / Entregado
+                                    @(item.Estado == EstadoPublicacion.Vendido ? "Vendido / Entregado" : "Contacto sin registrar")
                                 </button>
                             }
 

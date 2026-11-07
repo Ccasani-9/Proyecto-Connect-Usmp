@@ -23,7 +23,7 @@ public class LostFoundController(ApplicationDbContext db, IAlmacenArchivos almac
 
         // Determinar tab activa
         var tabActiva = tab?.ToLowerInvariant();
-        if (string.IsNullOrEmpty(tabActiva))
+        if (tabActiva is not ("encontrados" or "extraviados" or "mis-publicaciones" or "mis-solicitudes"))
         {
             tabActiva = (tipo == TipoReporte.Perdido) ? "extraviados" : "encontrados";
         }
@@ -282,7 +282,7 @@ public class LostFoundController(ApplicationDbContext db, IAlmacenArchivos almac
         db.ObjetosPerdidos.Remove(objeto);
         await db.SaveChangesAsync();
 
-        if (objeto.FotoUrl is not null)
+        if (objeto.FotoUrl?.StartsWith("/uploads/lostfound/", StringComparison.Ordinal) == true)
         {
             var ruta = almacen.RutaFisica(objeto.FotoUrl);
             if (System.IO.File.Exists(ruta))

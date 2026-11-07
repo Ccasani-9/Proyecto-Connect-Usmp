@@ -1,6 +1,6 @@
 @{
     var codigo = (int)(ViewData["Codigo"] ?? 404);
-    ViewData["Title"] = codigo == 404 ? "En construcción" : "Error";
+    ViewData["Title"] = codigo == 404 ? "Página no encontrada" : "No se pudo completar la solicitud";
     if (User.Identity?.IsAuthenticated != true)
     {
         Layout = "_LayoutAuth";
@@ -9,9 +9,15 @@
 <div class="card-u estado">
     @if (codigo == 404)
     {
-        <div class="icono"><i class="bi bi-cone-striped"></i></div>
-        <h1 class="h4 fw-bold">Este módulo está en construcción</h1>
-        <p class="text-muted">Nuestro equipo está trabajando en esta sección. ¡Muy pronto estará disponible!</p>
+        <div class="icono"><i class="bi bi-search"></i></div>
+        <h1 class="h4 fw-bold">No encontramos esta página</h1>
+        <p class="text-muted">El enlace puede haber cambiado o la publicación ya fue retirada. Vuelve al inicio para seguir explorando.</p>
+    }
+    else if (codigo == 400)
+    {
+        <div class="icono"><i class="bi bi-arrow-clockwise"></i></div>
+        <h1 class="h4 fw-bold">No pudimos procesar el formulario</h1>
+        <p class="text-muted">La página pudo quedar desactualizada. Abre de nuevo la sección y vuelve a intentar la operación.</p>
     }
     else
     {

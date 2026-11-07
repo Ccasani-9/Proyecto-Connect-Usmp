@@ -177,6 +177,8 @@ public static class DbInitializer
             }
 
             await AmpliacionDemo.AplicarAsync(db);
+            if (await PresentacionDemo.AplicarAsync(db))
+                await sp.GetRequiredService<CatalogoRestaurantesService>().InvalidarAsync();
             await CompletarPreciosDemoAsync(db);
             await AplicarValoracionesMapaDemoAsync(sp, db);
             await ClasificarResenasPendientesAsync(sp, db, logger);
@@ -202,6 +204,8 @@ public static class DbInitializer
         }
 
         await AmpliacionDemo.AplicarAsync(db);
+        if (await PresentacionDemo.AplicarAsync(db))
+            await sp.GetRequiredService<CatalogoRestaurantesService>().InvalidarAsync();
         await CompletarPreciosDemoAsync(db);
         await AplicarValoracionesMapaDemoAsync(sp, db);
         await ClasificarResenasPendientesAsync(sp, db, logger);

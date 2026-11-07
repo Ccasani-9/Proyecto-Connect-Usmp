@@ -119,6 +119,7 @@ public sealed class AgenteUsmpService(IConfiguration config, ApplicationDbContex
             yield break;
         }
         chat.AddSystemMessage("Formato de esta respuesta: texto plano, párrafos breves o lista numerada. " +
+            "Máximo 120 palabras. En una continuación presenta las opciones del nuevo criterio sin repetir la búsqueda anterior. " +
             "No generes tablas, títulos Markdown, asteriscos ni bloques de código. " +
             "Para búsquedas presenta los resultados del turno; no redactes ejercicios ni tutoriales. " +
             "Si no hay coincidencias, ofrece como máximo dos títulos de alternativas reales y aclara que son de otros temas.");

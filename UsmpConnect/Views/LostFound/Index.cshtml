@@ -106,7 +106,11 @@
                         <div class="lf-foto">
                             @if (o.FotoUrl is not null)
                             {
-                                <img src="@o.FotoUrl" alt="@o.Titulo" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=600&q=80';" />
+                                <img src="@o.FotoUrl" alt="@o.Titulo" loading="lazy" onerror="this.onerror=null; this.src='/images/demo/sin-foto.svg';" />
+                                @if (o.FotoUrl?.StartsWith("/images/demo/", StringComparison.Ordinal) == true && !o.FotoUrl.EndsWith(".svg", StringComparison.Ordinal))
+                                {
+                                    <span class="position-absolute bottom-0 start-0 bg-white text-muted small px-2 py-1 rounded-top-end">Foto referencial · Demo</span>
+                                }
                             }
                             else
                             {
@@ -215,7 +219,11 @@
                         <div class="lf-foto">
                             @if (o.FotoUrl is not null)
                             {
-                                <img src="@o.FotoUrl" alt="@o.Titulo" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=600&q=80';" />
+                                <img src="@o.FotoUrl" alt="@o.Titulo" loading="lazy" onerror="this.onerror=null; this.src='/images/demo/sin-foto.svg';" />
+                                @if (o.FotoUrl?.StartsWith("/images/demo/", StringComparison.Ordinal) == true && !o.FotoUrl.EndsWith(".svg", StringComparison.Ordinal))
+                                {
+                                    <span class="position-absolute bottom-0 start-0 bg-white text-muted small px-2 py-1 rounded-top-end">Foto referencial · Demo</span>
+                                }
                             }
                             else
                             {
@@ -314,7 +322,11 @@
                             <div style="width: 72px; height: 72px; border-radius: 10px; overflow: hidden; background: #f4f4f5; flex-shrink: 0; display: grid; place-items: center;">
                                 @if (o.FotoUrl is not null)
                                 {
-                                    <img src="@o.FotoUrl" alt="@o.Titulo" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=600&q=80';" />
+                                    <img src="@o.FotoUrl" alt="@o.Titulo" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='/images/demo/sin-foto.svg';" />
+                                @if (o.FotoUrl?.StartsWith("/images/demo/", StringComparison.Ordinal) == true && !o.FotoUrl.EndsWith(".svg", StringComparison.Ordinal))
+                                {
+                                    <span class="position-absolute bottom-0 start-0 bg-white text-muted small px-2 py-1 rounded-top-end">Foto referencial · Demo</span>
+                                }
                                 }
                                 else
                                 {

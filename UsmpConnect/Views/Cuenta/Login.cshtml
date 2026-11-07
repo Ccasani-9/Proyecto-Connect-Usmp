@@ -18,8 +18,12 @@
 {
     <div class="alert alert-warning small" role="alert">@errorAcceso</div>
 }
+@if (Context.Request.Query["aviso"] == "formulario-vencido")
+{
+    <div class="alert alert-warning small" role="alert">El formulario de acceso venció. Ya lo renovamos. Vuelve a ingresar tus datos o continúa con Google.</div>
+}
 
-<form asp-action="Login" method="post" novalidate id="formLogin">
+<form asp-action="Login" method="post" novalidate id="formLogin" data-acceso>
     <input type="hidden" asp-for="ReturnUrl" />
     <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small rounded-3"></div>
 
@@ -39,7 +43,7 @@
         <div class="input-group">
             <span class="input-group-text bg-white border-end-0 text-muted ps-3"><i class="bi bi-lock"></i></span>
             <input asp-for="Password" class="form-control border-start-0 border-end-0 ps-2" placeholder="••••••••" autocomplete="current-password" id="inputPassword" />
-            <button class="btn btn-outline-secondary border-start-0 bg-white text-muted pe-3" type="button" id="btnTogglePassword" tabindex="-1" title="Ver contraseña">
+            <button class="btn btn-outline-secondary border-start-0 bg-white text-muted pe-3" type="button" id="btnTogglePassword" aria-label="Mostrar contraseña" aria-pressed="false" title="Mostrar contraseña">
                 <i class="bi bi-eye" id="eyeIcon"></i>
             </button>
         </div>
@@ -56,6 +60,7 @@
     <button type="submit" class="btn-guinda w-100 py-2 d-flex align-items-center justify-content-center gap-2 fw-semibold rounded-3 shadow-sm">
         <i class="bi bi-box-arrow-in-right"></i> Ingresar al Portal
     </button>
+    <p class="small text-muted mt-2 mb-0" data-estado-acceso role="status" aria-live="polite"></p>
 </form>
 
 <div class="d-flex align-items-center my-3">
@@ -74,6 +79,8 @@
     </svg>
     <span>Continuar con Google</span>
 </button>
+<div id="errorGoogle" class="alert alert-danger small" role="alert" hidden></div>
+<a id="recargarAcceso" href="/Cuenta/Login" class="btn btn-soft mb-3" hidden>Renovar formulario de acceso</a>
 
 <p class="small text-muted mb-3">Google permite usar tu cuenta personal en esta maqueta; no acredita pertenencia a la USMP.</p>
 <!-- Box de Cuentas Demo por Carrera -->
@@ -142,8 +149,12 @@
 
         const btnGoogle = document.getElementById('btnGoogleLogin');
         const originalGoogleHtml = btnGoogle.innerHTML;
+        const errorGoogle = document.getElementById('errorGoogle');
+        const recargarAcceso = document.getElementById('recargarAcceso');
 
         btnGoogle.addEventListener('click', async () => {
+            errorGoogle.hidden = true;
+            recargarAcceso.hidden = true;
             btnGoogle.disabled = true;
             btnGoogle.innerHTML = `<span class="spinner-border spinner-border-sm me-2 text-danger" role="status"></span> Conectando con Google...`;
 
@@ -155,6 +166,7 @@
                 const idToken = await user.getIdToken();
                 const resp = await fetch('/Cuenta/GoogleLogin', {
                     method: 'POST',
+                    signal: AbortSignal.timeout(45000),
                     headers: {
                         'Content-Type': 'application/json',
                         'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
@@ -170,18 +182,24 @@
                     try {
                         const err = await resp.json();
                         if (err && err.error) errMsg = err.error;
+                        recargarAcceso.hidden = !err.recargar;
                     } catch (_) {}
-                    alert(errMsg);
-                    btnGoogle.disabled = false;
-                    btnGoogle.innerHTML = originalGoogleHtml;
+                    errorGoogle.textContent = resp.status >= 500
+                        ? 'El servidor está tardando en responder. Espera un momento y vuelve a intentarlo.'
+                        : errMsg;
+                    errorGoogle.hidden = false;
                 }
             } catch (error) {
-                console.error("Firebase Google Auth error:", error);
-                if (error.code === 'auth/operation-not-allowed') {
-                    alert('Atención: El proveedor Google aún no está habilitado en Firebase Console.\n\nVe a Firebase Console > Authentication > pestaña "Sign-in method" > Activa el proveedor "Google".');
-                } else if (error.code !== 'auth/popup-closed-by-user') {
-                    alert('Error al conectar con Google: ' + (error.message || error.code));
+                if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+                    const mensajes = {
+                        'auth/popup-blocked': 'Tu navegador bloqueó la ventana de Google. Permite las ventanas emergentes para este sitio y vuelve a intentarlo.',
+                        'auth/unauthorized-domain': 'El acceso con Google no está disponible en esta dirección. Puedes ingresar con tu cuenta o un perfil demo.',
+                        'auth/operation-not-allowed': 'El acceso con Google aún no está habilitado. Puedes ingresar con tu cuenta o un perfil demo.'
+                    };
+                    errorGoogle.textContent = mensajes[error.code] || 'No pudimos conectar para completar tu acceso. Revisa tu conexión y vuelve a intentarlo en un momento.';
+                    errorGoogle.hidden = false;
                 }
+            } finally {
                 btnGoogle.disabled = false;
                 btnGoogle.innerHTML = originalGoogleHtml;
             }
@@ -196,6 +214,8 @@
                 const isPass = inputPass.type === 'password';
                 inputPass.type = isPass ? 'text' : 'password';
                 eyeIcon.className = isPass ? 'bi bi-eye-slash' : 'bi bi-eye';
+                btnToggle.setAttribute('aria-label', isPass ? 'Ocultar contraseña' : 'Mostrar contraseña');
+                btnToggle.setAttribute('aria-pressed', String(isPass));
             });
         }
 
@@ -203,7 +223,7 @@
         document.querySelectorAll('[data-demo]').forEach(b => b.addEventListener('click', () => {
             document.getElementById('Email').value = b.dataset.demo;
             document.getElementById('inputPassword').value = '@DemoUsers.Password';
-            document.getElementById('formLogin').submit();
+            document.getElementById('formLogin').requestSubmit();
         }));
     </script>
 }

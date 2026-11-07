@@ -18,6 +18,7 @@ public class PublicarArticuloInputModel
     public string Titulo { get; set; } = "";
 
     [Required(ErrorMessage = "Selecciona una categoría.")]
+    [EnumDataType(typeof(CategoriaMarketplace), ErrorMessage = "Selecciona una categoría de la lista.")]
     [Display(Name = "Categoría")]
     public CategoriaMarketplace Categoria { get; set; }
 
@@ -26,6 +27,7 @@ public class PublicarArticuloInputModel
     public decimal? Precio { get; set; }
 
     [Required(ErrorMessage = "Selecciona el estado del ítem.")]
+    [EnumDataType(typeof(EstadoItem), ErrorMessage = "Selecciona un estado de la lista.")]
     [Display(Name = "Estado del ítem")]
     public EstadoItem EstadoItem { get; set; } = EstadoItem.Usado;
 
