@@ -44,6 +44,8 @@ public sealed class CatalogoFiaPlugin(ApplicationDbContext db, ContextoAsistente
         }).ToListAsync(cancellationToken);
         var coincidentes = candidatos.Where(r => Coincide(texto, new[] { r.Nombre, r.Descripcion }.Concat(r.Platos.Select(p => p.Nombre)).ToArray()))
             .OrderByDescending(r => r.CalificacionPromedio).ThenByDescending(r => r.TotalResenas).ToList();
+        if (solicitud?.ParaAlmorzar == true)
+            coincidentes = coincidentes.Where(r => HorarioRestaurante.IncluyeAlmuerzo(r.HorarioAtencion, solicitud.DiaConsulta) != false).ToList();
         var resultados = coincidentes.Where(r => !precioMaximo.HasValue ||
             (r.PrecioPromedioReferencial.HasValue && r.PrecioPromedioReferencial <= precioMaximo.Value)).Take(4).ToList();
         var sinPrecio = coincidentes.Where(r => precioMaximo.HasValue && r.PrecioPromedioReferencial is null)

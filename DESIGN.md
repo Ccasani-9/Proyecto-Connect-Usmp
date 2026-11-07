@@ -23,7 +23,14 @@ Mensajes del modelo y de usuarios se renderizan con textContent, nunca HTML. Enl
 ## Gasto referencial de restaurantes
 El catálogo coloca los filtros del listado antes del mapa. Los controles de zona se agrupan con el mapa. Las tarjetas de la grilla muestran foto, nombre, categoría, valoración, gasto aproximado y cercanía. El modal reúne descripción, dirección, horarios, rutas y reseñas. Un precio desconocido se muestra como gasto por confirmar y queda fuera del filtro de presupuesto.
 
+## Fotos y acceso
+
+Marketplace y Objetos Perdidos usan fotografías locales de referencia en publicaciones demo. Se identifican junto a la foto y conservan la misma geometría al cargar o fallar. Una publicación nueva sin imagen muestra un estado sin foto, sin atribuirle una fotografía de otro objeto. Los archivos de ejemplo viven en `/images/demo/`; eliminar un reporte solo retira archivos subidos a `/uploads/lostfound/`.
+
+`acceso.js` comparte la espera y prevención de doble envío en inicio y cierre de sesión. Un formulario vencido se renueva mediante navegación GET sin repetir la operación. Google presenta errores dentro del formulario, con recuperación explícita cuando debe renovarse.
+
 ## Calendario y lectura del asistente
+
 Calendario reserva 100px al pie para separar acciones del lanzador flotante. Actividades semanales con días seleccionados y final obligatorio (máximo 366 días); se materializan como actividades independientes y eliminar afecta solo esa fecha. Emoji de paleta acotada integrado al título para mantener compatibilidad con Inicio sin migración. Formulario desplazable en pantallas bajas. El asistente presenta listas mediante nodos DOM con textContent y tarjetas verticales completas, sin HTML del modelo ni carruseles truncados.
 
 El asistente admite negrita y código en línea mediante elementos strong/code creados con textContent (sin HTML del modelo). Un indicador fijo sobre el compositor permanece visible durante toda la petición y el streaming; desaparece en finalización, error o cancelación. Respeta movimiento reducido.

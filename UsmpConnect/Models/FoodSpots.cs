@@ -11,7 +11,7 @@ public enum CategoriaRestaurante
     ComidaRapida,
     [Display(Name = "Chifa")]
     Chifa,
-    [Display(Name = "Cafetería & Huarique")]
+    [Display(Name = "Cafetería")]
     CafeteriaHuarique,
     [Display(Name = "Pastelería & Postres")]
     PasteleriaPostres,

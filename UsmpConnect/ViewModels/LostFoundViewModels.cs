@@ -22,6 +22,7 @@ public class LostFoundIndexViewModel
 
 public class ReportarObjetoVM
 {
+    [EnumDataType(typeof(TipoReporte), ErrorMessage = "Selecciona el tipo de reporte.")]
     public TipoReporte Tipo { get; set; }
 
     [Required(ErrorMessage = "Escribe qué objeto es.")]
@@ -29,6 +30,7 @@ public class ReportarObjetoVM
     public string Titulo { get; set; } = "";
 
     [Required(ErrorMessage = "Selecciona una categoría.")]
+    [EnumDataType(typeof(CategoriaObjeto), ErrorMessage = "Selecciona una categoría de la lista.")]
     public CategoriaObjeto? Categoria { get; set; }
 
     [Required(ErrorMessage = "Selecciona el pabellón o edificio.")]
@@ -42,6 +44,7 @@ public class ReportarObjetoVM
 
     public IFormFile? Foto { get; set; }
 
+    [EnumDataType(typeof(CustodiaObjeto), ErrorMessage = "Selecciona un lugar de custodia de la lista.")]
     public CustodiaObjeto? Custodia { get; set; }
 
     [RegularExpression(Services.WhatsApp.Patron, ErrorMessage = "El WhatsApp debe tener 9 dígitos y empezar con 9.")]

@@ -1,5 +1,22 @@
 # Verificación de la publicación
 
+## Cierre local del 7 de noviembre de 2026
+
+Rama `codex/cierre-presentacion`, basada en `develop` después del PR #53. Las mejoras pendientes del PR #35 se adaptaron al asistente actual. Ese PR se sustituye por el cierre, y el PR #31 `develop → main` queda para después de integrar y revisar el despliegue.
+
+`dotnet test UsmpConnect.slnx --configuration Release` completó **81 pruebas aprobadas, 0 fallidas y 5 omitidas**. Las omitidas requieren una instancia Redis de prueba mediante `USMP_TEST_REDIS`.
+
+- Acceso demo, renovación de formularios con antiforgery vencido y cierre de sesión, conservando la validación del token.
+- Marketplace permite publicar, cambiar estado y eliminar con verificación de autoría. Se validan estados y categorías. La búsqueda conserva filtros, codifica los enlaces y permite limpiarlos. Las publicaciones sin teléfono muestran contacto sin registrar.
+- Objetos Perdidos permite aprobar el reclamo demo y confirmar la entrega, con notificación persistida. Borrar un reporte conserva las fotografías compartidas y los ejemplos eliminados no se recrean al reiniciar.
+- Cátedra permite aportar y votar un consejo. Apuntes permite modificar una valoración sin duplicarla y descargar un PDF válido.
+- El asistente conserva presupuesto al cambiar de categoría en una continuación y filtra horarios publicados incompatibles con almuerzo. La recuperación del PR #35 mantiene el renderizado seguro y las mejoras posteriores del chat.
+- La página de errores lee el código HTTP desde la ruta. Antes, un campo `id` del formulario podía sustituir ese código y provocar un error 500 durante la recuperación.
+
+Revisión de navegador local en escritorio y a 390 × 844 px de Inicio, Marketplace, Objetos Perdidos, Cátedra, Apuntes, Restaurantes y Calendario, incluido el formulario de actividades. Se verificaron fotografías y distribución adaptable. Fotografías referenciales guardadas con la aplicación y créditos en `UsmpConnect/wwwroot/images/demo/CREDITOS.md`. El carné usa una ilustración sin datos personales.
+
+Esta revisión utiliza una base SQLite temporal y servicios remotos desactivados. Después del merge, contrastar el campo `version` de `/health` con el commit que Render marca Live. Completar el acceso personal de Google y el ensayo de integraciones remotas en esa versión. La suspensión y el almacenamiento efímero de Render Free siguen siendo condiciones del alojamiento.
+
 Comprobación realizada el **26 de octubre de 2026**, hora de Lima, sobre https://usmpconnect.onrender.com/.
 
 ## Versión

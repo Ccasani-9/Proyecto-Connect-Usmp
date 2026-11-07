@@ -48,12 +48,13 @@ public class HomeController(
         return View(vm);
     }
 
-    /// <summary>Páginas de estado (404 → "módulo en construcción").</summary>
+    /// <summary>Páginas de error que conservan el código HTTP de la ruta de recuperación.</summary>
     [AllowAnonymous]
-    public IActionResult Estado(int id)
+    public IActionResult Estado([FromRoute] int id)
     {
-        Response.StatusCode = id;
-        ViewData["Codigo"] = id;
+        var codigo = id is >= 400 and <= 599 ? id : StatusCodes.Status404NotFound;
+        Response.StatusCode = codigo;
+        ViewData["Codigo"] = codigo;
         return View();
     }
 

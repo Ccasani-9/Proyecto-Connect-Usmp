@@ -75,6 +75,7 @@ builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add(new AuthorizeFilter(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().RequireRole(Roles.Alumno).Build()));
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+    options.Filters.Add<RecuperarFormularioAccesoFilter>();
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -217,6 +218,10 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
-app.MapGet("/health", () => Results.Ok(new { estado = "ok" })).AllowAnonymous();
+app.MapGet("/health", (IConfiguration config) => Results.Ok(new
+{
+    estado = "ok",
+    version = config["RENDER_GIT_COMMIT"]
+})).AllowAnonymous();
 
 app.Run();
